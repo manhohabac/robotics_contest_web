@@ -1,0 +1,114 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Login</title>
+
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <style>
+        body, html {
+            height: 100%;
+        }
+        
+        .bg-image {
+            width: 100%;
+            height: 100vh; /* Chiều cao của khung nền chiếm toàn bộ màn hình */
+            background-size: cover;
+            background-position: center center; /* Giữ ảnh ở giữa */
+            background-repeat: no-repeat;
+            animation: slide 30s infinite; /* 30 giây để hoàn thành một vòng slide và lặp lại vô tận */
+        }
+        
+        @keyframes slide {
+            0%, 33% {
+                background-image: url('{% static "images/robot1.jpg" %}');
+            }
+            34%, 66% {
+                background-image: url('{% static "images/robot2.jpg" %}');
+            }
+            67%, 100% {
+                background-image: url('{% static "images/robot3.jpg" %}');
+            }
+        }
+
+        .login-container {
+            height: 70%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-card {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 30%;
+        }
+        .login-card h3 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-control {
+            margin-bottom: 20px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            border: none;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .login-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .register-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: linear-gradient(45deg, #ff512f, #f09819);
+            border: none;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .register-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-image">
+        <div class="container login-container">
+            <div class="login-card col-md-4">
+                <h3>Đăng nhập</h3>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="username" class="form-control" placeholder="Username" required autocomplete="username">
+                    <input type="password" name="password" class="form-control" placeholder="Password" required autocomplete="current-password">
+                    <button type="submit" class="btn login-btn">Đăng nhập</button>
+                </form>
+                <!-- Nút Đăng ký -->
+                <a href="{% url 'register' %}" class="register-btn">Đăng ký</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,184 @@
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from .models import CustomUser, UserProfile, Competition
+import re
+from django.core.exceptions import ValidationError
+from django.contrib.auth import password_validation
+from django.utils import timezone
+
+
+class UserRegistrationForm(UserCreationForm):
+    full_name = forms.CharField(max_length=255, label="Họ và tên")
+    date_of_birth = forms.DateField(
+        widget=forms.DateInput(attrs={'placeholder': 'dd/mm/yyyy', 'class': 'form-control'}, format='%d/%m/%Y'),
+        input_formats=['%d/%m/%Y'],
+        label="Ngày sinh (dd/mm/yyyy)"
+    )
+    address = forms.CharField(max_length=255, label="Địa chỉ")
+    school_name = forms.CharField(max_length=255, label="Đang là học sinh trường")
+
+    has_robot_competition_experience = forms.ChoiceField(
+        choices=[(True, 'Đã từng'), (False, 'Chưa từng')],
+        widget=forms.RadioSelect,
+        label="Đã từng tham gia các cuộc thi về robot"
+    )
+    profile_picture = forms.ImageField(required=False, label="Ảnh đại diện")
+    phone_number = forms.CharField(max_length=15, required=False, label="Số điện thoại")
+    email = forms.EmailField(label="Email")
+
+    # Thêm các trường mới
+    gender = forms.ChoiceField(
+        choices=[('nam', 'Nam'), ('nữ', 'Nữ'), ('khác', 'Khác')],
+        widget=forms.RadioSelect,
+        initial='khác',
+        label="Giới tính"
+    )
+    id_number = forms.CharField(max_length=20, required=False, label="Số CMND/CCCD")
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'username', 'full_name', 'date_of_birth', 'address', 'school_name',
+            'has_robot_competition_experience', 'profile_picture', 'phone_number',
+            'email', 'gender', 'id_number', 'password1', 'password2'
+        ]
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if not re.match(r'^[a-zA-Z0-9_]+$', username):
+            raise forms.ValidationError("Username chỉ được chứa chữ cái, chữ số, và dấu gạch dưới.")
+        if CustomUser.objects.filter(username=username).exists():
+            raise forms.ValidationError("Username đã tồn tại.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError("Email này đã được sử dụng.")
+        return email
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        if phone_number and CustomUser.objects.filter(phone_number=phone_number).exists():
+            raise forms.ValidationError("Số điện thoại này đã được sử dụng.")
+        return phone_number
+
+    def clean_id_number(self):
+        id_number = self.cleaned_data.get('id_number')
+        if id_number and CustomUser.objects.filter(id_number=id_number).exists():
+            raise forms.ValidationError("Số CMND/CCCD này đã được sử dụng.")
+        return id_number
+
+    def clean_password1(self):
+        password1 = self.cleaned_data.get('password1')
+        if len(password1) < 8:
+            raise forms.ValidationError("Mật khẩu phải có ít nhất 8 ký tự.")
+        if not re.search(r'[A-Z]', password1):
+            raise forms.ValidationError("Mật khẩu phải chứa ít nhất một chữ cái viết hoa.")
+        if not re.search(r'[a-z]', password1):
+            raise forms.ValidationError("Mật khẩu phải chứa ít nhất một chữ cái viết thường.")
+        if not re.search(r'[0-9]', password1):
+            raise forms.ValidationError("Mật khẩu phải chứa ít nhất một chữ số.")
+        if not re.search(r'[@#$]', password1):
+            raise forms.ValidationError("Mật khẩu phải chứa ít nhất một ký tự đặc biệt (@, #, hoặc $).")
+        return password1
+
+
+class ChangePasswordForm(forms.Form):
+    current_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), label='Mật khẩu cũ')
+    new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), label='Mật khẩu mới')
+    confirm_new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+                                           label='Xác nhận mật khẩu mới')
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get("current_password")
+        if self.user and not self.user.check_password(current_password):
+            raise ValidationError('Mật khẩu cũ không đúng.')
+        return current_password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get("new_password")
+        confirm_new_password = cleaned_data.get("confirm_new_password")
+
+        if new_password and confirm_new_password and new_password != confirm_new_password:
+            self.add_error('confirm_new_password', 'Mật khẩu mới không khớp.')
+
+        if new_password:
+            try:
+                password_validation.validate_password(new_password, self.user)
+            except ValidationError as e:
+                self.add_error('new_password', e)
+
+
+class EditProfileForm(forms.ModelForm):
+    date_of_birth = forms.DateField(
+        widget=forms.DateInput(
+            attrs={
+                'type': 'text',
+                'class': 'form-control',
+                'placeholder': 'dd/mm/yyyy',
+                'data-date-format': 'd/m/Y',  # Flatpickr date format
+            },
+            format='%d/%m/%Y'  # Ensure the widget formats the initial value
+        ),
+        input_formats=['%d/%m/%Y'],
+        required=False
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = ['full_name', 'date_of_birth', 'address', 'school_name', 'phone_number', 'profile_picture', 'gender']
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
+            'school_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'profile_picture': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+
+class EditUserProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['bio', 'interests', 'social_links', 'is_competitor']
+        widgets = {
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'interests': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'social_links': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_competitor': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(EditUserProfileForm, self).__init__(*args, **kwargs)
+        # Đặt checkbox được tick dựa vào giá trị hiện tại của instance
+        if self.instance.is_competitor:
+            self.fields['is_competitor'].initial = True
+
+
+class CompetitionForm(forms.ModelForm):
+    class Meta:
+        model = Competition
+        fields = ['name', 'description', 'start_date', 'end_date', 'registration_deadline', 'rules', 'max_participants', 'image']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'registration_deadline': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def save(self, commit=True):
+        competition = super().save(commit=False)
+        # So sánh end_date với thời điểm hiện tại để đặt is_active
+        if competition.end_date >= timezone.now().date():
+            competition.is_active = True
+        else:
+            competition.is_active = False
+
+        if commit:
+            competition.save()
+        return competition

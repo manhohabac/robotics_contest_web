@@ -1,0 +1,297 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Register</title>
+
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Flatpickr CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <style>
+        .bg-image {
+            background-image: url('{% static "images/robot1.jpg" %}');
+            background-size: cover;
+            background-position: center;
+            height: 100vh; /* Đổi từ 50% sang 100vh */
+            width: 100%; /* Đảm bảo chiều rộng phủ hết */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .register-container {
+            width: 100%; /* Sử dụng 100% chiều rộng của cha */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 70px;
+        }
+        
+        .register-card {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 60%;
+        }
+        
+        .register-card h3 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(45deg, #ff512f, #f09819);
+            border: none;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .register-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-error {
+            color: #dc3545; /* Màu đỏ cho thông báo lỗi */
+            margin-top: 0.5rem;
+        }
+
+        /* CSS cho Flatpickr */
+        .flatpickr-calendar {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .flatpickr-day {
+            color: #007bff;
+        }
+
+        .flatpickr-day.selected, .flatpickr-day.today {
+            background: #007bff;
+            color: white;
+        }
+
+        .flatpickr-day:hover {
+            background: #e9ecef;
+        }
+
+        .flatpickr-month {
+            background: #007bff;
+            color: white;
+        }
+
+        .flatpickr-prev-month, .flatpickr-next-month {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    {% load form_filters %}
+    <div class="bg-image">
+        <div class="container register-container">
+            <div class="register-card col-md-8">
+                <h3>Đăng ký</h3>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <!-- Các trường nhập liệu khác -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">Tên người dùng</label>
+                                {{ form.username|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường username -->
+                                {% if form.username.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.username.errors %}
+                                            <p><strong>{{ form.username.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.full_name.id_for_label }}" class="form-label">Họ và tên</label>
+                                {{ form.full_name|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường full_name -->
+                                {% if form.full_name.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.full_name.errors %}
+                                            <p><strong>{{ form.full_name.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Ngày sinh</label>
+                                {{ form.date_of_birth|add_class:"datepicker form-control custom-width" }}
+                                <!-- Hiển thị lỗi cho trường date_of_birth -->
+                                {% if form.date_of_birth.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.date_of_birth.errors %}
+                                            <p><strong>{{ form.date_of_birth.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ form.email|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường email -->
+                                {% if form.email.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.email.errors %}
+                                            <p><strong>{{ form.email.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.phone_number.id_for_label }}" class="form-label">Số điện thoại</label>
+                                {{ form.phone_number|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường phone_number -->
+                                {% if form.phone_number.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.phone_number.errors %}
+                                            <p><strong>{{ form.phone_number.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.address.id_for_label }}" class="form-label">Địa chỉ</label>
+                                {{ form.address|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường address -->
+                                {% if form.address.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.address.errors %}
+                                            <p><strong>{{ form.address.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Ảnh đại diện</label>
+                                {{ form.profile_picture|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường address -->
+                                {% if form.profile_picture.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.profile_picture.errors %}
+                                            <p><strong>{{ form.profile_picture.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.school_name.id_for_label }}" class="form-label">Tên trường đang theo học</label>
+                                {{ form.school_name|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường school_name -->
+                                {% if form.school_name.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.school_name.errors %}
+                                            <p><strong>{{ form.school_name.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.id_number.id_for_label }}" class="form-label">Số CMND/CCCD</label>
+                                {{ form.id_number|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường id_card -->
+                                {% if form.id_number.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.id_number.errors %}
+                                            <p><strong>{{ form.id_number.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.gender.id_for_label }}" class="form-label">Giới tính</label>
+                                {{ form.gender }}
+                                <!-- Hiển thị lỗi cho trường gender -->
+                                {% if form.gender.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.gender.errors %}
+                                            <p><strong>{{ form.gender.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">Mật khẩu</label>
+                                {{ form.password1|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường password -->
+                                {% if form.password1.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.password1.errors %}
+                                            <p><strong>{{ form.password1.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">Nhập lại mật khẩu</label>
+                                {{ form.password2|add_class:"form-control" }}
+                                <!-- Hiển thị lỗi cho trường confirm_password -->
+                                {% if form.password2.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.password2.errors %}
+                                            <p><strong>{{ form.password2.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Đã từng tham gia các cuộc thi về robot?</label>
+                                {{ form.has_robot_competition_experience }}
+                                <!-- Hiển thị lỗi cho trường has_robot_competition_experience -->
+                                {% if form.has_robot_competition_experience.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.has_robot_competition_experience.errors %}
+                                            <p><strong>{{ form.has_robot_competition_experience.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn register-btn">Đăng ký</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr('.datepicker', {
+                dateFormat: "d/m/Y",
+                altInput: true,
+                altFormat: "d/m/Y",
+                allowInput: true
+            });
+        });
+    </script>
+</body>
+</html>
