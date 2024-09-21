@@ -119,7 +119,7 @@
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
                 <!-- Top Bar -->
                 <div class="top-bar">
-                    <a class="btn btn-secondary" href="{% url 'notification' %}">
+                    <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
                         <i class="fas fa-bell"></i> Thông báo
                     </a>
                     <a class="btn btn-primary" href="{% url 'change_password' %}">
@@ -259,37 +259,5 @@
 
     <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-{#    <script>#}
-{#        document.addEventListener('DOMContentLoaded', function() {#}
-{#            const form = document.querySelector('form');#}
-{#            form.addEventListener('submit', function(event) {#}
-{#                const startDate = new Date(document.getElementById('id_start_date').value);#}
-{#                const endDate = new Date(document.getElementById('id_end_date').value);#}
-{#                const registrationDeadline = new Date(document.getElementById('id_registration_deadline').value);#}
-{##}
-{#                const today = new Date();#}
-{##}
-{#                if (startDate < today) {#}
-{#                    alert("Ngày bắt đầu không thể là trong quá khứ.");#}
-{#                    event.preventDefault();#}
-{#                    return;#}
-{#                }#}
-{##}
-{#                if (endDate < startDate) {#}
-{#                    alert("Ngày kết thúc phải sau ngày bắt đầu.");#}
-{#                    event.preventDefault();#}
-{#                    return;#}
-{#                }#}
-{##}
-{#                if (registrationDeadline < today || registrationDeadline > endDate) {#}
-{#                    alert("Hạn đăng ký phải nằm trong khoảng thời gian của cuộc thi.");#}
-{#                    event.preventDefault();#}
-{#                    return;#}
-{#                }#}
-{#            });#}
-{#        });#}
-{#    </script>#}
 </body>
 </html>

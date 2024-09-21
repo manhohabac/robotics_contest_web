@@ -37,17 +37,14 @@
             border-bottom: 1px solid #dee2e6;
             background-color: #f8f9fa;
         }
-        .top-bar .btn {
-            margin-left: 10px;
-        }
-        
         .text-center {
             text-align: center;
         }
-        
         .d-flex.justify-content-between h1 {
-            margin-left: auto;
-            margin-right: auto;
+            margin-left: 0; /* Căn trái */
+        }
+        .top-bar .btn, .button-group .btn {
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -74,7 +71,26 @@
                                 <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
                             </a>
                         </li>
-                        <!-- Các mục khác -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-chart-line"></i> Kết quả cuộc thi/giải đấu
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-box"></i> Bộ thiết bị
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-people-arrows"></i> Nhà tài trợ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-comment-dots"></i> Phản hồi
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
@@ -83,7 +99,7 @@
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
                 <!-- Top Bar -->
                 <div class="top-bar">
-                    <a class="btn btn-secondary" href="{% url 'notification' %}">
+                    <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
                         <i class="fas fa-bell"></i> Thông báo
                     </a>
                     <a class="btn btn-primary" href="{% url 'change_password' %}">
@@ -97,28 +113,81 @@
                 <!-- Nội dung chính -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Chi tiết cuộc thi</h1>
+                    <div class="button-group">
+                        {% if today < competition.start_date %}
+                            <span class="text-muted">Chưa bắt đầu đăng ký</span>
+                        {% elif today > competition.registration_deadline %}
+                            <span class="text-muted">Đã hết hạn đăng ký</span>
+                        {% else %}
+                            {% if user.is_authenticated %}
+                                {% if registration %}
+                                    {% if registration.is_cancelled %}
+                                        <button class="btn btn-primary" disabled>
+                                            <i class="fas fa-user-plus"></i> Không thể đăng ký lại sau khi đã huỷ đăng ký
+                                        </button>
+                                        <button class="btn btn-danger" disabled>
+                                            <i class="fas fa-times"></i> Bạn đã huỷ đăng ký cuộc thi này
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-primary" disabled>
+                                            <i class="fas fa-check"></i> Bạn đã đăng ký thành công
+                                        </button>
+                                        <a href="{% url 'cancel_registration' competition.id %}" class="btn btn-danger">
+                                            <i class="fas fa-times"></i> Hủy đăng ký
+                                        </a>
+                                    {% endif %}
+                                {% else %}
+                                    {% if competition.max_participants is not None and current_participants >= competition.max_participants %}
+                                        <button class="btn btn-primary" disabled>
+                                            <i class="fas fa-user-friends"></i> Số lượng đăng ký đã đầy
+                                        </button>
+                                    {% else %}
+                                        <a href="{% url 'register_competition' competition.id %}" class="btn btn-primary">
+                                            <i class="fas fa-user-plus"></i> Đăng ký
+                                        </a>
+                                        <button class="btn btn-danger" disabled> Bạn chưa đăng ký thành công </button>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    
+                        <a href="{% url 'registration_list' competition.id %}" class="btn btn-info">
+                            <i class="fas fa-list"></i> Danh sách đăng ký
+                        </a>
+                        <a href="{% url 'edit_competition' competition.id %}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Chỉnh sửa
+                        </a>
+                        <a href="{% url 'delete_competition' competition.id %}" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Xoá
+                        </a>
+                    </div>
                 </div>
+                
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         {% if competition.image %}
                             <img src="{{ competition.image.url }}" class="img-fluid" alt="{{ competition.name }}">
                         {% else %}
                             <img src="{% static 'images/robot1.jpg' %}" class="img-fluid" alt="{{ competition.name }}">
                         {% endif %}
                     </div>
-                    <div class="col-md-6">
-                        <p><strong>Mô tả:</strong> {{ competition.description }}</p>
-                        <p><strong>Thời gian:</strong> {{ competition.start_date|date:"d/m/Y" }} - {{ competition.end_date|date:"d/m/Y" }}</p>
-                        <p><strong>Hạn đăng ký:</strong> {{ competition.registration_deadline|date:"d/m/Y" }}</p>
-                        <p><strong>Quy định:</strong> {{ competition.rules }}</p>
-                        <p><strong>Số đội thi:</strong> Tối đa {{ competition.max_participants }}</p>
-                        {% if competition.registration_deadline >= today %}
-                            <a href="{% url 'register_competition' competition.id %}" class="btn btn-primary">Đăng ký</a>
-                            <a href="{% url 'cancel_registration' competition.id %}" class="btn btn-danger">Hủy đăng ký</a>
-                            <a href="{% url 'registration_list' competition.id %}" class="btn btn-info">Danh sách đăng ký</a>
-                        {% else %}
-                            <span class="text-muted">Đã hết hạn đăng ký</span>
-                        {% endif %}
+                
+                    <div class="col-md-8">
+                        <p><strong>Mô tả:</strong> 
+                            {{ competition.description }}
+                        </p>
+                        <p><strong>Thời gian diễn ra:</strong> 
+                            Từ ngày {{ competition.start_date|date:"d/m/Y" }} đến ngày {{ competition.end_date|date:"d/m/Y" }}
+                        </p>
+                        <p><strong>Hạn đăng ký:</strong> 
+                            {{ competition.registration_deadline|date:"d/m/Y" }}
+                        </p>
+                        <p><strong>Quy định:</strong> 
+                            {{ competition.rules }}
+                        </p>
+                        <p><strong>Số đội thi tối đa:</strong> 
+                            Tối đa {{ competition.max_participants }} đội
+                        </p>
                     </div>
                 </div>
             </main>

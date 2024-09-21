@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
@@ -23,6 +24,9 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    def get_full_name(self):
+        return self.full_name
 
 
 class UserProfile(models.Model):
@@ -134,10 +138,12 @@ class Kit(models.Model):
 
 
 class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     title = models.CharField(max_length=255)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)  # Trạng thái đã đọc
+    is_read = models.BooleanField(default=False)
+    notification_type = models.CharField(max_length=50, choices=[('admin', 'Admin'), ('user', 'User')], default='user')
 
     def __str__(self):
         return self.title

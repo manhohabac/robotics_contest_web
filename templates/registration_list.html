@@ -103,7 +103,7 @@
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
                 <!-- Top Bar -->
                 <div class="top-bar">
-                    <a class="btn btn-secondary" href="{% url 'notification' %}">
+                    <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
                         <i class="fas fa-bell"></i> Thông báo
                     </a>
                     <a class="btn btn-primary" href="{% url 'change_password' %}">
@@ -162,7 +162,7 @@
                                 </tbody>
                             </table>
                         {% else %}
-                            <p>Không có người dùng nào đăng ký.</p>
+                            <p>Chưa có đội thi nào đăng ký.</p>
                         {% endif %}
                     </div>
                 </div>

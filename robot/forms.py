@@ -164,7 +164,8 @@ class EditUserProfileForm(forms.ModelForm):
 class CompetitionForm(forms.ModelForm):
     class Meta:
         model = Competition
-        fields = ['name', 'description', 'start_date', 'end_date', 'registration_deadline', 'rules', 'max_participants', 'image']
+        fields = ['name', 'description', 'start_date', 'end_date',
+                  'registration_deadline', 'rules', 'max_participants', 'image']
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
@@ -182,3 +183,6 @@ class CompetitionForm(forms.ModelForm):
         if commit:
             competition.save()
         return competition
+
+    # Thêm trường upload ảnh mới
+    new_image = forms.ImageField(required=False, label='Change')
