@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang chủ</title>
+    <title>Cuộc thi/Giải đấu</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -39,9 +39,13 @@
         .top-bar .btn {
             margin-left: 10px;
         }
-        .center-content {
-            text-align: center;
-            margin-top: 20px;
+    </style>
+    
+    <style>
+        .competition-image {
+            max-height: 190px; /* Thay đổi giá trị theo nhu cầu */
+            max-width: 100%; /* Giữ tỉ lệ hình ảnh, không vượt quá chiều rộng của card */
+            object-fit: cover; /* Giúp hình ảnh được cắt và hiển thị đồng nhất */
         }
     </style>
 </head>
@@ -64,17 +68,17 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'contest_list' %}">
+                            <a class="nav-link" href="{% url 'contest_list' %}">
                                 <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'result_list' %}">
-                                <i class="fas fa-chart-line"></i> Kết quả cuộc thi/giải đấu
+                                <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link active" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
@@ -106,22 +110,41 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
+                
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Xoá cuộc thi</h1>
+                    <h1 class="h2">Danh sách Cuộc thi/Giải đấu</h1>
+                
+                    {% if request.user.is_superuser %}
+                        <a class="btn btn-success" href="{% url 'add_competition' %}">
+                            <i class="fas fa-plus"></i> Thêm cuộc thi
+                        </a>
+                    {% endif %}
                 </div>
-                <div class="container mt-5 center-content">
-                    <p>Bạn có chắc chắn muốn xoá cuộc thi "{{ competition.name }}" không?</p>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Xoá</button>
-                        <a href="{% url 'competition_detail' competition.id %}" class="btn btn-secondary">Hủy</a>
-                    </form>
+                
+                {% load static %}
+                <div class="row">
+                    <a href="{% url 'add_kit' %}">Thêm Bộ Kit</a>
+                    <ul>
+                        {% for kit in kits %}
+                            <li>
+                                <a href="{% url 'kit_detail' kit.id %}">
+                                    <img src="{{ kit.thumbnail.url }}" alt="{{ kit.name }}" width="100">
+                                    <p>{{ kit.name }}</p>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
                 </div>
+                
+{#                {% if request.user.is_superuser %}#}
+{#                    <a href="{% url 'add_kit' %}" class="btn btn-success mt-3">Thêm Bộ Thiết Bị</a>#}
+{#                {% endif %}#}
             </main>
         </div>
     </div>
 
+    <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
 </body>
 </html>

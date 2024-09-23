@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser, UserProfile, Competition
+from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit
 import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
@@ -186,3 +186,40 @@ class CompetitionForm(forms.ModelForm):
 
     # Thêm trường upload ảnh mới
     new_image = forms.ImageField(required=False, label='Change')
+
+
+class CompetitionResultForm(forms.ModelForm):
+    class Meta:
+        model = CompetitionResult
+        fields = ['registration', 'score']
+        widgets = {
+            'registration': forms.Select(attrs={'class': 'form-control'}),
+            'score': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        competition = kwargs.pop('competition', None)  # Nhận tham số competition
+        super().__init__(*args, **kwargs)
+
+        if competition:
+            # Lọc các registration theo cuộc thi và is_cancelled=False
+            self.fields['registration'].queryset = Registration.objects.filter(
+                competition=competition,
+                is_cancelled=False
+            )
+
+
+class KitForm(forms.ModelForm):
+    class Meta:
+        model = Kit
+        fields = ['name', 'description', 'price', 'main_image']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'main_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+
+
+

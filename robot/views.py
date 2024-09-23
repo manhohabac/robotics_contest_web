@@ -1,16 +1,17 @@
 from datetime import date
 
-from django.conf import settings
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
-from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm
+from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
+    CompetitionResultForm, KitForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from django.utils import timezone
 
-from .models import UserProfile, Competition, Registration, Notification, CustomUser
+from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, KitDetail
 
 
 def register(request):
@@ -77,11 +78,17 @@ def user_logout(request):
 
 @login_required
 def notification_view(request):
+    # Lấy danh sách thông báo của người dùng và sắp xếp theo thời gian tạo
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
     notifications_unread = notifications.filter(is_read=False).exists()
 
+    # Tạo phân trang với mỗi trang hiển thị 6 thông báo
+    paginator = Paginator(notifications, 6)  # Hiển thị 6 thông báo mỗi trang
+    page_number = request.GET.get('page')  # Lấy số trang hiện tại từ URL
+    page_obj = paginator.get_page(page_number)  # Lấy các thông báo tương ứng với trang hiện tại
+
     return render(request, 'notification.html', {
-        'notifications': notifications,
+        'page_obj': page_obj,  # Thay đổi từ 'notifications' sang 'page_obj'
         'notifications_unread': notifications_unread
     })
 
@@ -408,28 +415,189 @@ def delete_competition(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
 
     if request.method == 'POST':
+        competition_name = competition.name  # Lưu lại tên cuộc thi trước khi xóa
         competition.delete()
 
-        # Tạo thông báo cho người dùng về việc cuộc thi đã bị xóa
-        Notification.objects.create(
-            user=request.user,
-            title="Cuộc thi đã bị xóa",
-            content=f"Cuộc thi {competition.name} đã được xóa thành công.",
-            created_at=timezone.now()
-        )
+        # Tạo thông báo cho tất cả người dùng thường
+        users = CustomUser.objects.filter(is_superuser=False)  # Lọc người dùng thường (không phải admin)
+        for user in users:
+            Notification.objects.create(
+                user=user,
+                title="Cuộc thi đã bị xóa",
+                content=f"Cuộc thi {competition_name} đã bị xóa. Hãy theo dõi các cuộc thi khác!",
+                created_at=timezone.now(),
+                notification_type='user'
+            )
 
-        # Tạo thông báo cho admin về việc người dùng đã xóa cuộc thi
-        admin_users = settings.AUTH_USER_MODEL.objects.filter(is_superuser=True)  # Lấy danh sách admin
+        # Tạo thông báo cho admin về việc cuộc thi đã bị xóa
+        admin_users = CustomUser.objects.filter(is_superuser=True)  # Lấy danh sách admin
         for admin in admin_users:
             Notification.objects.create(
                 user=admin,
-                title="Thông báo xóa cuộc thi",
-                content=f"Người dùng {request.user.username} đã xóa cuộc thi {competition.name}.",
-                created_at=timezone.now()
+                title="Cuộc thi đã bị xóa",
+                content=f"Người dùng {request.user.get_full_name()} đã xóa cuộc thi {competition_name}.",
+                created_at=timezone.now(),
+                notification_type='admin'
             )
 
-        messages.success(request, "Cuộc thi đã được xoá.")
+        messages.success(request, f"Cuộc thi '{competition_name}' đã được xóa thành công.")
         return redirect('contest_list')
 
     return render(request, 'delete_competition.html', {'competition': competition})
+
+
+@login_required
+def add_result(request, competition_id):
+    competition = get_object_or_404(Competition, id=competition_id)
+
+    if request.method == 'POST':
+        form = CompetitionResultForm(request.POST, competition=competition)
+
+        # Kiểm tra nếu thí sinh đã có kết quả
+        registration_id = request.POST.get('registration')
+        if CompetitionResult.objects.filter(registration_id=registration_id).exists():
+            messages.add_message(
+                request, messages.ERROR,
+                "Thí sinh này đã có kết quả trên hệ thống cho cuộc thi này, không thể thêm mới. Nếu có bất kì sự thay đổi nào xin vui lòng thực hiện chỉnh sửa.",
+                extra_tags='duplicate-error'
+            )
+            return render(request, 'add_result.html', {'form': form, 'competition': competition})
+
+        if form.is_valid():
+            result = form.save()
+
+            # Lấy thông tin người dùng tương ứng với kết quả vừa được thêm
+            user = result.registration.user
+
+            # Gửi thông báo chỉ đến người dùng đó
+            Notification.objects.create(
+                user=user,
+                title="Kết quả cuộc thi đã được cập nhật",
+                content=f"Kết quả của bạn trong cuộc thi {competition.name} đã được cập nhật. Hãy kiểm tra ngay nhé.",
+                created_at=timezone.now(),
+                notification_type='user'
+            )
+
+            # Tự động sắp xếp thứ hạng dựa trên điểm số
+            competition_results = CompetitionResult.objects.filter(
+                registration__competition=competition
+            ).order_by('-score')
+
+            for idx, competition_result in enumerate(competition_results, start=1):
+                print(
+                    f"{competition_result.registration.user.full_name} - Hạng: {idx} - Điểm: {competition_result.score}"
+                )
+
+            return redirect('result_detail', competition_id=competition.id)
+    else:
+        form = CompetitionResultForm(competition=competition)
+
+    return render(request, 'add_result.html', {'form': form, 'competition': competition})
+
+
+@login_required
+def result_list(request):
+    competitions = Competition.objects.all()  # Lấy tất cả các cuộc thi
+    return render(request, 'result_list.html', {'competitions': competitions})
+
+
+@login_required
+def result_detail(request, competition_id):
+    competition = get_object_or_404(Competition, id=competition_id)
+    results = CompetitionResult.objects.filter(registration__competition=competition).order_by('-score')
+    return render(request, 'result_detail.html', {'competition': competition, 'results': results})
+
+
+@login_required
+def edit_result(request, result_id):
+    result = get_object_or_404(CompetitionResult, id=result_id)
+    competition = result.registration.competition
+
+    if request.method == 'POST':
+        form = CompetitionResultForm(request.POST, instance=result, competition=competition)
+        if form.is_valid():
+            form.save()
+
+            # Lấy thông tin người dùng tương ứng với kết quả được cập nhật
+            user = result.registration.user
+
+            # Gửi thông báo đến người dùng
+            Notification.objects.create(
+                user=user,
+                title="Kết quả cuộc thi đã được cập nhật",
+                content=f"Kết quả của bạn trong cuộc thi {competition.name} đã được cập nhật.",
+                created_at=timezone.now(),
+                notification_type='user'
+            )
+
+            # Tự động sắp xếp thứ hạng dựa trên điểm số sau khi cập nhật
+            competition_results = CompetitionResult.objects.filter(
+                registration__competition=competition
+            ).order_by('-score')
+
+            for idx, competition_result in enumerate(competition_results, start=1):
+                print(f"{competition_result.registration.user.full_name} - Hạng: {idx} - Điểm: {competition_result.score}")
+
+            return redirect('result_detail', competition_id=competition.id)
+    else:
+        form = CompetitionResultForm(instance=result, competition=competition)
+
+    return render(request, 'edit_result.html', {'form': form, 'competition': competition, 'result': result})
+
+
+def kit_list(request):
+    kits = Kit.objects.all()
+    return render(request, 'kit_list.html', {'kits': kits})
+
+
+def kit_detail(request, kit_id):
+    kit = get_object_or_404(Kit, id=kit_id)
+
+    if request.method == 'POST':
+        # Xử lý tải lên nhiều hình ảnh
+        images = request.FILES.getlist('images')
+        for image in images:
+            KitDetail.objects.create(kit=kit, image=image)
+        messages.success(request, 'Hình ảnh chi tiết đã được thêm thành công!')
+        return redirect('kit_detail', kit_id=kit.id)
+
+    kit_details = kit.details.all()
+    return render(request, 'kit_detail.html', {'kit': kit, 'kit_details': kit_details})
+
+
+def add_kit(request):
+    if request.method == 'POST':
+        form = KitForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Bộ thiết bị đã được thêm!')
+            return redirect('kit_list')
+    else:
+        form = KitForm()
+
+    return render(request, 'add_kit.html', {'form': form})
+
+
+def edit_kit(request, kit_id):
+    kit = get_object_or_404(Kit, id=kit_id)
+    if request.method == 'POST':
+        form = KitForm(request.POST, request.FILES, instance=kit)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Bộ thiết bị đã được chỉnh sửa!')
+            return redirect('kit_detail', kit_id=kit.id)
+    else:
+        form = KitForm(instance=kit)
+
+    return render(request, 'edit_kit.html', {'form': form, 'kit': kit})
+
+
+def delete_kit(request, kit_id):
+    kit = get_object_or_404(Kit, id=kit_id)
+    if request.method == 'POST':
+        kit.delete()
+        messages.success(request, 'Bộ thiết bị đã được xóa!')
+        return redirect('kit_list')
+
+    return render(request, 'delete_kit.html', {'kit': kit})
 

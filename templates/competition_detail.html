@@ -72,8 +72,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-chart-line"></i> Kết quả cuộc thi/giải đấu
+                            <a class="nav-link" href="{% url 'result_list' %}">
+                                <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
                             </a>
                         </li>
                         <li class="nav-item">
@@ -114,52 +114,59 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Chi tiết cuộc thi</h1>
                     <div class="button-group">
-                        {% if today < competition.start_date %}
-                            <span class="text-muted">Chưa bắt đầu đăng ký</span>
-                        {% elif today > competition.registration_deadline %}
-                            <span class="text-muted">Đã hết hạn đăng ký</span>
-                        {% else %}
-                            {% if user.is_authenticated %}
-                                {% if registration %}
-                                    {% if registration.is_cancelled %}
-                                        <button class="btn btn-primary" disabled>
-                                            <i class="fas fa-user-plus"></i> Không thể đăng ký lại sau khi đã huỷ đăng ký
-                                        </button>
-                                        <button class="btn btn-danger" disabled>
-                                            <i class="fas fa-times"></i> Bạn đã huỷ đăng ký cuộc thi này
-                                        </button>
+                        {% if not request.user.is_superuser %}
+                            <!-- Phần này chỉ hiển thị cho người dùng không phải là admin (superuser) -->
+                            {% if today < competition.start_date %}
+                                <span class="text-muted">Chưa bắt đầu đăng ký</span>
+                            {% elif today > competition.registration_deadline %}
+                                <span class="text-muted">Đã hết hạn đăng ký</span>
+                            {% else %}
+                                {% if user.is_authenticated %}
+                                    {% if registration %}
+                                        {% if registration.is_cancelled %}
+                                            <button class="btn btn-primary" disabled>
+                                                <i class="fas fa-user-plus"></i> Không thể đăng ký lại sau khi đã huỷ đăng ký
+                                            </button>
+                                            <button class="btn btn-danger" disabled>
+                                                <i class="fas fa-times"></i> Bạn đã huỷ đăng ký cuộc thi này
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-primary" disabled>
+                                                <i class="fas fa-check"></i> Bạn đã đăng ký thành công
+                                            </button>
+                                            <a href="{% url 'cancel_registration' competition.id %}" class="btn btn-danger">
+                                                <i class="fas fa-times"></i> Hủy đăng ký
+                                            </a>
+                                        {% endif %}
                                     {% else %}
-                                        <button class="btn btn-primary" disabled>
-                                            <i class="fas fa-check"></i> Bạn đã đăng ký thành công
-                                        </button>
-                                        <a href="{% url 'cancel_registration' competition.id %}" class="btn btn-danger">
-                                            <i class="fas fa-times"></i> Hủy đăng ký
-                                        </a>
-                                    {% endif %}
-                                {% else %}
-                                    {% if competition.max_participants is not None and current_participants >= competition.max_participants %}
-                                        <button class="btn btn-primary" disabled>
-                                            <i class="fas fa-user-friends"></i> Số lượng đăng ký đã đầy
-                                        </button>
-                                    {% else %}
-                                        <a href="{% url 'register_competition' competition.id %}" class="btn btn-primary">
-                                            <i class="fas fa-user-plus"></i> Đăng ký
-                                        </a>
-                                        <button class="btn btn-danger" disabled> Bạn chưa đăng ký thành công </button>
+                                        {% if competition.max_participants is not None and current_participants >= competition.max_participants %}
+                                            <button class="btn btn-primary" disabled>
+                                                <i class="fas fa-user-friends"></i> Số lượng đăng ký đã đầy
+                                            </button>
+                                        {% else %}
+                                            <a href="{% url 'register_competition' competition.id %}" class="btn btn-primary">
+                                                <i class="fas fa-user-plus"></i> Đăng ký
+                                            </a>
+                                            <button class="btn btn-danger" disabled> Bạn chưa đăng ký thành công </button>
+                                        {% endif %}
                                     {% endif %}
                                 {% endif %}
                             {% endif %}
                         {% endif %}
-                    
+                
                         <a href="{% url 'registration_list' competition.id %}" class="btn btn-info">
                             <i class="fas fa-list"></i> Danh sách đăng ký
                         </a>
-                        <a href="{% url 'edit_competition' competition.id %}" class="btn btn-warning">
-                            <i class="fas fa-edit"></i> Chỉnh sửa
-                        </a>
-                        <a href="{% url 'delete_competition' competition.id %}" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> Xoá
-                        </a>
+                    
+                        <!-- Phần này chỉ hiển thị cho admin (superuser) -->
+                        {% if request.user.is_superuser %}
+                            <a href="{% url 'edit_competition' competition.id %}" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Chỉnh sửa
+                            </a>
+                            <a href="{% url 'delete_competition' competition.id %}" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Xoá
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
                 

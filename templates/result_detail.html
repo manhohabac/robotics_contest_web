@@ -1,11 +1,15 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý thông báo</title>
+    <title>Kết quả cụ thể</title>
+    <!-- Liên kết tới Bootstrap CSS từ CDN -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- CSS tùy chỉnh trực tiếp -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,9 +43,8 @@
         .top-bar .btn {
             margin-left: 10px;
         }
-        .unread-notification {
-            background-color: #fff3cd; /* Màu nền nhạt */
-            border-left: 5px solid #ffc107; /* Viền trái màu vàng */
+        table th, table td {
+            text-align: center; /* Căn giữa nội dung */
         }
     </style>
 </head>
@@ -69,7 +72,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'result_list' %}">
+                            <a class="nav-link active" href="{% url 'result_list' %}">
                                 <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
                             </a>
                         </li>
@@ -106,75 +109,57 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
-
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Thông báo</h1>
+                    <h1 class="h2">Kết quả cụ thể của cuộc thi {{competition.name}}</h1>
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        <!-- Danh sách thông báo -->
-                        {% if page_obj %}
-                            <ul class="list-group">
-                                {% for notification in page_obj %}
-                                    {% if request.user.is_superuser and notification.notification_type == 'admin' %}
-                                        <!-- Hiển thị thông báo dành cho admin -->
-                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not notification.is_read %}unread-notification{% endif %}">
-                                            <div>
-                                                <strong>{{ notification.title }}</strong>
-                                                <p>{{ notification.content }}</p>
-                                                <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
-                                            </div>
-                                            {% if not notification.is_read %}
-                                                <a href="{% url 'mark_as_read' notification.id %}" class="btn btn-success">Xác nhận đã xem</a>
-                                            {% endif %}
-                                        </li>
-                                    {% elif not request.user.is_superuser and notification.notification_type == 'user' %}
-                                        <!-- Hiển thị thông báo dành cho user thường -->
-                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not notification.is_read %}unread-notification{% endif %}">
-                                            <div>
-                                                <strong>{{ notification.title }}</strong>
-                                                <p>{{ notification.content }}</p>
-                                                <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
-                                            </div>
-                                            {% if not notification.is_read %}
-                                                <a href="{% url 'mark_as_read' notification.id %}" class="btn btn-success">Xác nhận đã xem</a>
-                                            {% endif %}
-                                        </li>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%;">Thứ hạng</th>
+                                    <th style="width: 15%;">Người tham gia</th>
+                                    <th style="width: 5%;">Ảnh đại diện</th>
+                                    <th style="width: 6%;">Ngày sinh</th> 
+                                    <th style="width: 20%;">Học sinh trường</th> 
+                                    <th style="width: 6%;">Điểm</th>
+                                    {% if request.user.is_superuser %}
+                                    <th style="width: 7%;">Hành động</th>
                                     {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ result.registration.user.full_name }}</td>
+                                    <td>
+                                        {% if result.registration.user.profile_picture %}
+                                            <img src="{{ result.registration.user.profile_picture.url }}" alt="Avatar" width="100" height="100">
+                                        {% else %}
+                                            <img src="{% static 'images/default.jpg' %}" alt="Avatar" width="100" height="100">
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ result.registration.user.date_of_birth|date:"d/m/Y" }}</td> <!-- Ngày sinh -->
+                                    <td>{{ result.registration.user.school_name }}</td> <!-- Học sinh trường -->
+                                    <td>{{ result.score|floatformat:0 }}</td>
+                                    {% if request.user.is_superuser %}
+                                    <td>
+                                        <a href="{% url 'edit_result' result.id %}" class="btn btn-warning">
+                                            <i class="fas fa-edit"></i> Chỉnh sửa
+                                        </a>
+                                    </td>
+                                    {% endif %}
+                                </tr>
                                 {% endfor %}
-                            </ul>
-                
-                            <!-- Phân trang -->
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination">
-                                    {% if page_obj.has_previous %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page=1">Đầu</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Trước</a>
-                                        </li>
-                                    {% endif %}
-                                    
-                                    <li class="page-item disabled">
-                                        <a class="page-link">{{ page_obj.number }}</a>
-                                    </li>
-                
-                                    {% if page_obj.has_next %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Tiếp</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Cuối</a>
-                                        </li>
-                                    {% endif %}
-                                </ul>
-                            </nav>
-                        {% else %}
-                            <div class="alert alert-info" role="alert">
-                                Không có thông báo mới.
-                            </div>
+                            </tbody>
+                        </table>
+                    
+                        {% if request.user.is_superuser %}
+                        <a href="{% url 'add_result' competition.id %}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Thêm kết quả
+                        </a>
                         {% endif %}
                     </div>
                 </div>
@@ -182,6 +167,7 @@
         </div>
     </div>
 
+    <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
 </body>
 </html>

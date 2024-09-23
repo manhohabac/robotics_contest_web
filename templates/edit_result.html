@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang chủ</title>
+    <title>Chỉnh sửa kết quả cuộc thi</title>
+    <!-- Liên kết tới Bootstrap CSS từ CDN -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- CSS tùy chỉnh trực tiếp -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,10 +42,6 @@
         .top-bar .btn {
             margin-left: 10px;
         }
-        .center-content {
-            text-align: center;
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
@@ -64,13 +63,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'contest_list' %}">
+                            <a class="nav-link" href="{% url 'contest_list' %}">
                                 <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'result_list' %}">
-                                <i class="fas fa-chart-line"></i> Kết quả cuộc thi/giải đấu
+                            <a class="nav-link active" href="{% url 'result_list' %}">
+                                <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
                             </a>
                         </li>
                         <li class="nav-item">
@@ -108,20 +107,36 @@
                 </div>
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Xoá cuộc thi</h1>
+                    <h1 class="h2">Chỉnh sửa kết quả của thí sinh trong cuộc thi {{ competition.name }}</h1>
                 </div>
-                <div class="container mt-5 center-content">
-                    <p>Bạn có chắc chắn muốn xoá cuộc thi "{{ competition.name }}" không?</p>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Xoá</button>
-                        <a href="{% url 'competition_detail' competition.id %}" class="btn btn-secondary">Hủy</a>
-                    </form>
+                <div class="row">
+                    <div class="col-12">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="form-group">
+                                <label for="id_registration">Người tham gia</label>
+                                {{ form.registration }}
+                            </div>
+                
+                            <div class="form-group">
+                                <label for="id_score">Điểm</label>
+                                {{ form.score }}
+                            </div>
+                
+                            <button type="submit" class="btn btn-primary">Cập nhật kết quả</button>
+                            
+                            <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'result_detail' competition.id %}'">
+                                Quay lại
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
 </body>
 </html>

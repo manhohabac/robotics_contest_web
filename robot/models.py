@@ -118,23 +118,27 @@ class Team(models.Model):
 
 
 class CompetitionResult(models.Model):
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='results')
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='results')
-    position = models.IntegerField()  # Vị trí đạt được (1: Quán quân, 2: Á quân, ...)
+    registration = models.OneToOneField(Registration, on_delete=models.CASCADE,
+                                        related_name='result', null=True, blank=True)
     score = models.FloatField()  # Điểm số
 
     def __str__(self):
-        return f"{self.team.name} - {self.competition.name} - Position: {self.position}"
+        return f"{self.registration.user.full_name} - {self.registration.competition.name} - Score: {self.score}"
 
 
 class Kit(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='kits', null=True, blank=True)
-    image = models.ImageField(upload_to='kits/', null=True, blank=True)
+    price = models.DecimalField(max_digits=12, decimal_places=0, null=True, blank=True)
+    main_image = models.ImageField(upload_to='kits/', null=True, blank=True)
+
+
+class KitDetail(models.Model):
+    kit = models.ForeignKey(Kit, related_name='details', on_delete=models.CASCADE, null=True, blank=True)
+    image = models.ImageField(upload_to='kit_details/', null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return self.kit.name
 
 
 class Notification(models.Model):

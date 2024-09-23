@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý thông báo</title>
+    <title>Cuộc thi/Giải đấu</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -39,9 +39,13 @@
         .top-bar .btn {
             margin-left: 10px;
         }
-        .unread-notification {
-            background-color: #fff3cd; /* Màu nền nhạt */
-            border-left: 5px solid #ffc107; /* Viền trái màu vàng */
+    </style>
+    
+    <style>
+        .competition-image {
+            max-height: 190px; /* Thay đổi giá trị theo nhu cầu */
+            max-width: 100%; /* Giữ tỉ lệ hình ảnh, không vượt quá chiều rộng của card */
+            object-fit: cover; /* Giúp hình ảnh được cắt và hiển thị đồng nhất */
         }
     </style>
 </head>
@@ -64,7 +68,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'contest_list' %}">
+                            <a class="nav-link active" href="{% url 'contest_list' %}">
                                 <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
                             </a>
                         </li>
@@ -106,82 +110,72 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
-
+                
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Thông báo</h1>
+                    <h1 class="h2">Danh sách Cuộc thi/Giải đấu</h1>
+                
+                    {% if request.user.is_superuser %}
+                        <a class="btn btn-success" href="{% url 'add_competition' %}">
+                            <i class="fas fa-plus"></i> Thêm cuộc thi
+                        </a>
+                    {% endif %}
                 </div>
+                
+                {% load static %}
                 <div class="row">
-                    <div class="col-12">
-                        <!-- Danh sách thông báo -->
-                        {% if page_obj %}
-                            <ul class="list-group">
-                                {% for notification in page_obj %}
-                                    {% if request.user.is_superuser and notification.notification_type == 'admin' %}
-                                        <!-- Hiển thị thông báo dành cho admin -->
-                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not notification.is_read %}unread-notification{% endif %}">
-                                            <div>
-                                                <strong>{{ notification.title }}</strong>
-                                                <p>{{ notification.content }}</p>
-                                                <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
-                                            </div>
-                                            {% if not notification.is_read %}
-                                                <a href="{% url 'mark_as_read' notification.id %}" class="btn btn-success">Xác nhận đã xem</a>
-                                            {% endif %}
-                                        </li>
-                                    {% elif not request.user.is_superuser and notification.notification_type == 'user' %}
-                                        <!-- Hiển thị thông báo dành cho user thường -->
-                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not notification.is_read %}unread-notification{% endif %}">
-                                            <div>
-                                                <strong>{{ notification.title }}</strong>
-                                                <p>{{ notification.content }}</p>
-                                                <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
-                                            </div>
-                                            {% if not notification.is_read %}
-                                                <a href="{% url 'mark_as_read' notification.id %}" class="btn btn-success">Xác nhận đã xem</a>
-                                            {% endif %}
-                                        </li>
-                                    {% endif %}
+                    <div class="col-md-6">
+                        <div id="kitCarousel" class="carousel slide" data-ride="carousel">
+                            <div class="carousel-inner">
+                                {% for image in kit.images.all %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    <img src="{{ image.image.url }}" class="d-block w-100" alt="{{ kit.name }}">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <a class="carousel-control-prev" href="#kitCarousel" role="button" data-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            </a>
+                            <a class="carousel-control-next" href="#kitCarousel" role="button" data-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h1>Chi tiết bộ thiết bị: {{ kit.name }}</h1>
+                        <p>{{ kit.description }}</p>
+                        <p>Giá: {{ kit.price }}</p>
+                        
+                        <h2>Hình ảnh chi tiết</h2>
+                        {% if kit_details.exists %}
+                            <ul>
+                                {% for detail in kit.details.all %}
+                                    <li><img src="{{ detail.image.url }}" alt="" style="width: 100px;"></li>
                                 {% endfor %}
                             </ul>
-                
-                            <!-- Phân trang -->
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination">
-                                    {% if page_obj.has_previous %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page=1">Đầu</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Trước</a>
-                                        </li>
-                                    {% endif %}
-                                    
-                                    <li class="page-item disabled">
-                                        <a class="page-link">{{ page_obj.number }}</a>
-                                    </li>
-                
-                                    {% if page_obj.has_next %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Tiếp</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Cuối</a>
-                                        </li>
-                                    {% endif %}
-                                </ul>
-                            </nav>
                         {% else %}
-                            <div class="alert alert-info" role="alert">
-                                Không có thông báo mới.
-                            </div>
+                            <p>Chưa có hình ảnh chi tiết.</p>
                         {% endif %}
+                        
+                        <h2>Thêm hình ảnh chi tiết</h2>
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="id_images">Hình ảnh</label>
+                                <input type="file" name="images" id="id_images" multiple>
+                            </div>
+                            <button type="submit">Thêm hình ảnh</button>
+                        </form>
+                        
+                        <a href="{% url 'edit_kit' kit.id %}">Chỉnh sửa</a>
+                        <a href="{% url 'delete_kit' kit.id %}">Xóa</a>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
 </body>
 </html>

@@ -25,5 +25,14 @@ urlpatterns = [
 
     # URL cho mark_as_read
     path('notifications/read/<int:notification_id>/', views.mark_as_read, name='mark_as_read'),
+    path('results/', views.result_list, name='result_list'),
+    path('results/<int:competition_id>/', views.result_detail, name='result_detail'),
+    path('results/<int:competition_id>/add/', views.add_result, name='add_result'),
+    path('edit_result/<int:result_id>/', views.edit_result, name='edit_result'),
+    path('kits', views.kit_list, name='kit_list'),
+    path('kits/add/', views.add_kit, name='add_kit'),
+    path('kits/<int:kit_id>/', views.kit_detail, name='kit_detail'),
+    path('kits/<int:kit_id>/edit/', views.edit_kit, name='edit_kit'),
+    path('kits/<int:kit_id>/delete/', views.delete_kit, name='delete_kit'),
 
 ]

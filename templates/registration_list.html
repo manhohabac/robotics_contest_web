@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -76,8 +77,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-chart-line"></i> Kết quả cuộc thi/giải đấu
+                            <a class="nav-link" href="{% url 'result_list' %}">
+                                <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
                             </a>
                         </li>
                         <li class="nav-item">
@@ -147,7 +148,11 @@
                                         <td>{{ registration.registration_date|date:"d/m/Y" }}</td>
                                         <!-- Ảnh đại diện -->
                                         <td>
-                                            <img src="{{ registration.user.profile_picture.url }}" alt="Avatar" width="180" height="180">
+                                            {% if registration.user.profile_picture %}
+                                                <img src="{{ registration.user.profile_picture.url }}" alt="Avatar" width="180" height="180">
+                                            {% else %}
+                                                <img src="{% static 'images/default.jpg' %}" alt="Avatar" width="180" height="180">
+                                            {% endif %}
                                         </td>
                                         <!-- Trạng thái -->
                                         <td>
