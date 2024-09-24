@@ -29,10 +29,16 @@ urlpatterns = [
     path('results/<int:competition_id>/', views.result_detail, name='result_detail'),
     path('results/<int:competition_id>/add/', views.add_result, name='add_result'),
     path('edit_result/<int:result_id>/', views.edit_result, name='edit_result'),
-    path('kits', views.kit_list, name='kit_list'),
-    path('kits/add/', views.add_kit, name='add_kit'),
-    path('kits/<int:kit_id>/', views.kit_detail, name='kit_detail'),
-    path('kits/<int:kit_id>/edit/', views.edit_kit, name='edit_kit'),
-    path('kits/<int:kit_id>/delete/', views.delete_kit, name='delete_kit'),
-
+    path('kits/', views.kit_list, name='kit_list'),
+    path('kits/new/', views.kit_create, name='kit_create'),
+    path('kits/<int:pk>/edit/', views.kit_update, name='kit_update'),
+    path('kits/<int:pk>/delete/', views.kit_delete, name='kit_delete'),
+    path('kits/<int:pk>/', views.kit_detail, name='kit_detail'),  # Thêm dòng này
+    path('kit/<int:kit_id>/add_image/', views.add_image, name='add_image'),
+    path('sponsors/', views.sponsor_list, name='sponsor_list'),
+    path('sponsors/add/', views.add_sponsor, name='add_sponsor'),
+    path('sponsors/edit/<int:sponsor_id>/', views.edit_sponsor, name='edit_sponsor'),
+    path('sponsors/delete/<int:sponsor_id>/', views.delete_sponsor, name='delete_sponsor'),
+    path('feedback/submit/', views.submit_feedback, name='submit_feedback'),
+    path('feedback/list/', views.feedback_list, name='feedback_list'),
 ]

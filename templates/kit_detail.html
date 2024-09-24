@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuộc thi/Giải đấu</title>
+    <title>Bộ thiết bị</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -39,19 +39,27 @@
         .top-bar .btn {
             margin-left: 10px;
         }
-    </style>
-    
-    <style>
-        .competition-image {
-            max-height: 190px; /* Thay đổi giá trị theo nhu cầu */
-            max-width: 100%; /* Giữ tỉ lệ hình ảnh, không vượt quá chiều rộng của card */
-            object-fit: cover; /* Giúp hình ảnh được cắt và hiển thị đồng nhất */
+        
+        html, body {
+            height: 100%;
+        }
+        
+        #sidebar {
+            background-color: #f8f9fa;
+            height: auto; /* Cho phép sidebar mở rộng theo nội dung */
+            min-height: 100vh; /* Đảm bảo sidebar luôn có chiều cao tối thiểu bằng chiều cao của màn hình */
+        }
+        
+        main {
+            flex: 1;
+            padding: 20px;
+            min-height: 100vh; /* Đảm bảo nội dung chính cũng mở rộng để ít nhất chiếm chiều cao màn hình */
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
+    <div class="container-fluid h-100">
+        <div class="row h-100 d-flex">
             <!-- Sidebar -->
             <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
                 <div class="position-sticky">
@@ -68,7 +76,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'contest_list' %}">
+                            <a class="nav-link" href="{% url 'contest_list' %}">
                                 <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
                             </a>
                         </li>
@@ -78,7 +86,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link active" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
@@ -97,7 +105,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 d-flex flex-column">
                 <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
@@ -113,63 +121,24 @@
                 
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Danh sách Cuộc thi/Giải đấu</h1>
-                
+                    <h1 class="h2">Hình ảnh chi tiết của bộ thiết bị {{ kit.name }}</h1>
                     {% if request.user.is_superuser %}
-                        <a class="btn btn-success" href="{% url 'add_competition' %}">
-                            <i class="fas fa-plus"></i> Thêm cuộc thi
-                        </a>
+                        <a href="{% url 'add_image' kit.id %}" class="btn btn-primary">Thêm hình ảnh</a>
                     {% endif %}
                 </div>
                 
-                {% load static %}
                 <div class="row">
-                    <div class="col-md-6">
-                        <div id="kitCarousel" class="carousel slide" data-ride="carousel">
-                            <div class="carousel-inner">
-                                {% for image in kit.images.all %}
-                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                    <img src="{{ image.image.url }}" class="d-block w-100" alt="{{ kit.name }}">
-                                </div>
-                                {% endfor %}
+                    {% if kit.images.all %}
+                        {% for image in kit.images.all %}
+                        <div class="col-md-3">
+                            <div class="card mb-4 shadow-sm">
+                                <img src="{{ image.image.url }}" class="card-img-top kit-image" alt="Hình ảnh của {{ kit.name }}">
                             </div>
-                            <a class="carousel-control-prev" href="#kitCarousel" role="button" data-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            </a>
-                            <a class="carousel-control-next" href="#kitCarousel" role="button" data-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            </a>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h1>Chi tiết bộ thiết bị: {{ kit.name }}</h1>
-                        <p>{{ kit.description }}</p>
-                        <p>Giá: {{ kit.price }}</p>
-                        
-                        <h2>Hình ảnh chi tiết</h2>
-                        {% if kit_details.exists %}
-                            <ul>
-                                {% for detail in kit.details.all %}
-                                    <li><img src="{{ detail.image.url }}" alt="" style="width: 100px;"></li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>Chưa có hình ảnh chi tiết.</p>
-                        {% endif %}
-                        
-                        <h2>Thêm hình ảnh chi tiết</h2>
-                        <form method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <label for="id_images">Hình ảnh</label>
-                                <input type="file" name="images" id="id_images" multiple>
-                            </div>
-                            <button type="submit">Thêm hình ảnh</button>
-                        </form>
-                        
-                        <a href="{% url 'edit_kit' kit.id %}">Chỉnh sửa</a>
-                        <a href="{% url 'delete_kit' kit.id %}">Xóa</a>
-                    </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>Chưa có hình ảnh cho bộ thiết bị này.</p>
+                    {% endif %}
                 </div>
             </main>
         </div>

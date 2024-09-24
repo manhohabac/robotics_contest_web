@@ -1,9 +1,10 @@
+{% load form_filters %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuộc thi/Giải đấu</title>
+    <title>Bộ thiết bị</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -39,19 +40,27 @@
         .top-bar .btn {
             margin-left: 10px;
         }
-    </style>
-    
-    <style>
-        .competition-image {
-            max-height: 190px; /* Thay đổi giá trị theo nhu cầu */
-            max-width: 100%; /* Giữ tỉ lệ hình ảnh, không vượt quá chiều rộng của card */
-            object-fit: cover; /* Giúp hình ảnh được cắt và hiển thị đồng nhất */
+        
+        html, body {
+            height: 100%;
+        }
+        
+        #sidebar {
+            background-color: #f8f9fa;
+            height: auto; /* Cho phép sidebar mở rộng theo nội dung */
+            min-height: 100vh; /* Đảm bảo sidebar luôn có chiều cao tối thiểu bằng chiều cao của màn hình */
+        }
+        
+        main {
+            flex: 1;
+            padding: 20px;
+            min-height: 100vh; /* Đảm bảo nội dung chính cũng mở rộng để ít nhất chiếm chiều cao màn hình */
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
+    <div class="container-fluid h-100">
+        <div class="row h-100 d-flex">
             <!-- Sidebar -->
             <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
                 <div class="position-sticky">
@@ -97,7 +106,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 d-flex flex-column">
                 <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
@@ -113,33 +122,38 @@
                 
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Danh sách Cuộc thi/Giải đấu</h1>
+                    <h1 class="h2">Danh sách bộ thiết bị</h1>
                 
                     {% if request.user.is_superuser %}
-                        <a class="btn btn-success" href="{% url 'add_competition' %}">
-                            <i class="fas fa-plus"></i> Thêm cuộc thi
-                        </a>
+                        <a href="{% url 'kit_create' %}" class="btn btn-success mb-3">Thêm bộ thiết bị</a>
                     {% endif %}
                 </div>
                 
-                {% load static %}
                 <div class="row">
-                    <a href="{% url 'add_kit' %}">Thêm Bộ Kit</a>
-                    <ul>
-                        {% for kit in kits %}
-                            <li>
-                                <a href="{% url 'kit_detail' kit.id %}">
-                                    <img src="{{ kit.thumbnail.url }}" alt="{{ kit.name }}" width="100">
-                                    <p>{{ kit.name }}</p>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                    {% for kit in kits %}
+                        <div class="col-md-4">
+                            <div class="card mb-4 shadow-sm">
+                                {% if kit.image %}
+                                    <img src="{{ kit.image.url }}" class="card-img-top" alt="{{ kit.name }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ kit.name }}</h5>
+                                    <p class="card-text">{{ kit.description }}</p>
+                                    <p class="card-text"><strong>Giá bán:</strong> {{ kit.price|format_vnd }} VNĐ</p>
+                                
+                                    <a href="{% url 'kit_detail' kit.id %}" class="btn btn-info">Chi tiết</a> <!-- Thêm nút Chi tiết -->
+                                    {% if request.user.is_superuser %}
+                                        <a href="{% url 'kit_update' kit.id %}" class="btn btn-primary">Chỉnh sửa</a>
+                                    {% endif %}     
+                                    
+                                    {% if request.user.is_superuser %}
+                                        <a href="{% url 'kit_delete' kit.id %}" class="btn btn-danger">Xóa</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
-                
-{#                {% if request.user.is_superuser %}#}
-{#                    <a href="{% url 'add_kit' %}" class="btn btn-success mt-3">Thêm Bộ Thiết Bị</a>#}
-{#                {% endif %}#}
             </main>
         </div>
     </div>

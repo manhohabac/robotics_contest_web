@@ -1,15 +1,11 @@
-{% load form_filters %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm thông tin bộ thiết bị</title>
-    <!-- Liên kết tới Bootstrap CSS từ CDN -->
+    <title>Gửi Phản Hồi</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- CSS tùy chỉnh trực tiếp -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,8 +13,6 @@
         #sidebar {
             background-color: #f8f9fa;
             height: 100vh;
-            position: sticky; /* Thay đổi từ fixed sang sticky */
-            top: 0;
         }
         .sidebar .nav-link {
             font-size: 1.1rem;
@@ -46,32 +40,10 @@
             margin-left: 10px;
         }
     </style>
-    
-    <style>
-        .form-row {
-            display: flex;
-            gap: 100px; /* Khoảng cách giữa các trường */
-        }
-        .form-group {
-            flex: 1; /* Đảm bảo các phần tử form-group chiếm không gian đồng đều */
-        }
-        .form-control {
-            width: 100%; /* Đảm bảo trường input chiếm toàn bộ chiều rộng của form-group */
-        }
-    </style>
-    
-    <style>
-        .form-row {
-            display: flex;
-            justify-content: center; /* Căn giữa theo chiều ngang */
-            align-items: center; /* Căn giữa theo chiều dọc */
-        }
-    </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
             <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
                 <div class="position-sticky">
                     <h4 class="mt-3 mb-4 text-center">Dashboard</h4>
@@ -87,7 +59,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'contest_list' %}">
+                            <a class="nav-link" href="{% url 'contest_list' %}">
                                 <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
                             </a>
                         </li>
@@ -97,17 +69,17 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link active" href="{% url 'submit_feedback' %}">
                                 <i class="fas fa-comment-dots"></i> Phản hồi
                             </a>
                         </li>
@@ -115,9 +87,7 @@
                 </div>
             </nav>
 
-            <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
-                <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
                         <i class="fas fa-bell"></i> Thông báo
@@ -129,26 +99,49 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
-                
-                <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Thêm thông tin bộ thiết bị</h1>
+                    <h1 class="h2">Gửi Phản Hồi</h1>
                 </div>
-            
-                <div class="container mt-3">
-                    <h2 style="text-align: center;">Thêm thông tin chi tiết về bộ thiết bị</h2>
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        {{ image_form.as_p }}
-                        <button type="submit">Lưu thông tin bộ thiết bị</button>
-                    </form>
+                <div class="row">
+                    <div class="col-12">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="subject">Chủ đề</label>
+                                <select class="form-control" id="subject" name="subject" required>
+                                    <option value="contest">Cuộc thi</option>
+                                    <option value="result">Kết quả</option>
+                                    <option value="kit">Bộ kit</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="content">Nội dung</label>
+                                <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="rating">Đánh giá</label>
+                                <select class="form-control" id="rating" name="rating" required>
+                                    <option value="">Chọn đánh giá</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="image">Ảnh đính kèm</label>
+                                <input type="file" class="form-control-file" id="image" name="image">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Gửi Phản Hồi</button>
+                        </form>
+                    </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 from django import template
+from django.contrib.humanize.templatetags.humanize import intcomma
 
 register = template.Library()
 
@@ -17,3 +18,8 @@ def split(value, delimiter=','):
 def trim(value):
     """Loại bỏ khoảng trắng ở đầu và cuối của mỗi phần tử trong danh sách."""
     return [item.strip() for item in value.split(',')] if value else []
+
+
+@register.filter
+def format_vnd(value):
+    return intcomma(value).replace(",", ".")

@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit
+from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit, KitImage, Sponsor, \
+    Feedback
 import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
@@ -212,12 +213,64 @@ class CompetitionResultForm(forms.ModelForm):
 class KitForm(forms.ModelForm):
     class Meta:
         model = Kit
-        fields = ['name', 'description', 'price', 'main_image']
+        fields = ['name', 'description', 'image', 'price']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control'}),
-            'price': forms.NumberInput(attrs={'class': 'form-control'}),
-            'main_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên bộ kit'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Nhập mô tả'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Nhập giá bán', 'id': 'priceInput'}),
+        }
+
+    def clean_price(self):
+        price = self.cleaned_data.get('price')  # Sử dụng get để tránh lỗi nếu giá trị là None
+        if price is None or price == '':
+            return 0  # Trả về giá trị mặc định nếu không nhập gì
+
+        # Loại bỏ dấu chấm khỏi giá trị
+        return int(str(price).replace('.', ''))
+
+
+class KitImageForm(forms.ModelForm):
+    class Meta:
+        model = KitImage
+        fields = ['image']
+        widgets = {
+            'image': forms.ClearableFileInput(),
+        }
+
+
+class SponsorForm(forms.ModelForm):
+    class Meta:
+        model = Sponsor
+        fields = ['name', 'description', 'logo', 'website']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Tên nhà tài trợ'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': 'Mô tả về nhà tài trợ'
+            }),
+            'logo': forms.ClearableFileInput(attrs={
+                'class': 'form-control-file'
+            }),
+            'website': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Liên kết website'
+            }),
+        }
+
+
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = Feedback
+        fields = ['subject', 'content', 'rating', 'image']
+        widgets = {
+            'subject': forms.Select(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'rating': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 5}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
         }
 
 

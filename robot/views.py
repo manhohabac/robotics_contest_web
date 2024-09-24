@@ -4,14 +4,15 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
-    CompetitionResultForm, KitForm
+    CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from django.utils import timezone
 
-from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, KitDetail
+from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, Sponsor, \
+    Feedback
 
 
 def register(request):
@@ -545,59 +546,148 @@ def edit_result(request, result_id):
     return render(request, 'edit_result.html', {'form': form, 'competition': competition, 'result': result})
 
 
+@login_required
 def kit_list(request):
     kits = Kit.objects.all()
     return render(request, 'kit_list.html', {'kits': kits})
 
 
-def kit_detail(request, kit_id):
-    kit = get_object_or_404(Kit, id=kit_id)
-
-    if request.method == 'POST':
-        # Xử lý tải lên nhiều hình ảnh
-        images = request.FILES.getlist('images')
-        for image in images:
-            KitDetail.objects.create(kit=kit, image=image)
-        messages.success(request, 'Hình ảnh chi tiết đã được thêm thành công!')
-        return redirect('kit_detail', kit_id=kit.id)
-
-    kit_details = kit.details.all()
-    return render(request, 'kit_detail.html', {'kit': kit, 'kit_details': kit_details})
-
-
-def add_kit(request):
+@login_required
+def kit_create(request):
     if request.method == 'POST':
         form = KitForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Bộ thiết bị đã được thêm!')
+            messages.success(request, 'Bộ thiết bị đã được tạo thành công.')
             return redirect('kit_list')
     else:
         form = KitForm()
+    return render(request, 'kit_form.html', {'form': form})
 
-    return render(request, 'add_kit.html', {'form': form})
 
-
-def edit_kit(request, kit_id):
-    kit = get_object_or_404(Kit, id=kit_id)
+@login_required
+def kit_update(request, pk):
+    kit = get_object_or_404(Kit, pk=pk)  # Sử dụng get_object_or_404 để đảm bảo an toàn
     if request.method == 'POST':
         form = KitForm(request.POST, request.FILES, instance=kit)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Bộ thiết bị đã được chỉnh sửa!')
-            return redirect('kit_detail', kit_id=kit.id)
+            messages.success(request, 'Bộ thiết bị đã được cập nhật thành công.')
+            return redirect('kit_list')
     else:
-        form = KitForm(instance=kit)
+        form = KitForm(instance=kit)  # Đảm bảo giữ giá trị hiện tại
 
-    return render(request, 'edit_kit.html', {'form': form, 'kit': kit})
+    return render(request, 'kit_form.html', {'form': form, 'kit': kit})
 
 
-def delete_kit(request, kit_id):
-    kit = get_object_or_404(Kit, id=kit_id)
+@login_required
+def kit_delete(request, pk):
+    kit = Kit.objects.get(pk=pk)
     if request.method == 'POST':
         kit.delete()
-        messages.success(request, 'Bộ thiết bị đã được xóa!')
+        messages.success(request, 'Bộ thiết bị đã bị xóa thành công.')
         return redirect('kit_list')
-
     return render(request, 'delete_kit.html', {'kit': kit})
+
+
+@login_required
+def kit_detail(request, pk):
+    kit = get_object_or_404(Kit, pk=pk)
+    images = kit.images.all()  # Lấy tất cả hình ảnh liên quan đến bộ kit
+
+    if request.method == 'POST':
+        image_form = KitImageForm(request.POST, request.FILES)
+        if image_form.is_valid():
+            new_image = image_form.save(commit=False)
+            new_image.kit = kit  # Gán hình ảnh vào bộ kit
+            new_image.save()
+            return redirect('kit_detail', pk=pk)  # Reload lại trang sau khi upload
+    else:
+        image_form = KitImageForm()
+
+    return render(request, 'kit_detail.html', {'kit': kit, 'images': images, 'image_form': image_form})
+
+
+@login_required
+def add_image(request, kit_id):
+    kit = get_object_or_404(Kit, id=kit_id)
+
+    if request.method == 'POST':
+        form = KitImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            kit_image = form.save(commit=False)
+            kit_image.kit = kit
+            kit_image.save()
+            return redirect('kit_detail', pk=kit.id)  # Chuyển hướng sau khi upload thành công
+    else:
+        form = KitImageForm()
+
+    return render(request, 'add_image.html', {'form': form, 'kit': kit})
+
+
+@login_required
+def sponsor_list(request):
+    sponsors = Sponsor.objects.all()
+    return render(request, 'sponsor_list.html', {'sponsors': sponsors})
+
+
+@login_required
+def add_sponsor(request):
+    if request.method == 'POST':
+        form = SponsorForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('sponsor_list')
+    else:
+        form = SponsorForm()
+    return render(request, 'add_sponsor.html', {'form': form})
+
+
+@login_required
+def edit_sponsor(request, sponsor_id):
+    sponsor = get_object_or_404(Sponsor, id=sponsor_id)
+    if request.method == 'POST':
+        form = SponsorForm(request.POST, request.FILES, instance=sponsor)
+        if form.is_valid():
+            form.save()
+            return redirect('sponsor_list')  # Redirect đến danh sách nhà tài trợ
+    else:
+        form = SponsorForm(instance=sponsor)
+    return render(request, 'edit_sponsor.html', {'form': form})
+
+
+@login_required
+def delete_sponsor(request, sponsor_id):
+    sponsor = get_object_or_404(Sponsor, id=sponsor_id)
+    if request.method == 'POST':
+        sponsor.delete()
+        return redirect('sponsor_list')  # Redirect đến danh sách nhà tài trợ
+    return render(request, 'delete_sponsor.html', {'sponsor': sponsor})
+
+
+@login_required
+def submit_feedback(request):
+    if request.method == "POST":
+        form = FeedbackForm(request.POST, request.FILES)
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            feedback.user = request.user
+            feedback.save()
+            messages.success(request, "Phản hồi của bạn đã được gửi thành công!")
+            return redirect('home')  # Chuyển hướng về trang home sau khi gửi phản hồi
+    else:
+        form = FeedbackForm()
+
+    return render(request, 'feedback/submit_feedback.html', {'form': form})
+
+
+@login_required
+def feedback_list(request):
+    if request.user.is_superuser:  # Kiểm tra nếu người dùng là admin
+        feedback_list = Feedback.objects.all()
+        return render(request, 'feedback/feedback_list.html', {'feedback_list': feedback_list})
+    else:
+        messages.error(request, "Bạn không có quyền truy cập vào trang này.")
+        return redirect('home')  # Chuyển hướng về trang home nếu không phải admin
+
 

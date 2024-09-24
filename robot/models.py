@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -97,14 +98,30 @@ class Sponsor(models.Model):
         return self.name
 
 
+def validate_image_size(image):
+    max_size = 2 * 1024 * 1024  # 2 MB
+    if image.size > max_size:
+        raise ValidationError("Kích thước ảnh không được vượt quá 2MB.")
+
+
 class Feedback(models.Model):
+    SUBJECT_CHOICES = [
+        ('contest', 'Cuộc thi'),
+        ('result', 'Kết quả'),
+        ('kit', 'Bộ kit'),
+        ('other', 'Khác'),
+    ]
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='feedbacks')
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='feedbacks')
-    content = models.TextField()
+    subject = models.CharField(max_length=20, choices=SUBJECT_CHOICES, default='other')
+    content = models.TextField(null=False, blank=False)
+    rating = models.IntegerField(default=1, null=False, blank=False)  # Giá trị từ 1 đến 5
     created_at = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='feedback_images/', null=True, blank=True, validators=[validate_image_size])
+    is_viewed = models.BooleanField(default=False)  # Trường xác nhận đã xem
 
     def __str__(self):
-        return f"Feedback by {self.user.username} on {self.competition.name}"
+        return f"Feedback by {self.user.username} - {self.subject}"
 
 
 class Team(models.Model):
@@ -127,18 +144,22 @@ class CompetitionResult(models.Model):
 
 
 class Kit(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    price = models.DecimalField(max_digits=12, decimal_places=0, null=True, blank=True)
-    main_image = models.ImageField(upload_to='kits/', null=True, blank=True)
-
-
-class KitDetail(models.Model):
-    kit = models.ForeignKey(Kit, related_name='details', on_delete=models.CASCADE, null=True, blank=True)
-    image = models.ImageField(upload_to='kit_details/', null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True, verbose_name="Tên bộ kit")
+    description = models.TextField(null=True, blank=True, verbose_name="Mô tả")
+    image = models.ImageField(upload_to='kits/', null=True, blank=True, verbose_name="Hình ảnh đính kèm")
+    price = models.PositiveBigIntegerField(null=True, blank=True, verbose_name="Giá bán")
 
     def __str__(self):
-        return self.kit.name
+        return self.name or "Bộ kit không tên"
+
+
+class KitImage(models.Model):
+    kit = models.ForeignKey(Kit, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='kits/images/', verbose_name="Hình ảnh chi tiết")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Hình ảnh cho {self.kit.name}"
 
 
 class Notification(models.Model):

@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang chủ</title>
-    <!-- Liên kết tới Bootstrap CSS từ CDN -->
+    <title>Bộ thiết bị</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- CSS tùy chỉnh trực tiếp -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,6 +39,17 @@
         .top-bar .btn {
             margin-left: 10px;
         }
+        
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-control {
+            margin-bottom: 15px;
+        }
+        .btn {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -53,7 +61,7 @@
                     <h4 class="mt-3 mb-4 text-center">Dashboard</h4>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'home' %}">
+                            <a class="nav-link" href="{% url 'home' %}">
                                 <i class="fas fa-home"></i> Trang chủ
                             </a>
                         </li>
@@ -73,25 +81,19 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'kit_list' %}">
+                            <a class="nav-link active" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'sponsor_list' %}">
+                            <a class="nav-link" href="#">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            {% if request.user.is_superuser %}
-                                <a class="nav-link" href="{% url 'feedback_list' %}">
-                                    <i class="fas fa-comment-dots"></i> Phản hồi
-                                </a>
-                            {% else %}
-                                <a class="nav-link" href="{% url 'submit_feedback' %}">
-                                    <i class="fas fa-comment-dots"></i> Gửi Phản hồi
-                                </a>
-                            {% endif %}
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-comment-dots"></i> Phản hồi
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -111,18 +113,40 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
+                
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Trang chủ</h1>
+                    <h1 class="h2">Thêm/sửa thông tin bộ thiết bị</h1>
                 </div>
-                <div class="row">
-                    <div class="col-12">
-                        <!-- Nội dung chính của dashboard -->
-                        <div class="alert alert-info" role="alert">
-                            Chào mừng bạn đến với hệ thống quản lý cuộc thi robot!
+                
+                <div class="form-container">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            {{ form.name.label_tag }}
+                            {{ form.name }}
                         </div>
-                        <!-- Các widget hoặc phần khác -->
-                    </div>
+                        
+                        <div class="form-group">
+                            {{ form.description.label_tag }}
+                            {{ form.description }}
+                        </div>
+        
+                        <div class="form-group">
+                            <label for="id_price">Giá bán</label>
+                            <input id="priceInput" type="text" name="price" class="form-control" placeholder="Nhập giá bán">
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.image.label_tag }}
+                            {{ form.image }}
+                        </div>
+        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </form>
                 </div>
             </main>
         </div>
@@ -130,5 +154,27 @@
 
     <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const priceInput = document.getElementById('priceInput');
+    
+            priceInput.addEventListener('input', function(e) {
+                let value = e.target.value;
+                value = value.replace(/\./g, ''); // Loại bỏ dấu "."
+                
+                if (!isNaN(value) && value.length > 0) {
+                    e.target.value = Number(value).toLocaleString('vi-VN'); // Gán giá trị đã định dạng trực tiếp
+                } else {
+                    e.target.value = ''; // Xóa giá trị nếu không hợp lệ
+                }
+            });
+    
+            document.querySelector('form').addEventListener('submit', function(e) {
+                let priceValue = priceInput.value.replace(/\./g, ''); // Loại bỏ dấu phân cách
+                priceInput.value = priceValue || 0; // Gán 0 nếu không có giá trị
+            });
+        });
+    </script>
 </body>
 </html>
