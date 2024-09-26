@@ -1,9 +1,10 @@
+{% load form_filters %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nhà tài trợ</title>
+    <title>Bộ thiết bị</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -56,37 +57,8 @@
             min-height: 100vh; /* Đảm bảo nội dung chính cũng mở rộng để ít nhất chiếm chiều cao màn hình */
         }
         
-        .card-no-logo {
-            width: 100%;
-            height: 200px; /* Chiều cao cố định cho ảnh */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f0f0f0;
-            color: white;
-        }
-        
-        .card-img-top {
-            width: 100%; /* Chiều rộng 100% */
-            height: 200px; /* Chiều cao cố định cho ảnh */
-            object-fit: contain; /* Giữ nguyên tỉ lệ ảnh mà không làm biến dạng */
-            background-color: white; /* Nền trắng khi không có ảnh */
-        }
-        
-        .card {
-            overflow: hidden; /* Đảm bảo ảnh không vượt quá giới hạn của card */
-            position: relative;
-        }
-        
-        .card-body {
-            position: relative;
-            z-index: 1; /* Đảm bảo phần nội dung luôn hiển thị phía trên ảnh */
-            background-color: white;
-            transition: background-color 0.3s ease;
-        }
-        
-        .card:hover .card-body {
-            background-color: #f8f9fa; /* Thay đổi màu nền khi hover nếu muốn */
+        .btn-group .btn {
+            margin-right: 15px; /* Tăng khoảng cách giữa các nút */
         }
     </style>
 </head>
@@ -119,19 +91,25 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'kit_list' %}">
+                            <a class="nav-link active" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'sponsor_list' %}">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -154,34 +132,43 @@
                 
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Danh sách các nhà tài trợ</h1>
+                    <h1 class="h2">Danh sách bộ thiết bị</h1>
+                
                     {% if request.user.is_superuser %}
-                        <a href="{% url 'add_sponsor' %}" class="btn btn-success mb-3">Thêm nhà tài trợ</a>
+                        <a href="{% url 'kit_create' %}" class="btn btn-success mb-3">
+                            <i class="fas fa-plus"></i> Thêm bộ thiết bị
+                        </a>
                     {% endif %}
                 </div>
                 
                 <div class="row">
-                    {% for sponsor in sponsors %}
+                    {% for kit in kits %}
                         <div class="col-md-4">
                             <div class="card mb-4 shadow-sm">
-                                {% if sponsor.logo %}
-                                    <img src="{{ sponsor.logo.url }}" class="card-img-top" alt="{{ sponsor.name }}">
-                                {% else %}
-                                    <div class="card-no-logo">
-                                        <p>Không có logo</p>
-                                    </div>
+                                {% if kit.image %}
+                                    <img src="{{ kit.image.url }}" class="card-img-top" alt="{{ kit.name }}">
                                 {% endif %}
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ sponsor.name }}</h5>
-                                    <p class="card-text">{{ sponsor.description }}</p>
-                                    {% if sponsor.website %}
-                                        <a href="{{ sponsor.website }}" target="_blank" class="btn btn-link">Website nhà tài trợ</a>
-                                    {% else %}
-                                        <p>Chưa có liên kết website</p>
-                                    {% endif %}
-                                    <div class="d-flex justify-content-between mt-2">
-                                        <a href="{% url 'edit_sponsor' sponsor.id %}" class="btn btn-warning btn-sm">Chỉnh sửa</a>
-                                        <a href="{% url 'delete_sponsor' sponsor.id %}" class="btn btn-danger btn-sm">Xoá</a>
+                                    <h5 class="card-title">{{ kit.name }}</h5>
+                                    <p class="card-text">{{ kit.description }}</p>
+                                    <p class="card-text"><strong>Giá bán:</strong> <span style="color: fuchsia;">{{ kit.price|format_vnd }}</span> VNĐ</p>
+                                
+                                    <div class="d-flex justify-content-center">
+                                        <a href="{% url 'kit_detail' kit.id %}" class="btn btn-info mr-2">
+                                            <i class="fas fa-info-circle"></i> Chi tiết
+                                        </a>
+                                
+                                        {% if request.user.is_superuser %}
+                                            <a href="{% url 'kit_update' kit.id %}" class="btn btn-primary mr-2">
+                                                <i class="fas fa-edit"></i> Chỉnh sửa
+                                            </a>
+                                        {% endif %}
+                                
+                                        {% if request.user.is_superuser %}
+                                            <a href="{% url 'kit_delete' kit.id %}" class="btn btn-danger">
+                                                <i class="fas fa-trash-alt"></i> Xóa
+                                            </a>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>

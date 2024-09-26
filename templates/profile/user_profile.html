@@ -41,6 +41,11 @@
         .top-bar .btn {
             margin-left: 10px;
         }
+        
+        .custom-btn {
+            padding: 8px 15px; /* Điều chỉnh padding để làm nút lớn hơn */
+            font-size: 0.9rem; /* Thay đổi kích thước font nếu cần */
+        }
     </style>
 </head>
 <body>
@@ -72,19 +77,25 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -104,10 +115,12 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
+            
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Trang cá nhân</h1>
                 </div>
+            
                 <div class="row">
                     <div class="col-12">
                         <div class="card mb-4">
@@ -115,7 +128,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <h5 class="card-title">Thông tin cá nhân</h5>
                                     <!-- Button chỉnh sửa -->
-                                    <a href="{% url 'edit_profile' %}" class="btn btn-primary btn-sm">
+                                    <a href="{% url 'edit_profile' %}" class="btn btn-primary custom-btn">
                                         <i class="fas fa-pencil-alt"></i> Chỉnh sửa
                                     </a>
                                 </div>

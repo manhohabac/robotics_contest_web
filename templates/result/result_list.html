@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xoá bộ thiết bị</title>
+    <title>Kết quả Cuộc thi/Giải đấu</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -40,6 +40,14 @@
             margin-left: 10px;
         }
     </style>
+    
+    <style>
+        .competition-image {
+            max-height: 190px; /* Thay đổi giá trị theo nhu cầu */
+            max-width: 100%; /* Giữ tỉ lệ hình ảnh, không vượt quá chiều rộng của card */
+            object-fit: cover; /* Giúp hình ảnh được cắt và hiển thị đồng nhất */
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -65,7 +73,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'result_list' %}">
+                            <a class="nav-link active" href="{% url 'result_list' %}">
                                 <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
                             </a>
                         </li>
@@ -75,14 +83,20 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'sponsor_list' %}">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -105,21 +119,27 @@
                 
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2"></h1>
+                    <h1 class="h2">Kết quả Cuộc thi/Giải đấu</h1>
                 </div>
                 
-                <div class="row justify-content-center">
-                    <div class="col-md-6 text-center">
-                        <p class="mb-4">Bạn có chắc chắn muốn xóa thông tin của nhà tài trợ "{{ sponsor.name }}" này không?</p>
-                        
-                        <form method="post">
-                            {% csrf_token %}
-                            <div class="d-flex justify-content-center">
-                                <button type="submit" class="btn btn-danger mr-3">Xóa</button>
-                                <a href="{% url 'sponsor_list' %}" class="btn btn-secondary">Hủy</a>
-                            </div>
-                        </form>
+                {% load static %}
+                <div class="row">
+                    {% for competition in competitions %}
+                    <div class="col-md-3">
+                        <div class="card mb-4 shadow-sm">
+                            <a href="{% url 'result_detail' competition.id %}">
+                                {% if competition.image %}
+                                    <img src="{{ competition.image.url }}" class="card-img-top competition-image" alt="{{ competition.name }}">
+                                {% else %}
+                                    <img src="{% static 'images/robot3.jpg' %}" class="card-img-top competition-image" alt="{{ competition.name }}">
+                                {% endif %}
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{{ competition.name }}</h5>
+                                </div>
+                            </a>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
             </main>
         </div>

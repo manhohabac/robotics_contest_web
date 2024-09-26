@@ -41,4 +41,6 @@ urlpatterns = [
     path('sponsors/delete/<int:sponsor_id>/', views.delete_sponsor, name='delete_sponsor'),
     path('feedback/submit/', views.submit_feedback, name='submit_feedback'),
     path('feedback/list/', views.feedback_list, name='feedback_list'),
+    path('toggle-viewed/<int:feedback_id>/', views.toggle_viewed_status, name='toggle_viewed_status'),
+
 ]

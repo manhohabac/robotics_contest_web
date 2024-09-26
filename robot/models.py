@@ -106,10 +106,10 @@ def validate_image_size(image):
 
 class Feedback(models.Model):
     SUBJECT_CHOICES = [
-        ('contest', 'Cuộc thi'),
-        ('result', 'Kết quả'),
-        ('kit', 'Bộ kit'),
-        ('other', 'Khác'),
+        ('Cuộc thi', 'Cuộc thi'),
+        ('Kết quả', 'Kết quả'),
+        ('Bộ thiết bị', 'Bộ thiết bị'),
+        ('Khác', 'Khác'),
     ]
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='feedbacks')

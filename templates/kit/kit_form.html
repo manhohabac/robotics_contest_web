@@ -40,26 +40,21 @@
             margin-left: 10px;
         }
         
-        html, body {
-            height: 100%;
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
         }
-        
-        #sidebar {
-            background-color: #f8f9fa;
-            height: auto; /* Cho phép sidebar mở rộng theo nội dung */
-            min-height: 100vh; /* Đảm bảo sidebar luôn có chiều cao tối thiểu bằng chiều cao của màn hình */
+        .form-control {
+            margin-bottom: 15px;
         }
-        
-        main {
-            flex: 1;
-            padding: 20px;
-            min-height: 100vh; /* Đảm bảo nội dung chính cũng mở rộng để ít nhất chiếm chiều cao màn hình */
+        .btn {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid h-100">
-        <div class="row h-100 d-flex">
+    <div class="container-fluid">
+        <div class="row">
             <!-- Sidebar -->
             <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
                 <div class="position-sticky">
@@ -91,21 +86,27 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 d-flex flex-column">
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
                 <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
@@ -121,24 +122,42 @@
                 
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Hình ảnh chi tiết của bộ thiết bị {{ kit.name }}</h1>
-                    {% if request.user.is_superuser %}
-                        <a href="{% url 'add_image' kit.id %}" class="btn btn-primary">Thêm hình ảnh</a>
-                    {% endif %}
+                    <h1 class="h2">Thêm/sửa thông tin bộ thiết bị</h1>
                 </div>
                 
-                <div class="row">
-                    {% if kit.images.all %}
-                        {% for image in kit.images.all %}
-                        <div class="col-md-3">
-                            <div class="card mb-4 shadow-sm">
-                                <img src="{{ image.image.url }}" class="card-img-top kit-image" alt="Hình ảnh của {{ kit.name }}">
-                            </div>
+                <div class="form-container">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            {{ form.name.label_tag }}
+                            {{ form.name }}
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <p>Chưa có hình ảnh cho bộ thiết bị này.</p>
-                    {% endif %}
+                        
+                        <div class="form-group">
+                            {{ form.description.label_tag }}
+                            {{ form.description }}
+                        </div>
+        
+{#                        <div class="form-group">#}
+{#                            <label for="id_price">Giá bán</label>#}
+{#                            <input id="priceInput" type="text" name="price" class="form-control" placeholder="Nhập giá bán">#}
+{#                        </div>#}
+                        
+                        <div class="form-group">
+                            {{ form.price.label_tag }}
+                            {{ form.price }} <!-- Sử dụng form.price từ form thay vì tạo input riêng -->
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.image.label_tag }}
+                            {{ form.image }}
+                        </div>
+        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </form>
                 </div>
             </main>
         </div>
@@ -146,5 +165,30 @@
 
     <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const priceInput = document.getElementById('priceInput');
+    
+            // Hàm xử lý khi người dùng nhập vào ô input
+            priceInput.addEventListener('input', function(e) {
+                let value = e.target.value;
+                value = value.replace(/[^\d]/g, ''); // Loại bỏ tất cả ký tự không phải là số
+    
+                if (!isNaN(value) && value.length > 0) {
+                    // Định dạng giá trị thành chuỗi có dấu phân cách hàng nghìn
+                    e.target.value = Number(value).toLocaleString('vi-VN'); 
+                } else {
+                    e.target.value = ''; // Xóa giá trị nếu không hợp lệ
+                }
+            });
+    
+            // Xử lý khi người dùng submit form
+            document.querySelector('form').addEventListener('submit', function(e) {
+                let priceValue = priceInput.value.replace(/[^\d]/g, ''); // Loại bỏ dấu phân cách và ký tự không hợp lệ
+                priceInput.value = priceValue || 0; // Gán giá trị 0 nếu không có giá trị nhập vào
+            });
+        });
+    </script>
 </body>
 </html>

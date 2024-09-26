@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm nhà tài trợ</title>
-    <!-- Liên kết tới Bootstrap CSS từ CDN -->
+    <title>Bộ thiết bị</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- CSS tùy chỉnh trực tiếp -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,6 +39,17 @@
         .top-bar .btn {
             margin-left: 10px;
         }
+        
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-control {
+            margin-bottom: 15px;
+        }
+        .btn {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -73,19 +81,25 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'kit_list' %}">
+                            <a class="nav-link active" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'sponsor_list' %}">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -105,32 +119,28 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
+                
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Thêm thông tin nhà tài trợ</h1>
+                    <h1 class="h2">Thêm hình ảnh cho bộ thiết bị {{ kit.name }}</h1>
                 </div>
-                <div class="form-section">
-                    <form method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="id_name">Tên nhà tài trợ</label>
-                            {{ form.name }}
-                        </div>
-                        <div class="form-group">
-                            <label for="id_description">Mô tả</label>
-                            {{ form.description }}
-                        </div>
-                        <div class="form-group">
-                            <label for="id_logo">Logo</label>
-                            {{ form.logo }}
-                        </div>
-                        <div class="form-group">
-                            <label for="id_website">Website</label>
-                            {{ form.website }}
-                        </div>
-                        <button type="submit" class="btn btn-success">Thêm Nhà tài trợ</button>
-                        <a href="{% url 'sponsor_list' %}" class="btn btn-secondary">Quay lại</a>
-                    </form>
+                
+                <div class="d-flex justify-content-center align-items-center" style="min-height: 0vh;">
+                    <div class="form-container" style="max-width: 380px; width: 100%;">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="form-group text-center">
+                                <label for="id_image">Chọn ảnh</label>
+                                {{ form.image }}
+                            </div>
+                            
+                            <div class="text-center" style="margin-left: -80px">
+                                <button type="submit" class="btn btn-success">Tải lên</button>
+                                <a href="{% url 'kit_detail' kit.id %}" class="btn btn-secondary">Quay lại</a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </main>
         </div>

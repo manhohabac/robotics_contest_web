@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gửi Phản Hồi</title>
+    <title>Gửi phản hồi</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -79,9 +79,15 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'submit_feedback' %}">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link active" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link active" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -99,42 +105,67 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Gửi Phản Hồi</h1>
+            
+                <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Gửi phản hồi</h1>
                 </div>
+            
                 <div class="row">
                     <div class="col-12">
                         <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}
+                        
                             <div class="form-group">
                                 <label for="subject">Chủ đề</label>
                                 <select class="form-control" id="subject" name="subject" required>
-                                    <option value="contest">Cuộc thi</option>
-                                    <option value="result">Kết quả</option>
-                                    <option value="kit">Bộ kit</option>
-                                    <option value="other">Khác</option>
+                                    <option value="Cuộc thi">Cuộc thi</option>
+                                    <option value="Kết quả">Kết quả</option>
+                                    <option value="Bộ thiết bị">Bộ thiết bị</option>
+                                    <option value="Khác">Khác</option>
                                 </select>
                             </div>
+                        
                             <div class="form-group">
                                 <label for="content">Nội dung</label>
                                 <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
                             </div>
+                        
                             <div class="form-group">
                                 <label for="rating">Đánh giá</label>
                                 <select class="form-control" id="rating" name="rating" required>
                                     <option value="">Chọn đánh giá</option>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
+                                    <option value="1">Rất không hài lòng</option>
+                                    <option value="2">Không hài lòng</option>
+                                    <option value="3">Bình thường</option>
+                                    <option value="4">Hài lòng</option>
+                                    <option value="5">Rất hài lòng</option>
                                 </select>
                             </div>
+                        
                             <div class="form-group">
                                 <label for="image">Ảnh đính kèm</label>
                                 <input type="file" class="form-control-file" id="image" name="image">
                             </div>
-                            <button type="submit" class="btn btn-primary">Gửi Phản Hồi</button>
+                        
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Gửi phản hồi
+                                </button>
+                            </div>
+                        
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+                            
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% endfor %}
                         </form>
                     </div>
                 </div>

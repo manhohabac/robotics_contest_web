@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm kết quả cho cuộc thi</title>
-    <!-- Liên kết tới Bootstrap CSS từ CDN -->
+    <title>Xoá bộ thiết bị</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- CSS tùy chỉnh trực tiếp -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,15 +39,6 @@
         .top-bar .btn {
             margin-left: 10px;
         }
-        .duplicate-error {
-            background-color: red;
-            color: white;
-        }
-        
-        .add-success {
-            background-color: green;
-            color: white;
-        }
     </style>
 </head>
 <body>
@@ -77,24 +65,30 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'result_list' %}">
+                            <a class="nav-link" href="{% url 'result_list' %}">
                                 <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link active" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -114,42 +108,22 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
+                
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Thêm kết quả cho cuộc thi {{ competition.name }}</h1>
+                    <h1 class="h2"></h1>
                 </div>
-                <div class="row">
-                    <div class="col-12">
+                
+                <div class="row justify-content-center">
+                    <div class="col-md-6 text-center">
+                        <p class="mb-4">Bạn có chắc chắn muốn xóa bộ thiết bị "{{ kit.name }}" này không?</p>
+                        
                         <form method="post">
                             {% csrf_token %}
-                            
-                            <div class="form-group">
-                                <label for="id_registration">Người tham gia</label>
-                                {{ form.registration }}
+                            <div class="d-flex justify-content-center">
+                                <button type="submit" class="btn btn-danger mr-3">Xóa</button>
+                                <a href="{% url 'kit_list' %}" class="btn btn-secondary">Hủy</a>
                             </div>
-                
-                            <div class="form-group">
-                                <label for="id_score">Điểm</label>
-                                {{ form.score }}
-                            </div>
-                            
-                            {% if messages %}
-                                <div>
-                                    {% for message in messages %}
-                                        <div class="alert {% if message.tags %}{{ message.tags }}{% endif %}">
-                                            {{ message }}
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                
-                            <!-- Nút lưu kết quả -->
-                            <button type="submit" class="btn btn-primary">Lưu kết quả</button>
-                            
-                            <!-- Nút quay lại -->
-                            <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'result_detail' competition.id %}'">
-                                Quay lại
-                            </button>
                         </form>
                     </div>
                 </div>

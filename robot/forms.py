@@ -204,10 +204,17 @@ class CompetitionResultForm(forms.ModelForm):
 
         if competition:
             # Lọc các registration theo cuộc thi và is_cancelled=False
-            self.fields['registration'].queryset = Registration.objects.filter(
+            registrations = Registration.objects.filter(
                 competition=competition,
                 is_cancelled=False
             )
+
+            # Tạo danh sách lựa chọn cho registration với thông tin hiển thị mong muốn
+            self.fields['registration'].queryset = registrations
+            self.fields['registration'].choices = [
+                (reg.id, f"{reg.user.full_name} - {reg.user.date_of_birth} - {reg.user.school_name}")
+                for reg in registrations
+            ]
 
 
 class KitForm(forms.ModelForm):
@@ -217,16 +224,23 @@ class KitForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên bộ kit'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Nhập mô tả'}),
-            'price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Nhập giá bán', 'id': 'priceInput'}),
+            'price': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập giá bán', 'id': 'priceInput'}),  # Dùng TextInput thay vì NumberInput
         }
 
     def clean_price(self):
-        price = self.cleaned_data.get('price')  # Sử dụng get để tránh lỗi nếu giá trị là None
+        price = self.cleaned_data.get('price')  # Lấy giá trị từ trường price
+
         if price is None or price == '':
             return 0  # Trả về giá trị mặc định nếu không nhập gì
 
-        # Loại bỏ dấu chấm khỏi giá trị
-        return int(str(price).replace('.', ''))
+        # Đảm bảo giá trị luôn là chuỗi để có thể xử lý replace
+        if isinstance(price, int):
+            return price  # Nếu là số nguyên, trả về luôn
+
+        # Nếu là chuỗi, loại bỏ dấu chấm hoặc dấu phẩy và chuyển thành số nguyên
+        price = str(price).replace(',', '').replace('.', '')
+
+        return int(price)
 
 
 class KitImageForm(forms.ModelForm):
@@ -272,7 +286,4 @@ class FeedbackForm(forms.ModelForm):
             'rating': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 5}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
         }
-
-
-
 

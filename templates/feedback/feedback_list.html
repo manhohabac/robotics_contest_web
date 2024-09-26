@@ -9,6 +9,8 @@
     <!-- Liên kết tới Font Awesome cho các biểu tượng -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- CSS tùy chỉnh trực tiếp -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,6 +43,89 @@
         }
         .top-bar .btn {
             margin-left: 10px;
+        }
+        .table-bordered {
+            border: 1px solid black; /* Đặt màu viền cho bảng */
+        }
+        
+        .table-bordered th, .table-bordered td {
+            border: 1px solid black; /* Đặt màu viền cho các ô */
+        }
+        
+        .table th, .table td {
+            vertical-align: middle; /* Giữa các ô */
+        }
+        
+        /* Tùy chỉnh màu nền cho tất cả các nút phân trang */
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            background-color: #007bff; /* Màu nền cho các nút */
+            color: white !important; /* Màu chữ trắng */
+            border: none;
+            padding: 5px 10px;
+            margin: 0 2px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    
+        /* Nút phân trang hiện tại */
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background-color: #0056b3 !important; /* Màu nền cho nút hiện tại */
+            color: black !important;
+            border: 1px solid #0056b3; /* Thêm viền để làm rõ nút */
+        }
+    
+        /* Thay đổi màu nền khi hover */
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background-color: #0056b3; /* Màu nền khi hover */
+            color: yellow !important;
+        }
+    
+        /* Nút "Trang trước" và "Trang sau" */
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            background-color: #007bff; /* Màu nền cho nút bị vô hiệu hoá */
+            color: white !important; /* Màu chữ cho nút bị vô hiệu hoá */
+            cursor: not-allowed;
+        }
+    
+        /* Căn giữa các nút phân trang */
+        .dataTables_wrapper .dataTables_paginate {
+            display: flex;
+            justify-content: center; /* Căn giữa */
+            margin-top: 30px; /* Khoảng cách trên */
+        }
+    
+        /* Căn giữa chữ trong các nút */
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            text-align: center; /* Căn giữa chữ trong nút */
+        }
+        
+        /* Căn giữa các nút phân trang và điều chỉnh margin-right */
+        .dataTables_wrapper .dataTables_paginate {
+            display: flex;
+            margin-right: 620px; /* Thay đổi giá trị này để điều chỉnh khoảng cách bên phải */
+        }
+        
+        /* Căn giữa thanh tìm kiếm */
+        .dataTables_wrapper .dataTables_filter {
+            display: flex;
+            justify-content: center; /* Căn giữa */
+            margin-bottom: 20px; /* Khoảng cách dưới cùng */
+        }
+    
+        /* Căn giữa input và nút tìm kiếm */
+        .dataTables_wrapper .dataTables_filter label {
+            margin-right: 500px; /* Khoảng cách giữa label và input */
+        }
+        
+        /* Tăng độ rộng của input trong thanh tìm kiếm */
+        .dataTables_wrapper .dataTables_filter input {
+            width: 500px; /* Thay đổi giá trị này để điều chỉnh độ rộng */
+        }
+        
+        input:focus {
+            outline: none; /* Loại bỏ viền mặc định */
+            box-shadow: none; /* Loại bỏ bóng hiệu ứng nếu có */
+            /* Thêm bất kỳ kiểu dáng nào bạn muốn ở đây */
         }
     </style>
 </head>
@@ -83,9 +168,15 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'submit_feedback' %}">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link active" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link active" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -105,28 +196,30 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
+            
                 <!-- Content -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Tổng hợp phản hồi của người dùng</h1>
                 </div>
+            
                 <div class="row">
                     <div class="col-12">
-                        <table class="table table-bordered text-center"> <!-- Thêm text-center để căn giữa nội dung -->
+                        <table id="feedbackTable" class="table table-bordered table-striped table-hover table-responsive text-center">
                             <thead>
                                 <tr>
-                                    <th>STT</th> <!-- Cột số thứ tự -->
-                                    <th>Chủ đề</th>
-                                    <th>Nội dung phản hồi</th>
-                                    <th>Đánh giá</th>
-                                    <th>Ảnh</th>
-                                    <th>Ngày phản hồi</th>
-                                    <th>Đã xem</th> <!-- Cột xác nhận đã xem -->
+                                    <th style="width: 3%;">STT</th>
+                                    <th style="width: 10%;">Chủ đề</th>
+                                    <th style="width: 30%;">Nội dung phản hồi</th>
+                                    <th style="width: 7%;">Đánh giá</th>
+                                    <th style="width: 20%;">Hình ảnh</th>
+                                    <th style="width: 9%;">Ngày phản hồi</th>
+                                    <th style="width: 6%;">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for feedback in feedback_list %}
                                 <tr>
-                                    <td>{{ forloop.counter }}</td> <!-- Số thứ tự tự động -->
+                                    <td>{{ forloop.counter }}</td>
                                     <td>{{ feedback.subject }}</td>
                                     <td>{{ feedback.content }}</td>
                                     <td>{{ feedback.rating }}</td>
@@ -135,16 +228,21 @@
                                             <img src="{{ feedback.image.url }}" alt="Ảnh đính kèm" style="width: 200px; height: 100px;">
                                         {% endif %}
                                     </td>
-                                    <td>{{ feedback.created_at|date:"H:i:s, d/m/Y" }}</td> <!-- Định dạng ngày giờ -->
+                                    <td>{{ feedback.created_at|date:"H:i:s, d/m/Y" }}</td>
                                     <td>
-                                        {% if feedback.is_resolved %}
-                                            <span class="badge badge-success">Đã xem</span>
-                                        {% else %}
-                                            <span class="badge badge-danger">Chưa xem</span>
-                                        {% endif %}
+                                        <form action="{% url 'toggle_viewed_status' feedback.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm">
+                                                {% if feedback.is_viewed %}
+                                                    <span class="badge badge-success">Đã xem</span>
+                                                {% else %}
+                                                    <span class="badge badge-danger">Chưa xem</span>
+                                                {% endif %}
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
-                                {% empty %}
+                                    {% empty %}
                                 <tr>
                                     <td colspan="7" class="text-center">Chưa có phản hồi nào.</td>
                                 </tr>
@@ -157,7 +255,28 @@
         </div>
     </div>
 
+    <!-- Liên kết tới jQuery từ CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#feedbackTable').DataTable({
+                "pageLength": 3, // Hiển thị 5 bản ghi trên mỗi trang
+                "lengthMenu": [3, 6], // Các tùy chọn hiển thị bản ghi
+                "language": {
+                    "search": "<i class='fas fa-search'></i> Tìm kiếm:",
+                    "lengthMenu": "Hiển thị _MENU_ bản ghi",
+                    "info": "Hiển thị _START_ đến _END_ trong tổng số _TOTAL_ bản ghi",
+                    "paginate": {
+                        "next": "<i class='fas fa-chevron-right'></i> Trang sau", // Thêm icon và chữ cho nút "Trang sau"
+                        "previous": "<i class='fas fa-chevron-left'></i> Trang trước" // Thêm icon và chữ cho nút "Trang trước"
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

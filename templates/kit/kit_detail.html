@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thay đổi mật khẩu</title>
+    <title>Bộ thiết bị</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -39,11 +39,40 @@
         .top-bar .btn {
             margin-left: 10px;
         }
+        
+        html, body {
+            height: 100%;
+        }
+        
+        #sidebar {
+            background-color: #f8f9fa;
+            height: auto; /* Cho phép sidebar mở rộng theo nội dung */
+            min-height: 100vh; /* Đảm bảo sidebar luôn có chiều cao tối thiểu bằng chiều cao của màn hình */
+        }
+        
+        main {
+            flex: 1;
+            padding: 20px;
+            min-height: 100vh; /* Đảm bảo nội dung chính cũng mở rộng để ít nhất chiếm chiều cao màn hình */
+        }
+        
+        .kit-image {
+            transition: transform 0.3s ease; /* Tạo hiệu ứng chuyển động mượt mà */
+            cursor: zoom-in; /* Hiển thị con trỏ kiểu phóng to khi di chuột vào */
+        }
+        
+        .kit-image:hover {
+            transform: scale(1.3); /* Phóng to ảnh lên 20% khi di chuột vào */
+        }
+        
+        .center-text {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
+    <div class="container-fluid h-100">
+        <div class="row h-100 d-flex">
             <!-- Sidebar -->
             <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
                 <div class="position-sticky">
@@ -70,26 +99,32 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link active" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 d-flex flex-column">
                 <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
@@ -102,61 +137,35 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
-
+                
                 <!-- Content -->
-                <div class="row justify-content-center mt-5"> <!-- Thêm lớp mt-5 vào đây -->
-                    <div class="col-md-8 col-lg-6">
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <h4 class="card-title mb-4 text-center">Đổi mật khẩu</h4>
-                                <form method="post">
-                                    {% csrf_token %}
-                                    {{ form.non_field_errors }}
-                                    
-                                    <div class="form-group">
-                                        <label for="{{ form.current_password.id_for_label }}">Mật khẩu cũ:</label>
-                                        {{ form.current_password }}
-                                        {% if form.current_password.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ form.current_password.errors }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Hình ảnh chi tiết của bộ thiết bị {{ kit.name }}</h1>
+                    {% if request.user.is_superuser %}
+                        <a href="{% url 'add_image' kit.id %}" class="btn btn-primary">Thêm hình ảnh</a>
+                    {% endif %}
+                </div>
                 
-                                    <div class="form-group">
-                                        <label for="{{ form.new_password.id_for_label }}">Mật khẩu mới:</label>
-                                        {{ form.new_password }}
-                                        {% if form.new_password.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ form.new_password.errors }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                
-                                    <div class="form-group">
-                                        <label for="{{ form.confirm_new_password.id_for_label }}">Xác nhận mật khẩu mới:</label>
-                                        {{ form.confirm_new_password }}
-                                        {% if form.confirm_new_password.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ form.confirm_new_password.errors }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                
-                                    <div class="form-group text-center">
-                                        <button type="submit" class="btn btn-primary">Lưu</button>
-                                    </div>
-                                </form>
+                <div class="row">
+                    {% if kit.images.all %}
+                        {% for image in kit.images.all %}
+                        <div class="col-md-3">
+                            <div class="card mb-4 shadow-sm">
+                                <img src="{{ image.image.url }}" class="card-img-top kit-image" alt="Hình ảnh của {{ kit.name }}">
                             </div>
                         </div>
-                    </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12 text-center">
+                            <p>Chưa có hình ảnh cho bộ thiết bị này.</p>
+                        </div>
+                    {% endif %}
                 </div>
             </main>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

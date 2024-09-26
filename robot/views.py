@@ -49,7 +49,7 @@ def register(request):
     else:
         form = UserRegistrationForm()
 
-    return render(request, 'register.html', {'form': form})
+    return render(request, 'account/register.html', {'form': form})
 
 
 def user_login(request):
@@ -64,7 +64,7 @@ def user_login(request):
                 return redirect('home')  # Chuyển hướng đến trang sau khi đăng nhập thành công
     else:
         form = AuthenticationForm()
-    return render(request, 'login.html', {'form': form})
+    return render(request, 'account/login.html', {'form': form})
 
 
 @login_required
@@ -136,7 +136,7 @@ def change_password(request):
     else:
         form = ChangePasswordForm(user=request.user)
 
-    return render(request, 'change_password.html', {'form': form})
+    return render(request, 'account/change_password.html', {'form': form})
 
 
 @login_required
@@ -148,7 +148,7 @@ def user_profile(request):
     context = {
         'profile': profile,
     }
-    return render(request, 'user_profile.html', context)
+    return render(request, 'profile/user_profile.html', context)
 
 
 @login_required
@@ -196,14 +196,14 @@ def edit_profile(request):
         'user_form': user_form,
         'profile_form': profile_form,
     }
-    return render(request, 'edit_profile.html', context)
+    return render(request, 'profile/edit_profile.html', context)
 
 
 @login_required
 def contest_list(request):
     competitions = Competition.objects.filter(is_active=True)
     today = date.today()
-    return render(request, 'contest.html', {'competitions': competitions, 'today': today})
+    return render(request, 'competition/contest.html', {'competitions': competitions, 'today': today})
 
 
 @login_required
@@ -213,7 +213,7 @@ def competition_detail(request, competition_id):
     registration = Registration.objects.filter(user=request.user, competition=competition).first()
     current_participants = competition.registrations.exclude(is_cancelled=True).count()
 
-    return render(request, 'competition_detail.html', {
+    return render(request, 'competition/competition_detail.html', {
         'competition': competition,
         'today': today,
         'registration': registration,
@@ -274,7 +274,7 @@ def register_competition(request, competition_id):
         'today': today,
     }
 
-    return render(request, 'competition_detail.html', context)
+    return render(request, 'competition/competition_detail.html', context)
 
 
 @login_required
@@ -349,7 +349,7 @@ def add_competition(request):
     else:
         form = CompetitionForm()
 
-    return render(request, 'add_competition.html', {'form': form})
+    return render(request, 'competition/add_competition.html', {'form': form})
 
 
 @login_required
@@ -360,7 +360,7 @@ def registration_list(request, competition_id):
         'competition': competition,
         'registrations': registrations
     }
-    return render(request, 'registration_list.html', context)
+    return render(request, 'competition/registration_list.html', context)
 
 
 @login_required
@@ -408,7 +408,7 @@ def edit_competition(request, competition_id):
     else:
         form = CompetitionForm(instance=competition)
 
-    return render(request, 'edit_competition.html', {'form': form, 'competition': competition})
+    return render(request, 'competition/edit_competition.html', {'form': form, 'competition': competition})
 
 
 @login_required
@@ -444,7 +444,7 @@ def delete_competition(request, competition_id):
         messages.success(request, f"Cuộc thi '{competition_name}' đã được xóa thành công.")
         return redirect('contest_list')
 
-    return render(request, 'delete_competition.html', {'competition': competition})
+    return render(request, 'competition/delete_competition.html', {'competition': competition})
 
 
 @login_required
@@ -462,7 +462,7 @@ def add_result(request, competition_id):
                 "Thí sinh này đã có kết quả trên hệ thống cho cuộc thi này, không thể thêm mới. Nếu có bất kì sự thay đổi nào xin vui lòng thực hiện chỉnh sửa.",
                 extra_tags='duplicate-error'
             )
-            return render(request, 'add_result.html', {'form': form, 'competition': competition})
+            return render(request, 'result/add_result.html', {'form': form, 'competition': competition})
 
         if form.is_valid():
             result = form.save()
@@ -493,20 +493,20 @@ def add_result(request, competition_id):
     else:
         form = CompetitionResultForm(competition=competition)
 
-    return render(request, 'add_result.html', {'form': form, 'competition': competition})
+    return render(request, 'result/add_result.html', {'form': form, 'competition': competition})
 
 
 @login_required
 def result_list(request):
     competitions = Competition.objects.all()  # Lấy tất cả các cuộc thi
-    return render(request, 'result_list.html', {'competitions': competitions})
+    return render(request, 'result/result_list.html', {'competitions': competitions})
 
 
 @login_required
 def result_detail(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
     results = CompetitionResult.objects.filter(registration__competition=competition).order_by('-score')
-    return render(request, 'result_detail.html', {'competition': competition, 'results': results})
+    return render(request, 'result/result_detail.html', {'competition': competition, 'results': results})
 
 
 @login_required
@@ -543,13 +543,13 @@ def edit_result(request, result_id):
     else:
         form = CompetitionResultForm(instance=result, competition=competition)
 
-    return render(request, 'edit_result.html', {'form': form, 'competition': competition, 'result': result})
+    return render(request, 'result/edit_result.html', {'form': form, 'competition': competition, 'result': result})
 
 
 @login_required
 def kit_list(request):
     kits = Kit.objects.all()
-    return render(request, 'kit_list.html', {'kits': kits})
+    return render(request, 'kit/kit_list.html', {'kits': kits})
 
 
 @login_required
@@ -562,7 +562,7 @@ def kit_create(request):
             return redirect('kit_list')
     else:
         form = KitForm()
-    return render(request, 'kit_form.html', {'form': form})
+    return render(request, 'kit/kit_form.html', {'form': form})
 
 
 @login_required
@@ -577,7 +577,7 @@ def kit_update(request, pk):
     else:
         form = KitForm(instance=kit)  # Đảm bảo giữ giá trị hiện tại
 
-    return render(request, 'kit_form.html', {'form': form, 'kit': kit})
+    return render(request, 'kit/kit_form.html', {'form': form, 'kit': kit})
 
 
 @login_required
@@ -587,7 +587,7 @@ def kit_delete(request, pk):
         kit.delete()
         messages.success(request, 'Bộ thiết bị đã bị xóa thành công.')
         return redirect('kit_list')
-    return render(request, 'delete_kit.html', {'kit': kit})
+    return render(request, 'kit/delete_kit.html', {'kit': kit})
 
 
 @login_required
@@ -605,7 +605,7 @@ def kit_detail(request, pk):
     else:
         image_form = KitImageForm()
 
-    return render(request, 'kit_detail.html', {'kit': kit, 'images': images, 'image_form': image_form})
+    return render(request, 'kit/kit_detail.html', {'kit': kit, 'images': images, 'image_form': image_form})
 
 
 @login_required
@@ -622,13 +622,13 @@ def add_image(request, kit_id):
     else:
         form = KitImageForm()
 
-    return render(request, 'add_image.html', {'form': form, 'kit': kit})
+    return render(request, 'kit/add_image.html', {'form': form, 'kit': kit})
 
 
 @login_required
 def sponsor_list(request):
     sponsors = Sponsor.objects.all()
-    return render(request, 'sponsor_list.html', {'sponsors': sponsors})
+    return render(request, 'sponsor/sponsor_list.html', {'sponsors': sponsors})
 
 
 @login_required
@@ -640,7 +640,7 @@ def add_sponsor(request):
             return redirect('sponsor_list')
     else:
         form = SponsorForm()
-    return render(request, 'add_sponsor.html', {'form': form})
+    return render(request, 'sponsor/add_sponsor.html', {'form': form})
 
 
 @login_required
@@ -653,7 +653,7 @@ def edit_sponsor(request, sponsor_id):
             return redirect('sponsor_list')  # Redirect đến danh sách nhà tài trợ
     else:
         form = SponsorForm(instance=sponsor)
-    return render(request, 'edit_sponsor.html', {'form': form})
+    return render(request, 'sponsor/edit_sponsor.html', {'form': form})
 
 
 @login_required
@@ -662,7 +662,7 @@ def delete_sponsor(request, sponsor_id):
     if request.method == 'POST':
         sponsor.delete()
         return redirect('sponsor_list')  # Redirect đến danh sách nhà tài trợ
-    return render(request, 'delete_sponsor.html', {'sponsor': sponsor})
+    return render(request, 'sponsor/delete_sponsor.html', {'sponsor': sponsor})
 
 
 @login_required
@@ -675,6 +675,11 @@ def submit_feedback(request):
             feedback.save()
             messages.success(request, "Phản hồi của bạn đã được gửi thành công!")
             return redirect('home')  # Chuyển hướng về trang home sau khi gửi phản hồi
+        else:
+            # In ra lỗi để dễ debug
+            print(form.errors)  # In ra các lỗi của form trong console
+            messages.error(request, "Có lỗi xảy ra khi gửi phản hồi. Vui lòng kiểm tra lại.")
+
     else:
         form = FeedbackForm()
 
@@ -684,10 +689,22 @@ def submit_feedback(request):
 @login_required
 def feedback_list(request):
     if request.user.is_superuser:  # Kiểm tra nếu người dùng là admin
-        feedback_list = Feedback.objects.all()
+        feedback_list = Feedback.objects.all().order_by('-created_at')
         return render(request, 'feedback/feedback_list.html', {'feedback_list': feedback_list})
     else:
         messages.error(request, "Bạn không có quyền truy cập vào trang này.")
         return redirect('home')  # Chuyển hướng về trang home nếu không phải admin
 
+
+@login_required
+def toggle_viewed_status(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+
+    if request.method == 'POST':
+        # Đảo ngược giá trị của is_viewed
+        feedback.is_viewed = not feedback.is_viewed
+        feedback.save()
+
+    # Sau khi lưu, chuyển hướng về trang feedback_list
+    return redirect('feedback_list')
 

@@ -77,19 +77,25 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -113,14 +119,15 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Kết quả cụ thể của cuộc thi {{competition.name}}</h1>
                 </div>
+                
                 <div class="row">
                     <div class="col-12">
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
                                     <th style="width: 5%;">Thứ hạng</th>
-                                    <th style="width: 15%;">Người tham gia</th>
-                                    <th style="width: 5%;">Ảnh đại diện</th>
+                                    <th style="width: 11%;">Người tham gia</th>
+                                    <th style="width: 6%;">Ảnh đại diện</th>
                                     <th style="width: 6%;">Ngày sinh</th> 
                                     <th style="width: 20%;">Học sinh trường</th> 
                                     <th style="width: 6%;">Điểm</th>
@@ -134,11 +141,11 @@
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
                                     <td>{{ result.registration.user.full_name }}</td>
-                                    <td>
+                                    <td style="width: 100px; height: 150px;">
                                         {% if result.registration.user.profile_picture %}
-                                            <img src="{{ result.registration.user.profile_picture.url }}" alt="Avatar" width="100" height="100">
+                                            <img src="{{ result.registration.user.profile_picture.url }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
                                         {% else %}
-                                            <img src="{% static 'images/default.jpg' %}" alt="Avatar" width="100" height="100">
+                                            <img src="{% static 'images/default.jpg' %}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
                                         {% endif %}
                                     </td>
                                     <td>{{ result.registration.user.date_of_birth|date:"d/m/Y" }}</td> <!-- Ngày sinh -->
@@ -157,9 +164,11 @@
                         </table>
                     
                         {% if request.user.is_superuser %}
-                        <a href="{% url 'add_result' competition.id %}" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Thêm kết quả
-                        </a>
+                            <div class="d-flex justify-content-center">
+                                <a href="{% url 'add_result' competition.id %}" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> Thêm kết quả
+                                </a>
+                            </div>
                         {% endif %}
                     </div>
                 </div>

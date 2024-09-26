@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm cuộc thi</title>
+    <title>Chỉnh sửa thông tin cuộc thi</title>
     <!-- Liên kết tới Bootstrap CSS từ CDN -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Liên kết tới Font Awesome cho các biểu tượng -->
@@ -97,19 +97,25 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'kit_list' %}">
                                 <i class="fas fa-box"></i> Bộ thiết bị
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
                                 <i class="fas fa-people-arrows"></i> Nhà tài trợ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-comment-dots"></i> Phản hồi
-                            </a>
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -132,17 +138,16 @@
                 
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Thêm thông tin cuộc thi</h1>
+                    <h1 class="h2">Chỉnh sửa thông tin cuộc thi</h1>
                 </div>
 
                 <div class="container mt-3">
-                    <h2 style="text-align: center;">Thêm thông tin chi tiết về cuộc thi</h2>
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
                         <!-- Name Field -->
                         <div class="form-group">
-                            <label for="id_name">{{ form.name.label }}</label>
+                            <label for="id_name">Tên cuộc thi</label>
                             {{ form.name|add_class:"form-control" }}
                             {% if form.name.errors %}
                                 <div class="text-danger">
@@ -155,7 +160,7 @@
                 
                         <!-- Description Field -->
                         <div class="form-group">
-                            <label for="id_description">{{ form.description.label }}</label>
+                            <label for="id_description">Mô tả cuộc thi</label>
                             {{ form.description|add_class:"form-control" }}
                             {% if form.description.errors %}
                                 <div class="text-danger">
@@ -169,7 +174,7 @@
                         <div class="form-row">
                             <!-- Start Date Field -->
                             <div class="form-group" style="max-width: 160px;">   
-                                <label for="id_start_date">{{ form.start_date.label }}</label>
+                                <label for="id_start_date">Ngày bắt đầu</label>
                                 {{ form.start_date|add_class:"form-control" }}
                                 {% if form.start_date.errors %}
                                     <div class="text-danger">
@@ -182,7 +187,7 @@
                         
                             <!-- Registration Deadline Field -->
                             <div class="form-group" style="max-width: 160px;">
-                                <label for="id_registration_deadline">{{ form.registration_deadline.label }}</label>
+                                <label for="id_registration_deadline">Hạn đăng ký</label>
                                 {{ form.registration_deadline|add_class:"form-control" }}
                                 {% if form.registration_deadline.errors %}
                                     <div class="text-danger">
@@ -195,7 +200,7 @@
                 
                             <!-- End Date Field -->
                             <div class="form-group" style="max-width: 160px;">
-                                <label for="id_end_date">{{ form.end_date.label }}</label>
+                                <label for="id_end_date">Ngày kết thúc</label>
                                 {{ form.end_date|add_class:"form-control" }}
                                 {% if form.end_date.errors %}
                                     <div class="text-danger">
@@ -209,7 +214,7 @@
                     
                         <!-- Rules Field -->
                         <div class="form-group">
-                            <label for="id_rules">{{ form.rules.label }}</label>
+                            <label for="id_rules">Quy định</label>
                             {{ form.rules|add_class:"form-control" }}
                             {% if form.rules.errors %}
                                 <div class="text-danger">
@@ -222,7 +227,7 @@
                     
                         <!-- Max Participants Field -->
                         <div class="form-group">
-                            <label for="id_max_participants">{{ form.max_participants.label }}</label>
+                            <label for="id_max_participants">Số đội thi tối đa</label>
                             {{ form.max_participants|add_class:"form-control" }}
                             {% if form.max_participants.errors %}
                                 <div class="text-danger">
@@ -235,20 +240,27 @@
                     
                         <!-- Image Field -->
                         <div class="form-group">
-                            <label for="id_image">{{ form.image.label }}</label>
-                            {{ form.image }}
-                            {% if form.image.errors %}
+                            <label for="id_image">Chọn ảnh</label>
+                            <!-- Ẩn thông tin hình ảnh hiện tại -->
+                            <input type="hidden" name="current_image" value="{{ form.image.value }}">
+                            <label for="id_new_image"></label>
+                            {{ form.new_image }}
+                            {% if form.new_image.errors %}
                                 <div class="text-danger">
-                                    {% for error in form.image.errors %}
+                                    {% for error in form.new_image.errors %}
                                         <p>{{ error }}</p>
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
                     
-                        <div class="form-group text-center mt-4 mb-5"> <!-- Thêm mt-4 để tạo khoảng cách trên, mb-5 để thêm khoảng cách dưới -->
-                            <button type="submit" class="btn btn-primary">Lưu cuộc thi</button>
-                            <a href="{% url 'contest_list' %}" class="btn btn-secondary ml-2">Hủy</a>
+                        <div class="form-group text-center mt-4 mb-5"> 
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save mr-1"></i> Lưu thông tin
+                            </button>
+                            <a href="{% url 'contest_list' %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times mr-1"></i> Hủy
+                            </a>
                         </div>
                     </form>
                 </div>
