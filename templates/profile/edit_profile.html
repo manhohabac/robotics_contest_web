@@ -14,6 +14,7 @@
         #sidebar {
             background-color: #f8f9fa;
             height: 100vh;
+            width: 200px;
         }
         .sidebar .nav-link {
             font-size: 1.1rem;
@@ -40,13 +41,21 @@
         .form-group textarea {
             min-height: 95px; /* Điều chỉnh chiều cao mặc định cho textarea */
         }
+        .main-content {
+            margin-left: -18px;
+            flex: 1; /* Để phần main tự động chiếm không gian còn lại */
+            height: 100vh; /* Chiếm toàn bộ chiều cao viewport */
+            overflow-y: auto; /* Thêm cuộn nếu nội dung dài */
+            padding-right: 0.5rem !important; /* Thêm padding nếu cần */
+            max-width: 100%; /* Đảm bảo nó chiếm hết không gian bên phải */
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
+            <nav id="sidebar" class="d-md-block bg-light sidebar">
                 <div class="position-sticky">
                     <h4 class="mt-3 mb-4 text-center">Dashboard</h4>
                     <ul class="nav flex-column">
@@ -62,12 +71,12 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'contest_list' %}">
-                                <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
+                                <i class="fas fa-trophy"></i> Cuộc thi
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'result_list' %}">
-                                <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
+                                <i class="fas fa-chart-line"></i> Kết quả
                             </a>
                         </li>
                         <li class="nav-item">
@@ -96,7 +105,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
                 <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
@@ -124,32 +133,32 @@
                                     <div class="col-md-6">
                                         {{ user_form.non_field_errors }}
                                         <div class="form-group">
-                                            {{ user_form.full_name.label_tag }}
+                                            Họ và tên:
                                             {{ user_form.full_name }}
                                             {{ user_form.full_name.errors }}
                                         </div>
                                         <div class="form-group">
-                                            {{ user_form.date_of_birth.label_tag }}
+                                            Ngày sinh:
                                             {{ user_form.date_of_birth }}
                                             {{ user_form.date_of_birth.errors }}
                                         </div>
                                         <div class="form-group">
-                                            {{ user_form.address.label_tag }}
+                                            Địa chỉ:
                                             {{ user_form.address }}
                                             {{ user_form.address.errors }}
                                         </div>
                                         <div class="form-group">
-                                            {{ user_form.school_name.label_tag }}
+                                            Tên trường:
                                             {{ user_form.school_name }}
                                             {{ user_form.school_name.errors }}
                                         </div>
                                         <div class="form-group">
-                                            {{ user_form.phone_number.label_tag }}
+                                            Số điện thoại:
                                             {{ user_form.phone_number }}
                                             {{ user_form.phone_number.errors }}
                                         </div>
                                         <div class="form-group">
-                                            {{ user_form.gender.label_tag }}
+                                            Giới tính:
                                             {{ user_form.gender }}
                                             {{ user_form.gender.errors }}
                                         </div>
@@ -157,7 +166,7 @@
                                     <div class="col-md-6">
                                         {{ profile_form.non_field_errors }}
                                         <div class="form-group">
-                                            {{ user_form.profile_picture.label_tag }}
+                                            Ảnh đại diện:
                                             <div class="custom-file">
                                                 <input type="file" class="custom-file-input" id="id_profile_picture" name="profile_picture">
                                                 <label class="custom-file-label" for="id_profile_picture">
@@ -166,27 +175,30 @@
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            {{ profile_form.bio.label_tag }}
+                                            Tiểu sử:
                                             {{ profile_form.bio }}
                                             {{ profile_form.bio.errors }}
                                         </div>
                                         <div class="form-group">
-                                            {{ profile_form.interests.label_tag }}
+                                            Sở thích:
                                             {{ profile_form.interests }}
                                             {{ profile_form.interests.errors }}
                                         </div>
                                         <div class="form-group">
-                                            {{ profile_form.social_links.label_tag }}
+                                            Liên kết mạng xã hội:
                                             {{ profile_form.social_links }}
                                             {{ profile_form.social_links.errors }}
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="form-group text-center mt-4">
+                                <div class="form-group text-center mt-4" style="margin-right: 100px">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save mr-2"></i> Lưu thay đổi
                                     </button>
+                                    <a href="{% url 'user_profile' %}" class="btn btn-secondary ml-2">
+                                        <i class="fas fa-times mr-2"></i> Huỷ
+                                    </a>
                                 </div>
                             </form>
                         </div>

@@ -13,6 +13,7 @@
         #sidebar {
             background-color: #f8f9fa;
             height: 100vh;
+            width: 200px;
         }
         .sidebar .nav-link {
             font-size: 1.1rem;
@@ -25,14 +26,22 @@
         .sidebar .nav-link i {
             margin-right: 8px;
         }
+        
         .main-content {
-            margin-left: 15px;
+            margin-left: -18px;
+            flex: 1; /* Để phần main tự động chiếm không gian còn lại */
+            height: 100vh; /* Chiếm toàn bộ chiều cao viewport */
+            overflow-y: auto; /* Thêm cuộn nếu nội dung dài */
+            padding-right: 0.5rem !important; /* Thêm padding nếu cần */
+            max-width: 100%; /* Đảm bảo nó chiếm hết không gian bên phải */
         }
+        
         .top-bar {
             display: flex;
             justify-content: flex-end;
             align-items: center;
             padding: 10px;
+            margin-top: -20px;
             border-bottom: 1px solid #dee2e6;
             background-color: #f8f9fa;
         }
@@ -56,7 +65,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
+            <nav id="sidebar" class="d-md-block bg-light sidebar">
                 <div class="position-sticky">
                     <h4 class="mt-3 mb-4 text-center">Dashboard</h4>
                     <ul class="nav flex-column">
@@ -72,12 +81,12 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'contest_list' %}">
-                                <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
+                                <i class="fas fa-trophy"></i> Cuộc thi
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'result_list' %}">
-                                <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
+                                <i class="fas fa-chart-line"></i> Kết quả
                             </a>
                         </li>
                         <li class="nav-item">
@@ -106,7 +115,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
                 <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
@@ -138,11 +147,6 @@
                             {{ form.description.label_tag }}
                             {{ form.description }}
                         </div>
-        
-{#                        <div class="form-group">#}
-{#                            <label for="id_price">Giá bán</label>#}
-{#                            <input id="priceInput" type="text" name="price" class="form-control" placeholder="Nhập giá bán">#}
-{#                        </div>#}
                         
                         <div class="form-group">
                             {{ form.price.label_tag }}
@@ -155,7 +159,12 @@
                         </div>
         
                         <div class="text-center">
-                            <button type="submit" class="btn btn-primary">Lưu</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Lưu
+                            </button>
+                            <a href="{% url 'kit_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Huỷ
+                            </a>
                         </div>
                     </form>
                 </div>

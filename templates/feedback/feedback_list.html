@@ -4,12 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phản hồi</title>
-    <!-- Liên kết tới Bootstrap CSS từ CDN -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- CSS tùy chỉnh trực tiếp -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
 
     <style>
         body {
@@ -18,6 +14,7 @@
         #sidebar {
             background-color: #f8f9fa;
             height: 100vh;
+            width: 200px;
         }
         .sidebar .nav-link {
             font-size: 1.1rem;
@@ -30,9 +27,16 @@
         .sidebar .nav-link i {
             margin-right: 8px;
         }
+        
         .main-content {
-            margin-left: 15px;
+            margin-left: -18px;
+            flex: 1; /* Để phần main tự động chiếm không gian còn lại */
+            height: 100vh; /* Chiếm toàn bộ chiều cao viewport */
+            overflow-y: auto; /* Thêm cuộn nếu nội dung dài */
+            padding-right: 0.5rem !important; /* Thêm padding nếu cần */
+            max-width: 100%; /* Đảm bảo nó chiếm hết không gian bên phải */
         }
+        
         .top-bar {
             display: flex;
             justify-content: flex-end;
@@ -45,87 +49,47 @@
             margin-left: 10px;
         }
         .table-bordered {
-            border: 1px solid black; /* Đặt màu viền cho bảng */
+            border: #495057; /* Đặt màu viền cho bảng */
         }
         
         .table-bordered th, .table-bordered td {
-            border: 1px solid black; /* Đặt màu viền cho các ô */
+            border: #495057; /* Đặt màu viền cho các ô */
         }
         
         .table th, .table td {
             vertical-align: middle; /* Giữa các ô */
         }
-        
-        /* Tùy chỉnh màu nền cho tất cả các nút phân trang */
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            background-color: #007bff; /* Màu nền cho các nút */
-            color: white !important; /* Màu chữ trắng */
-            border: none;
-            padding: 5px 10px;
-            margin: 0 2px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    
-        /* Nút phân trang hiện tại */
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-            background-color: #0056b3 !important; /* Màu nền cho nút hiện tại */
-            color: black !important;
-            border: 1px solid #0056b3; /* Thêm viền để làm rõ nút */
-        }
-    
-        /* Thay đổi màu nền khi hover */
-        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-            background-color: #0056b3; /* Màu nền khi hover */
-            color: yellow !important;
-        }
-    
-        /* Nút "Trang trước" và "Trang sau" */
-        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-            background-color: #007bff; /* Màu nền cho nút bị vô hiệu hoá */
-            color: white !important; /* Màu chữ cho nút bị vô hiệu hoá */
-            cursor: not-allowed;
-        }
-    
-        /* Căn giữa các nút phân trang */
-        .dataTables_wrapper .dataTables_paginate {
-            display: flex;
-            justify-content: center; /* Căn giữa */
-            margin-top: 30px; /* Khoảng cách trên */
-        }
-    
-        /* Căn giữa chữ trong các nút */
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            text-align: center; /* Căn giữa chữ trong nút */
+
+        .text-center {
+            text-align: center; /* Căn giữa chữ trong các ô */
         }
         
-        /* Căn giữa các nút phân trang và điều chỉnh margin-right */
-        .dataTables_wrapper .dataTables_paginate {
-            display: flex;
-            margin-right: 620px; /* Thay đổi giá trị này để điều chỉnh khoảng cách bên phải */
+        /* Áp dụng cho các nút có class .toggle-viewed-status */
+        button.btn-sm.toggle-viewed-status:focus {
+            outline: none !important; /* Loại bỏ viền */
+            box-shadow: none !important; /* Loại bỏ bóng hiệu ứng */
         }
         
-        /* Căn giữa thanh tìm kiếm */
-        .dataTables_wrapper .dataTables_filter {
-            display: flex;
-            justify-content: center; /* Căn giữa */
-            margin-bottom: 20px; /* Khoảng cách dưới cùng */
-        }
-    
-        /* Căn giữa input và nút tìm kiếm */
-        .dataTables_wrapper .dataTables_filter label {
-            margin-right: 500px; /* Khoảng cách giữa label và input */
+        .table-bordered {
+            border: 1px solid #dee2e6; /* Viền bên ngoài */
         }
         
-        /* Tăng độ rộng của input trong thanh tìm kiếm */
-        .dataTables_wrapper .dataTables_filter input {
-            width: 500px; /* Thay đổi giá trị này để điều chỉnh độ rộng */
+        .table-bordered th, .table-bordered td {
+            border: 1px solid #dee2e6; /* Viền các ô */
         }
         
-        input:focus {
-            outline: none; /* Loại bỏ viền mặc định */
-            box-shadow: none; /* Loại bỏ bóng hiệu ứng nếu có */
-            /* Thêm bất kỳ kiểu dáng nào bạn muốn ở đây */
+        /* Tùy chỉnh màu nền cho hàng lẻ và hàng chẵn để dễ nhìn hơn */
+        .table tbody tr:nth-child(odd) {
+            background-color: #f9f9f9; /* Màu nền cho hàng lẻ */
+        }
+        
+        .table tbody tr:nth-child(even) {
+            background-color: #ffffff; /* Màu nền cho hàng chẵn */
+        }
+        
+        #searchInput:focus {
+            outline: none; /* Loại bỏ viền focus */
+            box-shadow: none; /* Loại bỏ bóng hiệu ứng */
         }
     </style>
 </head>
@@ -133,7 +97,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
+            <nav id="sidebar" class="d-md-block bg-light sidebar">
                 <div class="position-sticky">
                     <h4 class="mt-3 mb-4 text-center">Dashboard</h4>
                     <ul class="nav flex-column">
@@ -149,12 +113,12 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'contest_list' %}">
-                                <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
+                                <i class="fas fa-trophy"></i> Cuộc thi
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'result_list' %}">
-                                <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
+                                <i class="fas fa-chart-line"></i> Kết quả
                             </a>
                         </li>
                         <li class="nav-item">
@@ -183,7 +147,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
                 <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
@@ -196,15 +160,33 @@
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </div>
-            
+
                 <!-- Content -->
                 <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Tổng hợp phản hồi của người dùng</h1>
                 </div>
-            
+
                 <div class="row">
                     <div class="col-12">
-                        <table id="feedbackTable" class="table table-bordered table-striped table-hover table-responsive text-center">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <!-- Tìm kiếm -->
+                            <div class="input-group" style="max-width: 300px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i> <!-- Icon tìm kiếm -->
+                                    </span>
+                                </div>
+                                <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control" placeholder="Tìm kiếm..." autocomplete="off">
+                            </div>
+                        
+                            <!-- Button Xuất Excel -->
+                            <a href="{% url 'export_feedback_to_excel' %}" class="btn btn-success d-flex align-items-center">
+                                <i class="fas fa-file-excel"></i> <!-- Icon cho nút -->
+                                <span class="ml-2">Xuất Excel</span>
+                            </a>
+                        </div>
+                    
+                        <table id="feedbackTable" class="table table-bordered text-center">
                             <thead>
                                 <tr>
                                     <th style="width: 3%;">STT</th>
@@ -221,62 +203,115 @@
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
                                     <td>{{ feedback.subject }}</td>
-                                    <td>{{ feedback.content }}</td>
+                                    <td>
+                                        <div class="feedback-content">
+                                            {{ feedback.content|linebreaksbr }}
+                                        </div>
+                                    </td>
                                     <td>{{ feedback.rating }}</td>
                                     <td>
                                         {% if feedback.image %}
                                             <img src="{{ feedback.image.url }}" alt="Ảnh đính kèm" style="width: 200px; height: 100px;">
                                         {% endif %}
                                     </td>
-                                    <td>{{ feedback.created_at|date:"H:i:s, d/m/Y" }}</td>
+                                    <td>{{ feedback.created_at|date:"d/m/Y" }}</td>
                                     <td>
-                                        <form action="{% url 'toggle_viewed_status' feedback.id %}" method="POST">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm">
-                                                {% if feedback.is_viewed %}
-                                                    <span class="badge badge-success">Đã xem</span>
-                                                {% else %}
-                                                    <span class="badge badge-danger">Chưa xem</span>
-                                                {% endif %}
-                                            </button>
-                                        </form>
+                                        <button class="btn btn-sm toggle-viewed-status" data-id="{{ feedback.id }}">
+                                            {% if feedback.is_viewed %}
+                                                <span class="badge badge-success">Đã xem</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">Chưa xem</span>
+                                            {% endif %}
+                                        </button>
                                     </td>
                                 </tr>
-                                    {% empty %}
+                                {% empty %}
                                 <tr>
                                     <td colspan="7" class="text-center">Chưa có phản hồi nào.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
+                    
+{#                        <!-- Pagination Controls -->#}
+{#                        <div class="pagination">#}
+{#                            <span class="step-links">#}
+{#                                {% if feedback_list.has_previous %}#}
+{#                                    <a href="?page=1&search={{ search_query }}">&laquo; Trang đầu</a>#}
+{#                                    <a href="?page={{ feedback_list.previous_page_number }}&search={{ search_query }}">Trang trước</a>#}
+{#                                {% endif %}#}
+{##}
+{#                                <span class="current">#}
+{#                                    Trang {{ feedback_list.number }} trong {{ feedback_list.paginator.num_pages }}.#}
+{#                                </span>#}
+{##}
+{#                                {% if feedback_list.has_next %}#}
+{#                                    <a href="?page={{ feedback_list.next_page_number }}&search={{ search_query }}">Trang tiếp</a>#}
+{#                                    <a href="?page={{ feedback_list.paginator.num_pages }}&search={{ search_query }}">&raquo; Trang cuối</a>#}
+{#                                {% endif %}#}
+{#                            </span>#}
+{#                        </div>#}
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Liên kết tới jQuery từ CDN -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
+    <!-- Thêm mã JavaScript ở đây -->
     <script>
         $(document).ready(function() {
-            $('#feedbackTable').DataTable({
-                "pageLength": 3, // Hiển thị 5 bản ghi trên mỗi trang
-                "lengthMenu": [3, 6], // Các tùy chọn hiển thị bản ghi
-                "language": {
-                    "search": "<i class='fas fa-search'></i> Tìm kiếm:",
-                    "lengthMenu": "Hiển thị _MENU_ bản ghi",
-                    "info": "Hiển thị _START_ đến _END_ trong tổng số _TOTAL_ bản ghi",
-                    "paginate": {
-                        "next": "<i class='fas fa-chevron-right'></i> Trang sau", // Thêm icon và chữ cho nút "Trang sau"
-                        "previous": "<i class='fas fa-chevron-left'></i> Trang trước" // Thêm icon và chữ cho nút "Trang trước"
+            $('.toggle-viewed-status').on('click', function(e) {
+                e.preventDefault(); // Ngăn chặn hành động mặc định của nút
+    
+                var button = $(this);
+                var feedbackId = button.data('id');
+    
+                $.ajax({
+                    url: "{% url 'toggle_viewed_status' 0 %}".replace('0', feedbackId), // Thay 0 bằng id thực
+                    type: 'POST',
+                    data: {
+                        'csrfmiddlewaretoken': '{{ csrf_token }}', // Gửi CSRF token
+                    },
+                    success: function(response) {
+                        // Cập nhật giao diện sau khi yêu cầu thành công
+                        if (response.is_viewed) {
+                            button.html("<span class='badge badge-success'>Đã xem</span>");
+                        } else {
+                            button.html("<span class='badge badge-danger'>Chưa xem</span>");
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error occurred: " + error);
                     }
-                }
+                });
             });
         });
+    </script>
+
+    <script>
+        function searchTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('feedbackTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                tr[i].style.display = 'none';
+                const td = tr[i].getElementsByTagName('td');
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        if (td[j].innerText.toLowerCase().indexOf(filter) > -1) {
+                            tr[i].style.display = '';
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     </script>
 </body>
 </html>

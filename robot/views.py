@@ -1,8 +1,20 @@
-from datetime import date
+from datetime import date, datetime
+from io import BytesIO
 
+import openpyxl
+from django.core.files.base import ContentFile
+from openpyxl.drawing.image import Image as OpenPyXLImage
+import os
 from django.core.paginator import Paginator
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
+from django.utils.timezone import make_naive
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
+from PIL import Image
+import io
+
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
     CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm
 from django.contrib.auth.forms import AuthenticationForm
@@ -99,7 +111,9 @@ def mark_as_read(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
     notification.is_read = True
     notification.save()
-    return redirect('notification')
+
+    # Trả về phản hồi JSON để AJAX có thể xử lý
+    return JsonResponse({'status': 'success'})
 
 
 @login_required
@@ -672,6 +686,25 @@ def submit_feedback(request):
         if form.is_valid():
             feedback = form.save(commit=False)
             feedback.user = request.user
+
+            # Xử lý ảnh
+            if feedback.image:
+                try:
+                    img = Image.open(feedback.image)
+                    img = img.convert('RGB')  # Chuyển đổi sang RGB
+
+                    # Lưu vào một buffer
+                    img_byte_arr = io.BytesIO()
+                    img.save(img_byte_arr, format='JPEG')  # Lưu ảnh dưới dạng JPEG
+                    img_byte_arr.seek(0)
+
+                    # Tạo một ContentFile từ buffer
+                    feedback.image.save(f"{feedback.image.name}.jpg", ContentFile(img_byte_arr.read()), save=False)
+                except Exception as e:
+                    form.add_error('image', 'Lỗi khi xử lý hình ảnh: ' + str(e))
+                    messages.error(request, "Có lỗi xảy ra khi xử lý hình ảnh.")
+                    return render(request, 'feedback/submit_feedback.html', {'form': form})
+
             feedback.save()
             messages.success(request, "Phản hồi của bạn đã được gửi thành công!")
             return redirect('home')  # Chuyển hướng về trang home sau khi gửi phản hồi
@@ -679,7 +712,6 @@ def submit_feedback(request):
             # In ra lỗi để dễ debug
             print(form.errors)  # In ra các lỗi của form trong console
             messages.error(request, "Có lỗi xảy ra khi gửi phản hồi. Vui lòng kiểm tra lại.")
-
     else:
         form = FeedbackForm()
 
@@ -688,12 +720,106 @@ def submit_feedback(request):
 
 @login_required
 def feedback_list(request):
-    if request.user.is_superuser:  # Kiểm tra nếu người dùng là admin
+    if request.user.is_superuser:
         feedback_list = Feedback.objects.all().order_by('-created_at')
         return render(request, 'feedback/feedback_list.html', {'feedback_list': feedback_list})
     else:
         messages.error(request, "Bạn không có quyền truy cập vào trang này.")
-        return redirect('home')  # Chuyển hướng về trang home nếu không phải admin
+        return redirect('home')
+
+
+@login_required
+def export_feedback_to_excel(request):
+    # Lấy danh sách phản hồi (feedback)
+    feedback_list = Feedback.objects.all().order_by('-created_at')
+
+    # Tạo workbook và worksheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Feedback Report"
+
+    # Đặt font mặc định cho toàn bộ bảng (size 14)
+    default_font = Font(size=14)
+
+    # Đặt tiêu đề cột với font bôi đậm và kích thước 14
+    columns = ['STT', 'Chủ đề', 'Nội dung phản hồi', 'Đánh giá', 'Hình ảnh', 'Ngày phản hồi', 'Trạng thái']
+
+    # Đảm bảo bôi đậm tiêu đề cột với font đậm và màu nền nếu cần để dễ thấy
+    for col_num, column_title in enumerate(columns, start=1):
+        cell = ws.cell(row=1, column=col_num, value=column_title)
+        cell.font = Font(bold=True, size=14)  # Đặt font đậm và size 14 cho tiêu đề
+        cell.alignment = Alignment(horizontal='center', vertical='center')  # Căn giữa tiêu đề
+        cell.fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")  # Thêm màu nền
+
+    # Thêm dữ liệu vào bảng từ dòng thứ hai
+    for index, feedback in enumerate(feedback_list, start=1):
+        created_at_naive = make_naive(feedback.created_at)  # Chuyển timezone-aware datetime thành timezone-naive
+        row = [
+            index,
+            feedback.subject,
+            feedback.content.replace('\r\n', '\n'),  # Thay thế xuống dòng
+            feedback.rating,
+            '',
+            created_at_naive.strftime("%d/%m/%Y"),
+            'Đã xem' if feedback.is_viewed else 'Chưa xem'
+        ]
+        ws.append(row)
+
+        # Đảm bảo nội dung phản hồi được wrap text
+        ws.cell(row=index + 1, column=3).alignment = Alignment(wrap_text=True)  # Cột "Nội dung phản hồi"
+
+        # Nếu có hình ảnh, thêm vào ô tương ứng
+        if feedback.image:
+            img_path = feedback.image.path
+            if os.path.exists(img_path):
+                img = OpenPyXLImage(img_path)
+
+                # Điều chỉnh kích thước ảnh
+                img.width = 300  # Xác định chiều rộng ảnh
+                img.height = 200  # Xác định chiều cao ảnh
+
+                # Thêm hình ảnh vào ô (cột 5 là "Hình ảnh")
+                ws.add_image(img, f'E{index + 1}')
+
+                # Cố định độ cao hàng dựa trên chiều cao của ảnh (1 đơn vị = 0.75 pixel)
+                row_height = img.height * 0.75  # Chuyển đổi chiều cao ảnh sang đơn vị hàng
+                ws.row_dimensions[index + 1].height = row_height  # Điều chỉnh độ cao hàng
+
+    # Đặt độ rộng fix cứng cho cột "Hình ảnh"
+    ws.column_dimensions['E'].width = 45  # 45 tương đương với khoảng 270 pixels
+
+    # Điều chỉnh độ rộng các cột khác dựa trên dữ liệu
+    for col_num, column_cells in enumerate(ws.columns, 1):
+        col_letter = get_column_letter(col_num)
+
+        # Lấy độ dài lớn nhất giữa tiêu đề cột và dữ liệu trong cột đó
+        max_length = max([len(str(cell.value)) if cell.value else 0 for cell in column_cells])
+
+        # Đặt độ rộng cho cột, cộng thêm 2 để dễ nhìn
+        if col_letter != 'E':  # Trừ cột E vì đã fix cứng độ rộng
+            ws.column_dimensions[col_letter].width = max_length + 2
+
+        # Cập nhật kích thước chữ và căn giữa cho từng ô
+        for cell in column_cells:
+            cell.font = default_font  # Tăng kích thước chữ lên 14 cho toàn bộ dữ liệu
+            cell.alignment = Alignment(horizontal='center', vertical='center')  # Căn giữa toàn bộ dữ liệu
+
+    # Tạo một BytesIO để lưu workbook
+    output = BytesIO()
+    wb.save(output)  # Ghi workbook vào BytesIO
+    output.seek(0)  # Đặt con trỏ về đầu để có thể đọc từ đầu
+
+    # Tạo tên file theo ngày tháng
+    filename = f"feedback_report_{datetime.now().strftime('%d-%m-%Y')}.xlsx"
+
+    # Thiết lập phản hồi HTTP để trả file Excel về cho người dùng
+    response = HttpResponse(output.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+
+    # Reset lại dữ liệu phản hồi sau khi xuất ra file
+    feedback_list.delete()
+
+    return response
 
 
 @login_required
@@ -705,6 +831,9 @@ def toggle_viewed_status(request, feedback_id):
         feedback.is_viewed = not feedback.is_viewed
         feedback.save()
 
-    # Sau khi lưu, chuyển hướng về trang feedback_list
-    return redirect('feedback_list')
+        # Trả về JSON với trạng thái mới
+        return JsonResponse({'is_viewed': feedback.is_viewed})
+
+    # Nếu không phải POST, trả về lỗi không hợp lệ
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 

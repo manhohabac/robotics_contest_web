@@ -1,3 +1,5 @@
+import os
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit, KitImage, Sponsor, \
@@ -6,6 +8,7 @@ import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.utils import timezone
+from PIL import Image as PILImage
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -212,7 +215,7 @@ class CompetitionResultForm(forms.ModelForm):
             # Tạo danh sách lựa chọn cho registration với thông tin hiển thị mong muốn
             self.fields['registration'].queryset = registrations
             self.fields['registration'].choices = [
-                (reg.id, f"{reg.user.full_name} - {reg.user.date_of_birth} - {reg.user.school_name}")
+                (reg.id, f"{reg.user.full_name} - {reg.user.date_of_birth:%d-%m-%Y} - {reg.user.school_name}")
                 for reg in registrations
             ]
 
@@ -286,4 +289,23 @@ class FeedbackForm(forms.ModelForm):
             'rating': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 5}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
         }
+
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image:
+            # Lấy định dạng file
+            valid_extensions = ['jpg', 'jpeg', 'png']
+            ext = os.path.splitext(image.name)[1][1:].lower()  # Lấy phần mở rộng và chuyển về chữ thường
+            if ext not in valid_extensions:
+                raise ValidationError('Định dạng file không hợp lệ. Chỉ cho phép các định dạng: jpg, jpeg, png.')
+
+            # Kiểm tra định dạng thực sự của file
+            try:
+                img = PILImage.open(image)
+                img.verify()  # Xác thực file có phải là một hình ảnh hay không
+            except (IOError, SyntaxError) as e:
+                raise ValidationError('File không phải là hình ảnh hợp lệ.')
+
+        return image
+
 

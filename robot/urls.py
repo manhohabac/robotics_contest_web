@@ -42,5 +42,6 @@ urlpatterns = [
     path('feedback/submit/', views.submit_feedback, name='submit_feedback'),
     path('feedback/list/', views.feedback_list, name='feedback_list'),
     path('toggle-viewed/<int:feedback_id>/', views.toggle_viewed_status, name='toggle_viewed_status'),
+    path('feedback/export/', views.export_feedback_to_excel, name='export_feedback_to_excel'),
 
 ]

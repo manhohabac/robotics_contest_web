@@ -13,6 +13,7 @@
         #sidebar {
             background-color: #f8f9fa;
             height: 100vh;
+            width: 200px;
         }
         .sidebar .nav-link {
             font-size: 1.1rem;
@@ -25,9 +26,16 @@
         .sidebar .nav-link i {
             margin-right: 8px;
         }
+        
         .main-content {
-            margin-left: 15px;
+            margin-left: -18px;
+            flex: 1; /* Để phần main tự động chiếm không gian còn lại */
+            height: 100vh; /* Chiếm toàn bộ chiều cao viewport */
+            overflow-y: auto; /* Thêm cuộn nếu nội dung dài */
+            padding-right: 0.5rem !important; /* Thêm padding nếu cần */
+            max-width: 100%; /* Đảm bảo nó chiếm hết không gian bên phải */
         }
+        
         .top-bar {
             display: flex;
             justify-content: flex-end;
@@ -49,7 +57,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav id="sidebar" class="col-md-2 d-md-block bg-light sidebar">
+            <nav id="sidebar" class="d-md-block bg-light sidebar">
                 <div class="position-sticky">
                     <h4 class="mt-3 mb-4 text-center">Dashboard</h4>
                     <ul class="nav flex-column">
@@ -65,12 +73,12 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'contest_list' %}">
-                                <i class="fas fa-trophy"></i> Cuộc thi/Giải đấu
+                                <i class="fas fa-trophy"></i> Cuộc thi
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'result_list' %}">
-                                <i class="fas fa-chart-line"></i> Kết quả Cuộc thi/Giải đấu
+                                <i class="fas fa-chart-line"></i> Kết quả
                             </a>
                         </li>
                         <li class="nav-item">
@@ -99,7 +107,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4">
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
                 <!-- Top Bar -->
                 <div class="top-bar">
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
@@ -118,9 +126,9 @@
                     <h1 class="h2">Thông báo</h1>
                 </div>
 
+                <!-- Nội dung thông báo -->
                 <div class="row">
                     <div class="col-12">
-                        <!-- Danh sách thông báo -->
                         {% if page_obj %}
                             <ul class="list-group">
                                 {% for notification in page_obj %}
@@ -133,7 +141,9 @@
                                                 <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
                                             </div>
                                             {% if not notification.is_read %}
-                                                <a href="{% url 'mark_as_read' notification.id %}" class="btn btn-success">Xác nhận đã xem</a>
+                                                <button class="btn btn-success mark-as-read-btn" data-id="{{ notification.id }}">
+                                                    <i class="fas fa-check-circle mr-2"></i>Xác nhận đã xem
+                                                </button>
                                             {% endif %}
                                         </li>
                                     {% elif not request.user.is_superuser and notification.notification_type == 'user' %}
@@ -145,35 +155,36 @@
                                                 <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
                                             </div>
                                             {% if not notification.is_read %}
-                                                <a href="{% url 'mark_as_read' notification.id %}" class="btn btn-success">Xác nhận đã xem</a>
+                                                <button class="btn btn-success mark-as-read-btn" data-id="{{ notification.id }}">
+                                                    <i class="fas fa-check-circle mr-2"></i>Xác nhận đã xem
+                                                </button>
                                             {% endif %}
                                         </li>
                                     {% endif %}
                                 {% endfor %}
                             </ul>
-                
-                            <!-- Phân trang -->
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination">
+                            <!-- Phân trang vẫn giữ nguyên -->
+                            <nav aria-label="Page navigation" style="margin-top: 10px">
+                                <ul class="pagination justify-content-center">
                                     {% if page_obj.has_previous %}
                                         <li class="page-item">
-                                            <a class="page-link" href="?page=1">Đầu</a>
+                                            <a class="page-link" href="?page=1">Trang đầu</a>
                                         </li>
                                         <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Trước</a>
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Trang trước</a>
                                         </li>
                                     {% endif %}
                                     
                                     <li class="page-item disabled">
-                                        <a class="page-link" style="color: red">{{ page_obj.number }}</a>
+                                        <a class="page-link" style="color: red">Trang {{ page_obj.number }}</a>
                                     </li>
-                
+                    
                                     {% if page_obj.has_next %}
                                         <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Tiếp</a>
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Trang sau</a>
                                         </li>
                                         <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Cuối</a>
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Trang cuối</a>
                                         </li>
                                     {% endif %}
                                 </ul>
@@ -190,5 +201,33 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+    <!-- Thêm jQuery vào template -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Sự kiện khi nhấn nút "Xác nhận đã xem"
+            $('.mark-as-read-btn').on('click', function(e) {
+                e.preventDefault(); // Ngăn chặn hành động mặc định của nút
+                var button = $(this); // Lưu trữ nút được nhấn
+                var notificationId = button.data('id'); // Lấy id của thông báo
+    
+                // Thực hiện yêu cầu AJAX
+                $.ajax({
+                    url: '/notifications/read/' + notificationId + '/', // URL đến view để đánh dấu đã đọc
+                    type: 'GET', // Hoặc 'POST' tùy theo cách bạn thiết lập view
+                    success: function(response) {
+                        // Nếu thành công, cập nhật giao diện
+                        button.closest('.list-group-item').removeClass('unread-notification'); // Xóa lớp đánh dấu chưa đọc
+                        button.remove(); // Xóa nút "Xác nhận đã xem"
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Có lỗi xảy ra: ", error); // Log lỗi nếu có
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
