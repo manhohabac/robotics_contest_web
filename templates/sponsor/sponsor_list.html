@@ -1,28 +1,37 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nhà tài trợ</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Bootstrap CSS từ file offline -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    
+    <!-- Font Awesome từ file offline -->
+    <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
+    
     <style>
         body {
             font-family: Arial, sans-serif;
         }
+        
         #sidebar {
-            background-color: #f8f9fa;
             height: 100vh;
             width: 200px;
         }
+        
         .sidebar .nav-link {
             font-size: 1.1rem;
             color: #495057;
         }
+        
         .sidebar .nav-link.active {
             color: #007bff;
             font-weight: bold;
         }
+        
         .sidebar .nav-link i {
             margin-right: 8px;
         }
@@ -45,6 +54,7 @@
             border-bottom: 1px solid #dee2e6;
             background-color: #f8f9fa;
         }
+        
         .top-bar .btn {
             margin-left: 10px;
         }
@@ -53,8 +63,11 @@
             height: 100%;
         }
         
+        body #sidebar.bg-light {
+            background-color: #E3F2FD !important;
+        }
+        
         #sidebar {
-            background-color: #f8f9fa;
             height: auto; /* Cho phép sidebar mở rộng theo nội dung */
             min-height: 100vh; /* Đảm bảo sidebar luôn có chiều cao tối thiểu bằng chiều cao của màn hình */
         }
@@ -86,7 +99,7 @@
             overflow: hidden; /* Đảm bảo ảnh không vượt quá giới hạn của card */
             position: relative;
         }
-
+        
         .card-body {
             position: relative;
             z-index: 1; /* Đảm bảo phần nội dung luôn hiển thị phía trên ảnh */
@@ -234,7 +247,7 @@
         </div>
     </div>
 
-    <!-- Liên kết tới Bootstrap JS từ CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <!-- Popper.js từ file offline -->
+    <script src="{% static 'js/popper.min.js' %}"></script>
 </body>
 </html>

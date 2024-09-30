@@ -5,17 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kết quả</title>
-    <!-- Liên kết tới Bootstrap CSS từ CDN -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- CSS tùy chỉnh trực tiếp -->
+    
+    <!-- Bootstrap CSS từ file offline -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    
+    <!-- Font Awesome từ file offline -->
+    <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
+    
     <style>
         body {
             font-family: Arial, sans-serif;
         }
+        
+        body #sidebar.bg-light {
+            background-color: #E3F2FD !important;
+        }
+        
         #sidebar {
-            background-color: #f8f9fa;
             height: 100vh;
             width: 200px;
         }
@@ -126,6 +132,9 @@
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Kết quả cụ thể của cuộc thi {{competition.name}}</h1>
+                    <a class="btn btn-success" href="{% url 'export_results_to_excel' competition.id %}">
+                        <i class="fas fa-file-excel"></i> Xuất Excel
+                    </a>
                 </div>
                 
                 <div class="row">
@@ -134,11 +143,11 @@
                             <thead>
                                 <tr>
                                     <th style="width: 2%; vertical-align: middle;">Thứ hạng</th>
-                                    <th style="width: 11%; vertical-align: middle;">Người tham gia</th>
+                                    <th style="width: 11%; vertical-align: middle;">Thí sinh</th>
                                     <th style="width: 6%; vertical-align: middle;">Ảnh đại diện</th>
                                     <th style="width: 6%; vertical-align: middle;">Ngày sinh</th> 
                                     <th style="width: 20%; vertical-align: middle;">Học sinh trường</th> 
-                                    <th style="width: 6%; vertical-align: middle;">Điểm</th>
+                                    <th style="width: 6%; vertical-align: middle;">Điểm số</th>
                                     {% if request.user.is_superuser %}
                                         <th style="width: 7%; vertical-align: middle;">Hành động</th>
                                     {% endif %}
@@ -184,7 +193,7 @@
         </div>
     </div>
 
-    <!-- Liên kết tới Bootstrap JS từ CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <!-- Popper.js từ file offline -->
+    <script src="{% static 'js/popper.min.js' %}"></script>
 </body>
 </html>

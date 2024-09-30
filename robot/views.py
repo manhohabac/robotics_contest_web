@@ -741,15 +741,14 @@ def export_feedback_to_excel(request):
     # Đặt font mặc định cho toàn bộ bảng (size 14)
     default_font = Font(size=14)
 
-    # Đặt tiêu đề cột với font bôi đậm và kích thước 14
+    # Đặt tiêu đề cột với font bôi đậm và kích thước 14, không có màu nền
     columns = ['STT', 'Chủ đề', 'Nội dung phản hồi', 'Đánh giá', 'Hình ảnh', 'Ngày phản hồi', 'Trạng thái']
 
-    # Đảm bảo bôi đậm tiêu đề cột với font đậm và màu nền nếu cần để dễ thấy
+    # Đảm bảo bôi đậm tiêu đề cột với font đậm và không có màu nền
     for col_num, column_title in enumerate(columns, start=1):
         cell = ws.cell(row=1, column=col_num, value=column_title)
-        cell.font = Font(bold=True, size=14)  # Đặt font đậm và size 14 cho tiêu đề
+        cell.font = Font(bold=True, size=14, color='000000')  # Đặt font đậm, size 14, không có màu nền
         cell.alignment = Alignment(horizontal='center', vertical='center')  # Căn giữa tiêu đề
-        cell.fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")  # Thêm màu nền
 
     # Thêm dữ liệu vào bảng từ dòng thứ hai
     for index, feedback in enumerate(feedback_list, start=1):
@@ -836,4 +835,114 @@ def toggle_viewed_status(request, feedback_id):
 
     # Nếu không phải POST, trả về lỗi không hợp lệ
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+@login_required
+def export_registrations_to_excel(request, competition_id):
+    competition = get_object_or_404(Competition, id=competition_id)
+    registrations = Registration.objects.filter(competition=competition, is_cancelled=False)
+
+    # Tạo workbook và worksheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f'Danh sách đăng ký {competition.name}'[:31]  # Giới hạn 31 ký tự
+
+    # Thêm tiêu đề cột với bôi đậm
+    columns = ['STT', 'Họ và tên', 'Ngày sinh', 'Tên trường', 'Ngày đăng ký']
+    ws.append(columns)
+
+    # Bôi đậm tiêu đề
+    for cell in ws[1]:  # Dòng đầu tiên chứa tiêu đề
+        cell.font = Font(bold=True, size=14)
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    # Thêm dữ liệu vào file Excel
+    for idx, registration in enumerate(registrations, start=1):
+        row = [
+            idx,
+            registration.user.full_name,
+            registration.user.date_of_birth.strftime('%d/%m/%Y'),
+            registration.user.school_name,
+            registration.registration_date.strftime('%d/%m/%Y')
+        ]
+        ws.append(row)
+
+        # Căn giữa cho từng ô trong hàng
+        for cell in ws[idx + 1]:  # idx + 1 vì hàng đầu tiên là tiêu đề
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    # Điều chỉnh độ rộng của cột theo nội dung
+    for column_cells in ws.columns:
+        length = max(len(str(cell.value)) for cell in column_cells)
+        ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+
+    # Điều chỉnh chiều cao của hàng
+    for row in ws.iter_rows():
+        ws.row_dimensions[row[0].row].height = 20  # Thiết lập chiều cao hàng là 20 (tùy chỉnh)
+
+    # Lưu workbook vào một đối tượng file ảo
+    file_stream = io.BytesIO()
+    wb.save(file_stream)
+    file_stream.seek(0)  # Đặt con trỏ đọc file về đầu
+
+    # Thiết lập response để tải về file Excel
+    response = HttpResponse(file_stream,
+                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=Danh_sach_dang_ky_{competition.name}.xlsx'
+
+    return response
+
+
+@login_required
+def export_results_to_excel(request, competition_id):
+    competition = get_object_or_404(Competition, id=competition_id)
+    results = CompetitionResult.objects.filter(registration__competition=competition).order_by('-score')
+
+    # Tạo workbook và worksheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f'Kết quả {competition.name}'[:31]  # Giới hạn 31 ký tự
+
+    # Thêm tiêu đề cột
+    columns = ['Thứ hạng', 'Thí sinh', 'Ngày sinh', 'Học sinh trường', 'Điểm số']
+    ws.append(columns)
+
+    # Bôi đậm và căn giữa tiêu đề cột
+    for cell in ws[1]:  # ws[1] là hàng tiêu đề (hàng đầu tiên)
+        cell.font = Font(bold=True, size=14)  # Bôi đậm
+        cell.alignment = Alignment(horizontal='center', vertical='center')  # Căn giữa
+
+    # Thêm dữ liệu vào file Excel
+    for idx, result in enumerate(results, start=1):
+        row = [
+            idx,
+            result.registration.user.full_name,
+            result.registration.user.date_of_birth.strftime('%d/%m/%Y'),
+            result.registration.user.school_name,
+            result.score
+        ]
+        ws.append(row)
+
+    # Căn giữa nội dung các ô
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):  # Bắt đầu từ hàng thứ 2 để bỏ qua tiêu đề
+        for cell in row:
+            cell.alignment = Alignment(horizontal='center', vertical='center')  # Căn giữa
+
+    # Điều chỉnh độ rộng của cột theo nội dung
+    for column_cells in ws.columns:
+        length = max(len(str(cell.value)) for cell in column_cells)
+        ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+
+    # Lưu workbook vào một đối tượng file ảo
+    file_stream = io.BytesIO()
+    wb.save(file_stream)
+    file_stream.seek(0)  # Đặt con trỏ đọc file về đầu
+
+    # Thiết lập response để tải về file Excel
+    response = HttpResponse(file_stream,
+                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=Ket_qua_{competition.name}.xlsx'
+
+    return response
+
 

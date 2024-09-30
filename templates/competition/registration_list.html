@@ -5,18 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danh sách đăng kí</title>
-    <!-- Liên kết tới Bootstrap CSS từ CDN -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Liên kết tới Font Awesome cho các biểu tượng -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- CSS tùy chỉnh trực tiếp -->
+    
+    <!-- Bootstrap CSS từ file offline -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    
+    <!-- Font Awesome từ file offline -->
+    <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
+    
     <style>
         body {
             font-family: Arial, sans-serif;
         }
         
+        body #sidebar.bg-light {
+            background-color: #E3F2FD !important;
+        }
+        
         #sidebar {
-            background-color: #f8f9fa;
             height: 100vh;
             width: 200px;
         }
@@ -143,7 +148,10 @@
             
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Danh sách đăng ký - {{ competition.name }}</h1>
+                    <h1 class="h2">Danh sách đăng ký cuộc thi {{ competition.name }}</h1>
+                    <a href="{% url 'export_registrations_to_excel' competition.id %}" class="btn btn-success mb-3">
+                        <i class="fas fa-file-excel"></i> Xuất Excel
+                    </a>
                 </div>
             
                 <div class="row">
@@ -203,7 +211,8 @@
         </div>
     </div>
 
-    <!-- Liên kết tới Bootstrap JS từ CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <!-- Popper.js từ file offline -->
+    <script src="{% static 'js/popper.min.js' %}"></script>
+
 </body>
 </html>

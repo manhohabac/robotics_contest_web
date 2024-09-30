@@ -43,5 +43,9 @@ urlpatterns = [
     path('feedback/list/', views.feedback_list, name='feedback_list'),
     path('toggle-viewed/<int:feedback_id>/', views.toggle_viewed_status, name='toggle_viewed_status'),
     path('feedback/export/', views.export_feedback_to_excel, name='export_feedback_to_excel'),
+    path('competition/<int:competition_id>/registrations/export/', views.export_registrations_to_excel,
+         name='export_registrations_to_excel'),
+    path('competition/<int:competition_id>/results/export/', views.export_results_to_excel,
+         name='export_results_to_excel'),
 
 ]
