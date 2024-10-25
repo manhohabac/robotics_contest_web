@@ -45,18 +45,6 @@
             padding-right: 0.5rem !important; /* Thêm padding nếu cần */
             max-width: 100%; /* Đảm bảo nó chiếm hết không gian bên phải */
         }
-        
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
-            background-color: #f8f9fa;
-        }
-        .top-bar .btn {
-            margin-left: 10px;
-        }
     </style>
     
     <style>
@@ -78,11 +66,6 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'home' %}">
                                 <i class="fas fa-home"></i> Trang chủ
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'user_profile' %}">
-                                <i class="fas fa-user"></i> Trang cá nhân
                             </a>
                         </li>
                         <li class="nav-item">
@@ -121,20 +104,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
-                <!-- Top Bar -->
-                <div class="top-bar">
-                    <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
-                        <i class="fas fa-bell"></i> Thông báo
-                    </a>
-                    <a class="btn btn-primary" href="{% url 'change_password' %}">
-                        <i class="fas fa-key"></i> Đổi mật khẩu
-                    </a>
-                    <a class="btn btn-danger" href="{% url 'user_logout' %}">
-                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
-                    </a>
-                </div>
-                
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">                
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Kết quả các cuộc thi</h1>

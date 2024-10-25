@@ -945,4 +945,3 @@ def export_results_to_excel(request, competition_id):
 
     return response
 
-

@@ -118,19 +118,6 @@
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
-                <!-- Top Bar -->
-                <div class="top-bar">
-                    <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %}" href="{% url 'notification' %}">
-                        <i class="fas fa-bell"></i> Thông báo
-                    </a>
-                    <a class="btn btn-primary" href="{% url 'change_password' %}">
-                        <i class="fas fa-key"></i> Đổi mật khẩu
-                    </a>
-                    <a class="btn btn-danger" href="{% url 'user_logout' %}">
-                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
-                    </a>
-                </div>
-
                 <!-- Content -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Thông báo</h1>
