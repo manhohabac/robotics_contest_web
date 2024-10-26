@@ -47,5 +47,6 @@ urlpatterns = [
          name='export_registrations_to_excel'),
     path('competition/<int:competition_id>/results/export/', views.export_results_to_excel,
          name='export_results_to_excel'),
+    path('competition/<int:competition_id>/guide/', views.competition_guide, name='competition_guide'),
 
 ]

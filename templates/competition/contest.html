@@ -50,8 +50,8 @@
     
     <style>
         .competition-image {
-            max-height: 190px; /* Thay đổi giá trị theo nhu cầu */
-            max-width: 100%; /* Giữ tỉ lệ hình ảnh, không vượt quá chiều rộng của card */
+            height: 190px; /* Thay đổi giá trị theo nhu cầu */
+            width: 100%; /* Giữ tỉ lệ hình ảnh, không vượt quá chiều rộng của card */
             object-fit: cover; /* Giúp hình ảnh được cắt và hiển thị đồng nhất */
         }
     </style>
@@ -107,11 +107,14 @@
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">                
                 <!-- Content -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Danh sách cuộc thi</h1>
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 mb-2 border-bottom">
+                    <!-- Bọc tiêu đề trong một div và dùng mx-auto để căn giữa -->
+                    <div class="mx-auto">
+                        <h1 class="h2">Danh sách cuộc thi</h1>
+                    </div>
                 
                     {% if request.user.is_superuser %}
-                        <a class="btn btn-success" href="{% url 'add_competition' %}">
+                        <a class="btn btn-success mb-2" href="{% url 'add_competition' %}">
                             <i class="fas fa-plus"></i> Thêm cuộc thi
                         </a>
                     {% endif %}

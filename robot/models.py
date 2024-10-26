@@ -67,6 +67,16 @@ class Competition(models.Model):
         return self.name
 
 
+class GuideFile(models.Model):
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='guide_files')
+    file = models.FileField(upload_to='competition_guides/')
+    note = models.CharField(max_length=255, blank=True, null=True)  # Trường ghi chú
+    uploaded_at = models.DateTimeField(auto_now_add=True)  # Thời gian tải lên
+
+    def __str__(self):
+        return f"{self.file.name} - {self.competition.name}"
+
+
 class Registration(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='registrations')
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='registrations')

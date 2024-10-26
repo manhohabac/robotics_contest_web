@@ -106,9 +106,9 @@
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
                 <!-- Nội dung chính -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 mb-2 border-bottom">
                     <h1 class="h2">Thông tin chi tiết của cuộc thi {{ competition.name }}</h1>
-                    <div class="button-group">
+                    <div class="button-group mb-2">
                         {% if not request.user.is_superuser %}
                             <!-- Phần này chỉ hiển thị cho người dùng không phải là admin (superuser) -->
                             {% if today < competition.start_date %}
@@ -149,9 +149,11 @@
                             {% endif %}
                         {% endif %}
                 
-                        <a href="{% url 'registration_list' competition.id %}" class="btn btn-info">
-                            <i class="fas fa-list"></i> Danh sách đăng ký
-                        </a>
+                        {% if request.user.is_superuser or request.user.is_staff %}
+                            <a href="{% url 'registration_list' competition.id %}" class="btn btn-info">
+                                <i class="fas fa-list"></i> Danh sách đăng ký
+                            </a>
+                        {% endif %}
                     
                         <!-- Phần này chỉ hiển thị cho admin (superuser) -->
                         {% if request.user.is_superuser %}
@@ -189,6 +191,9 @@
                         </p>
                         <p><strong>Số đội thi tối đa:</strong> 
                             Tối đa {{ competition.max_participants }} đội
+                        </p>
+                        <p><strong>Tài liệu hướng dẫn:</strong> 
+                            <a href="{% url 'competition_guide' competition.id %}">Xem chi tiết</a>
                         </p>
                     </div>
                 </div>

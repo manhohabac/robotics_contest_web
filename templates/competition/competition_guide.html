@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thay đổi mật khẩu</title>
+    <title>Chi tiết cuộc thi</title>
     
     <!-- Bootstrap CSS từ file offline -->
-    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
-
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    
     <!-- Font Awesome từ file offline -->
     <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
     
@@ -25,25 +25,46 @@
             height: 100vh;
             width: 200px;
         }
+
         .sidebar .nav-link {
             font-size: 1.1rem;
             color: #495057;
         }
+
         .sidebar .nav-link.active {
             color: #007bff;
             font-weight: bold;
         }
+
         .sidebar .nav-link i {
             margin-right: 8px;
         }
         
         .main-content {
-            margin-left: -18px;
             flex: 1; /* Để phần main tự động chiếm không gian còn lại */
             height: 100vh; /* Chiếm toàn bộ chiều cao viewport */
             overflow-y: auto; /* Thêm cuộn nếu nội dung dài */
-            padding-right: 0.5rem !important; /* Thêm padding nếu cần */
+            padding: 1rem; /* Thêm padding */
             max-width: 100%; /* Đảm bảo nó chiếm hết không gian bên phải */
+        }
+
+        /* Điều chỉnh max-width của container */
+        @media (min-width: 1200px) {
+            .container,
+            .container-lg,
+            .container-md,
+            .container-sm,
+            .container-xl {
+                max-width: 100%; /* Đặt max-width thành 100% */
+            }
+        }
+
+        table th, table td {
+            text-align: center; /* Căn giữa nội dung */
+        }
+        
+        textarea.form-control {
+            height: 120px;
         }
     </style>
 </head>
@@ -66,7 +87,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'result_list' %}">
+                            <a class="nav-link active" href="{% url 'result_list' %}">
                                 <i class="fas fa-chart-line"></i> Kết quả
                             </a>
                         </li>
@@ -97,70 +118,59 @@
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
-                <!-- Content -->
-                <div class="row justify-content-center mt-5"> <!-- Thêm lớp mt-5 vào đây -->
-                    <div class="col-md-8 col-lg-6">
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <h4 class="card-title mb-4 text-center">Đổi mật khẩu</h4>
-                                <form method="post">
-                                    {% csrf_token %}
-                                    {{ form.non_field_errors }}
-                                    
-                                    <div class="form-group">
-                                        <label for="{{ form.current_password.id_for_label }}">Mật khẩu hiện tại:</label>
-                                        {{ form.current_password }}
-                                        {% if form.current_password.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ form.current_password.errors }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                
-                                    <div class="form-group">
-                                        <label for="{{ form.new_password.id_for_label }}">Mật khẩu mới:</label>
-                                        {{ form.new_password }}
-                                        {% if form.new_password.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ form.new_password.errors }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                
-                                    <div class="form-group">
-                                        <label for="{{ form.confirm_new_password.id_for_label }}">Xác nhận mật khẩu mới:</label>
-                                        {{ form.confirm_new_password }}
-                                        {% if form.confirm_new_password.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ form.confirm_new_password.errors }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                
-                                    <div class="form-group text-center">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save"></i> Lưu
-                                        </button>
-                                        <a href="{% url 'user_profile' %}" class="btn btn-secondary">
-                                            <i class="fas fa-times"></i> Huỷ
-                                        </a>
-                                    </div>
-                                </form>
-                            </div>
+                <!-- Phần Upload Tài Liệu -->
+                <div class="container">
+                    <h2 class="text-center mb-1">Tải lên tài liệu hướng dẫn</h2>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Chọn tài liệu để tải lên:</label>
+                            <input type="file" class="form-control" id="file" name="file" required>
                         </div>
-                    </div>
+                        <div class="mb-3">
+                            <label for="note" class="form-label">Ghi chú:</label>
+                            <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Tải lên</button>
+                    </form>
+                </div>
+
+                <!-- Nội dung chính - Bảng -->
+                <div class="container mt-2">
+                    <h2 class="text-center mb-1">Danh sách tài liệu hướng dẫn</h2>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Số thứ tự</th>
+                                <th>Tên tài liệu</th>
+                                <th>Ghi chú</th>
+                                <th>Ngày tải lên</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for guide_file in guide_files %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <a href="{{ guide_file.file.url }}" target="_blank">{{ guide_file.file.name }}</a>
+                                    </td>
+                                    <td>{{ guide_file.note|default:"Không có ghi chú" }}</td>
+                                    <td>{{ guide_file.uploaded_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Không có tài liệu hướng dẫn nào được tải lên.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- jQuery từ file offline -->
-    <script src="{% static 'js/jquery-3.5.1.min.js' %}"></script>
-
-    <!-- Popper.js từ file offline -->
+    <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="{% static 'js/popper.min.js' %}"></script>
 
-    <!-- Bootstrap JS từ file offline -->
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
 </body>
 </html>

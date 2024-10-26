@@ -79,11 +79,6 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'user_profile' %}">
-                                <i class="fas fa-user"></i> Trang cá nhân
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link active" href="{% url 'contest_list' %}">
                                 <i class="fas fa-trophy"></i> Cuộc thi
                             </a>
@@ -121,9 +116,13 @@
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">            
                 <!-- Content -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Danh sách đăng ký cuộc thi {{ competition.name }}</h1>
-                    <a href="{% url 'export_registrations_to_excel' competition.id %}" class="btn btn-success mb-3">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 mb-2 border-bottom">
+                    <!-- Bọc tiêu đề trong một div với mx-auto để căn giữa -->
+                    <div class="mx-auto">
+                        <h1 class="h2">Danh sách đăng ký cuộc thi {{ competition.name }}</h1>
+                    </div>
+                
+                    <a href="{% url 'export_registrations_to_excel' competition.id %}" class="btn btn-success mb-2">
                         <i class="fas fa-file-excel"></i> Xuất Excel
                     </a>
                 </div>

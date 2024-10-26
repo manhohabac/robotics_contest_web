@@ -102,13 +102,18 @@
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">            
                 <!-- Content -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Kết quả cụ thể của cuộc thi {{competition.name}}</h1>
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-1 mb-1 border-bottom">
+                    <!-- Bọc tiêu đề trong một div với mx-auto để căn giữa -->
+                    <div class="mx-auto">
+                        <h1 class="h2">Kết quả cụ thể của cuộc thi {{ competition.name }}</h1>
+                    </div>
+                    
+                    <!-- Nút Xuất Excel ở vị trí bên phải -->
                     <a class="btn btn-success" href="{% url 'export_results_to_excel' competition.id %}">
                         <i class="fas fa-file-excel"></i> Xuất Excel
                     </a>
                 </div>
-                
+             
                 <div class="row">
                     <div class="col-12">
                         <table class="table table-bordered">

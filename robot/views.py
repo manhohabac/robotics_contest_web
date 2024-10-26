@@ -24,7 +24,7 @@ from django.contrib import messages
 from django.utils import timezone
 
 from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, Sponsor, \
-    Feedback
+    Feedback, GuideFile
 
 
 def register(request):
@@ -95,8 +95,8 @@ def notification_view(request):
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
     notifications_unread = notifications.filter(is_read=False).exists()
 
-    # Tạo phân trang với mỗi trang hiển thị 6 thông báo
-    paginator = Paginator(notifications, 6)  # Hiển thị 6 thông báo mỗi trang
+    # Tạo phân trang với mỗi trang hiển thị 7 thông báo
+    paginator = Paginator(notifications, 7)  # Hiển thị 7 thông báo mỗi trang
     page_number = request.GET.get('page')  # Lấy số trang hiện tại từ URL
     page_obj = paginator.get_page(page_number)  # Lấy các thông báo tương ứng với trang hiện tại
 
@@ -945,3 +945,18 @@ def export_results_to_excel(request, competition_id):
 
     return response
 
+
+@login_required
+def competition_guide(request, competition_id):
+    competition = get_object_or_404(Competition, id=competition_id)
+
+    if request.method == 'POST':
+        guide_file = request.FILES.get('guide_file')
+        note = request.POST.get('note')  # Lấy ghi chú từ form
+        if guide_file:
+            GuideFile.objects.create(competition=competition, file=guide_file, note=note)
+            return redirect('competition_guide', competition_id=competition.id)
+
+    guide_files = competition.guide_files.all()  # Lấy tất cả tài liệu hướng dẫn liên kết với cuộc thi
+
+    return render(request, 'competition/competition_guide.html', {'competition': competition, 'guide_files': guide_files})

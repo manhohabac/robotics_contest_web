@@ -163,10 +163,11 @@
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4 d-flex flex-column main-content">                
                 <!-- Content -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3 border-bottom">
-                    <h1 class="h2">Danh sách các nhà tài trợ</h1>
+                <div class="d-flex justify-content-between align-items-center mb-1 border-bottom" style="margin-top: -15px">
+                    <h1 class="h2 mx-auto">Danh sách các nhà tài trợ</h1>
+                
                     {% if request.user.is_superuser %}
-                        <a href="{% url 'add_sponsor' %}" class="btn btn-success mb-3 d-flex align-items-center">
+                        <a href="{% url 'add_sponsor' %}" class="btn btn-success mb-1 d-flex align-items-center">
                             <i class="fas fa-plus-circle mr-2"></i> Thêm nhà tài trợ
                         </a>
                     {% endif %}
