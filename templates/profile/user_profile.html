@@ -152,7 +152,9 @@
                                                 <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>
                                             {% endfor %}
                                         </ul>
-                                        <p><strong>Có kinh nghiệm thi đấu robot:</strong> {{ profile.user.has_robot_competition_experience|yesno:"Có,Không" }}</p>
+                                        <p><strong>Vai trò:</strong> 
+                                            {{ profile.user.get_role_display }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>

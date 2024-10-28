@@ -236,6 +236,47 @@
                             {% endif %}
                         </div>
                     
+                        <!-- Thêm trường cho giải Nhất -->
+                        <div class="form-group">
+                            <label for="id_first_prize_points">Điểm giải Nhất</label>
+                            {{ form.first_prize_points|add_class:"form-control" }}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_first_prize_award">Phần thưởng giải Nhất</label>
+                            {{ form.first_prize_award|add_class:"form-control" }}
+                        </div>
+                        
+                        <!-- Thêm trường cho giải Nhì -->
+                        <div class="form-group">
+                            <label for="id_second_prize_points">Điểm giải Nhì</label>
+                            {{ form.second_prize_points|add_class:"form-control" }}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_second_prize_award">Phần thưởng giải Nhì</label>
+                            {{ form.second_prize_award|add_class:"form-control" }}
+                        </div>
+                        
+                        <!-- Thêm trường cho giải Ba -->
+                        <div class="form-group">
+                            <label for="id_third_prize_points">Điểm giải Ba</label>
+                            {{ form.third_prize_points|add_class:"form-control" }}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_third_prize_award">Phần thưởng giải Ba</label>
+                            {{ form.third_prize_award|add_class:"form-control" }}
+                        </div>
+                        
+                        <!-- Thêm trường cho giải Tiềm năng -->
+                        <div class="form-group">
+                            <label for="id_potential_points">Điểm giải Tiềm năng</label>
+                            {{ form.potential_points|add_class:"form-control" }}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_potential_award">Phần thưởng giải Tiềm năng</label>
+                            {{ form.potential_award|add_class:"form-control" }}
+                        </div>
+
+                    
                         <div class="form-group text-center mt-4 mb-5">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save mr-2"></i>Lưu

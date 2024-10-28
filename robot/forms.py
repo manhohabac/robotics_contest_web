@@ -3,7 +3,7 @@ import os
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit, KitImage, Sponsor, \
-    Feedback
+    Feedback, GuideFile
 import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
@@ -21,11 +21,12 @@ class UserRegistrationForm(UserCreationForm):
     address = forms.CharField(max_length=255, label="Địa chỉ")
     school_name = forms.CharField(max_length=255, label="Đang là học sinh trường")
 
-    has_robot_competition_experience = forms.ChoiceField(
-        choices=[(True, 'Đã từng'), (False, 'Chưa từng')],
+    role = forms.ChoiceField(
+        choices=[('student', 'Thí sinh'), ('coach', 'Huấn luyện viên')],
         widget=forms.RadioSelect,
-        label="Đã từng tham gia các cuộc thi về robot"
+        label="Vai trò"
     )
+
     profile_picture = forms.ImageField(required=False, label="Ảnh đại diện")
     phone_number = forms.CharField(max_length=15, required=False, label="Số điện thoại")
     email = forms.EmailField(label="Email")
@@ -43,7 +44,7 @@ class UserRegistrationForm(UserCreationForm):
         model = CustomUser
         fields = [
             'username', 'full_name', 'date_of_birth', 'address', 'school_name',
-            'has_robot_competition_experience', 'profile_picture', 'phone_number',
+            'role', 'profile_picture', 'phone_number',
             'email', 'gender', 'id_number', 'password1', 'password2'
         ]
 
@@ -136,13 +137,15 @@ class EditProfileForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ['full_name', 'date_of_birth', 'address', 'school_name', 'phone_number', 'profile_picture', 'gender']
+        fields = ['full_name', 'date_of_birth', 'address', 'school_name',
+                  'phone_number', 'profile_picture', 'gender', 'role']
         widgets = {
             'full_name': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'school_name': forms.TextInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
+            'role': forms.Select(attrs={'class': 'form-control'}),
             'profile_picture': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
@@ -150,26 +153,23 @@ class EditProfileForm(forms.ModelForm):
 class EditUserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['bio', 'interests', 'social_links', 'is_competitor']
+        fields = ['bio', 'interests', 'social_links']
         widgets = {
             'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'interests': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'social_links': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'is_competitor': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super(EditUserProfileForm, self).__init__(*args, **kwargs)
-        # Đặt checkbox được tick dựa vào giá trị hiện tại của instance
-        if self.instance.is_competitor:
-            self.fields['is_competitor'].initial = True
 
 
 class CompetitionForm(forms.ModelForm):
     class Meta:
         model = Competition
         fields = ['name', 'description', 'start_date', 'end_date',
-                  'registration_deadline', 'rules', 'max_participants', 'image']
+                  'registration_deadline', 'rules', 'max_participants', 'image',
+                  'first_prize_points', 'first_prize_award',
+                  'second_prize_points', 'second_prize_award',
+                  'third_prize_points', 'third_prize_award',
+                  'potential_award', 'potential_points']
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
@@ -308,4 +308,9 @@ class FeedbackForm(forms.ModelForm):
 
         return image
 
+
+class GuideFileForm(forms.ModelForm):
+    class Meta:
+        model = GuideFile
+        fields = ['file', 'note']
 

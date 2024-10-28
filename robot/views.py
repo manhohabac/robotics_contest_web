@@ -16,7 +16,7 @@ from PIL import Image
 import io
 
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
-    CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm
+    CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
@@ -959,4 +959,47 @@ def competition_guide(request, competition_id):
 
     guide_files = competition.guide_files.all()  # Lấy tất cả tài liệu hướng dẫn liên kết với cuộc thi
 
-    return render(request, 'competition/competition_guide.html', {'competition': competition, 'guide_files': guide_files})
+    # Tạo thuộc tính tên tệp cho từng guide_file
+    for guide_file in guide_files:
+        guide_file.file_name = os.path.basename(guide_file.file.name)
+
+    return render(request, 'competition/competition_guide.html',
+                  {'competition': competition, 'guide_files': guide_files})
+
+
+@login_required
+def edit_guide_file(request, pk):
+    guide_file = get_object_or_404(GuideFile, pk=pk)
+
+    if request.method == 'POST':
+        form = GuideFileForm(request.POST, request.FILES, instance=guide_file)
+
+        if form.is_valid():
+            # Lưu ghi chú
+            guide_file.note = form.cleaned_data['note']
+
+            # Kiểm tra xem có tệp mới không
+            if 'file' in request.FILES and request.FILES['file']:
+                guide_file.file = request.FILES['file']  # Cập nhật tệp mới
+
+            guide_file.save()  # Lưu thay đổi
+            return redirect('competition_guide', competition_id=guide_file.competition.id)
+    else:
+        form = GuideFileForm(instance=guide_file)
+
+    # Trích xuất tên tệp hiện tại
+    current_file_name = os.path.basename(guide_file.file.name) if guide_file.file else "Chưa có tệp"
+
+    return render(request, 'competition/edit_guide_file.html', {
+        'form': form,
+        'guide_file': guide_file,
+        'current_file_name': current_file_name  # Thêm biến tên tệp vào ngữ cảnh
+    })
+
+
+@login_required
+def delete_guide_file(request, pk):
+    guide_file = get_object_or_404(GuideFile, pk=pk)
+    competition_id = guide_file.competition.id
+    guide_file.delete()
+    return redirect('competition_guide', competition_id=competition_id)

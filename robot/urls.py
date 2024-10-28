@@ -48,5 +48,7 @@ urlpatterns = [
     path('competition/<int:competition_id>/results/export/', views.export_results_to_excel,
          name='export_results_to_excel'),
     path('competition/<int:competition_id>/guide/', views.competition_guide, name='competition_guide'),
+    path('guide-file/edit/<int:pk>/', views.edit_guide_file, name='edit_guide_file'),
+    path('guide-file/delete/<int:pk>/', views.delete_guide_file, name='delete_guide_file'),
 
 ]

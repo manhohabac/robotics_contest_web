@@ -11,17 +11,25 @@ class CustomUser(AbstractUser):
     date_of_birth = models.DateField(blank=True, null=True)
     address = models.CharField(max_length=255)
     school_name = models.CharField(max_length=255)
-    has_robot_competition_experience = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
-
     gender = models.CharField(
         max_length=10,
         choices=[('nam', 'Nam'), ('nữ', 'Nữ'), ('khác', 'Khác')],
         default='khác'
     )
     id_number = models.CharField(max_length=12, unique=True, null=True, blank=True)
+
+    # Phân biệt vai trò người dùng
+    ROLE_CHOICES = [
+        ('student', 'Học sinh thi đấu'),
+        ('coach', 'Huấn luyện viên')
+    ]
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
+
+    # Điểm Elo tích lũy qua các cuộc thi
+    elo_score = models.FloatField(default=0.0)
 
     def __str__(self):
         return self.username
@@ -35,7 +43,6 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, null=True)  # Thông tin giới thiệu
     interests = models.TextField(blank=True, null=True)  # Sở thích
     social_links = models.TextField(blank=True, null=True)  # Liên kết mạng xã hội
-    is_competitor = models.BooleanField(default=False)  # Có phải là thí sinh không
 
     def __str__(self):
         return self.user.username
@@ -62,6 +69,16 @@ class Competition(models.Model):
     rules = models.TextField(blank=True, null=True)  # Quy định cuộc thi
     max_participants = models.IntegerField(null=True, blank=True)  # Số lượng thí sinh tối đa
     image = models.ImageField(upload_to='competition_images/', null=True, blank=True)  # Hình ảnh cuộc thi
+
+    # Thêm các trường cho điểm thưởng và phần thưởng
+    first_prize_points = models.IntegerField(default=10)  # Điểm cho giải Nhất
+    first_prize_award = models.CharField(max_length=255, blank=True)  # Phần thưởng cho giải Nhất
+    second_prize_points = models.IntegerField(default=8)  # Điểm cho giải Nhì
+    second_prize_award = models.CharField(max_length=255, blank=True)  # Phần thưởng cho giải Nhì
+    third_prize_points = models.IntegerField(default=6)  # Điểm cho giải Ba
+    third_prize_award = models.CharField(max_length=255, blank=True)  # Phần thưởng cho giải Ba
+    potential_points = models.IntegerField(default=4)
+    potential_award = models.CharField(max_length=255, blank=True)  # Phần thưởng cho giải Tiềm năng
 
     def __str__(self):
         return self.name
