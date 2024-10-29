@@ -25,29 +25,35 @@
             height: 100vh;
             width: 200px;
         }
-
         .sidebar .nav-link {
             font-size: 1.1rem;
             color: #495057;
         }
-
         .sidebar .nav-link.active {
             color: #007bff;
             font-weight: bold;
         }
-
         .sidebar .nav-link i {
             margin-right: 8px;
         }
         
         .main-content {
+            margin-left: -18px;
             flex: 1; /* Để phần main tự động chiếm không gian còn lại */
             height: 100vh; /* Chiếm toàn bộ chiều cao viewport */
             overflow-y: auto; /* Thêm cuộn nếu nội dung dài */
-            padding: 1rem; /* Thêm padding */
+            padding-right: 0.5rem !important; /* Thêm padding nếu cần */
             max-width: 100%; /* Đảm bảo nó chiếm hết không gian bên phải */
         }
-
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .d-flex.justify-content-between h1 {
+            margin-left: 0; /* Căn trái */
+        }
+        
         /* Điều chỉnh max-width của container */
         @media (min-width: 1200px) {
             .container,
@@ -58,7 +64,7 @@
                 max-width: 100%; /* Đặt max-width thành 100% */
             }
         }
-
+        
         table th, table td {
             text-align: center; /* Căn giữa nội dung */
         }
@@ -66,13 +72,104 @@
         textarea.form-control {
             height: 120px;
         }
-    </style>
-    
-    <style>
+        
         /* Bỏ viền cho trường nhập file */
         .file-input {
             border: none;
             box-shadow: none;
+            width: 250px;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 4px;
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+
+        .top-bar .btn {
+            margin-left: 10px;
+        }
+
+        /* Làm cho nút btn-secondary trong suốt */
+        .btn-secondary {
+            color: black;
+            background-color: transparent;
+            border-color: transparent;
+        }
+
+        /* Loại bỏ hiệu ứng hover cho btn-secondary */
+        .btn-secondary:hover {
+            background-color: transparent;
+            border-color: transparent;
+            color: inherit;
+            cursor: default;
+        }
+
+        /* Phần thông báo */
+        .notification {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+        
+        /* Căn chỉnh dropdown của người dùng */
+        .dropdown-menu {
+            padding: 10px 15px;
+            min-width: 180px; /* Đảm bảo đủ không gian cho các mục */
+        }
+        
+        .dropdown-menu a.dropdown-item {
+            font-size: 1rem; /* Căn chỉnh kích thước chữ */
+            color: #495057;
+            display: flex;
+            align-items: center; /* Giúp biểu tượng và chữ cùng hàng ngang */
+            padding: 8px 10px; /* Khoảng cách đều giữa các mục */
+        }
+        
+        .dropdown-menu a.dropdown-item i {
+            margin-right: 8px; /* Khoảng cách giữa icon và chữ */
+        }
+        
+        .dropdown-menu a.dropdown-item:hover {
+            background-color: #e9ecef; /* Hiệu ứng hover cho các mục */
+            color: #007bff; /* Thay đổi màu chữ khi hover */
+        }
+        
+        #userDropdown {
+            font-size: 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px; /* Điều chỉnh khoảng cách giữa icon và username */
+        }
+        
+        #userDropdown::after {
+            margin-left: 1px; /* Điều chỉnh khoảng cách của mũi tên (icon) */
+        }
+        
+        @keyframes ring {
+            0% { transform: rotate(0); }
+            10% { transform: rotate(15deg); }
+            20% { transform: rotate(-10deg); }
+            30% { transform: rotate(5deg); }
+            40% { transform: rotate(-5deg); }
+            50% { transform: rotate(3deg); }
+            60% { transform: rotate(-3deg); }
+            100% { transform: rotate(0); }
+        }
+        
+        .bell-animation i {
+            font-size: 1.2rem;
+            animation: ring 1.5s ease infinite; /* Lặp lại hiệu ứng */
         }
     </style>
 </head>
@@ -126,6 +223,39 @@
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
+                <!-- Top Bar -->
+                <div class="top-bar">
+                    <!-- Notification Button (only icon) -->
+                    <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %} {% if notifications_unread %}bell-animation{% endif %}" href="{% url 'notification' %}">
+                        <i class="fas fa-bell"></i>
+                    </a>
+                
+                    <!-- Dropdown for User with margin -->
+                    <div class="dropdown ml-2">
+                        <a href="#" id="userDropdown" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ request.user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li class="nav-item">
+                                <a class="dropdown-item" href="{% url 'user_profile' %}">
+                                    <i class="fas fa-user"></i> Trang cá nhân
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'change_password' %}">
+                                    <i class="fas fa-lock"></i> Đổi mật khẩu
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'user_logout' %}" style="color: red;">
+                                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>    
+            
+                <!-- Nội dung chính -->
                 {% if request.user.is_superuser or request.user.is_staff %}
                     <!-- Phần Upload Tài Liệu -->
                     <div class="container">
@@ -165,9 +295,7 @@
                             {% for guide_file in guide_files %}
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
-                                    <td>
-                                        <a href="{{ guide_file.file.url }}" target="_blank">{{ guide_file.file_name }}</a>
-                                    </td>
+                                    <td>{{ guide_file.file_name }}</td>
                                     <td>{{ guide_file.note|default:"" }}</td>
                                     {% if request.user.is_superuser or request.user.is_staff %}
                                         <td>
@@ -195,6 +323,6 @@
 
     <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="{% static 'js/popper.min.js' %}"></script>
-
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

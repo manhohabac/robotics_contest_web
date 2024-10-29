@@ -954,10 +954,13 @@ def competition_guide(request, competition_id):
         guide_file = request.FILES.get('guide_file')
         note = request.POST.get('note')  # Lấy ghi chú từ form
         if guide_file:
-            GuideFile.objects.create(competition=competition, file=guide_file, note=note)
-            return redirect('competition_guide', competition_id=competition.id)
+            # Tạo một đối tượng GuideFile với trạng thái is_confirmed = False
+            guide_file_instance = GuideFile(competition=competition, file=guide_file, note=note, is_confirmed=False)
+            guide_file_instance.save()  # Lưu tài liệu mà chưa xác nhận
+            return redirect('confirm_guide_file', guide_file_id=guide_file_instance.id)  # Chuyển hướng đến trang xác nhận
 
-    guide_files = competition.guide_files.all()  # Lấy tất cả tài liệu hướng dẫn liên kết với cuộc thi
+    # Lấy danh sách tài liệu đã được xác nhận
+    guide_files = competition.guide_files.filter(is_confirmed=True)
 
     # Tạo thuộc tính tên tệp cho từng guide_file
     for guide_file in guide_files:
@@ -965,6 +968,21 @@ def competition_guide(request, competition_id):
 
     return render(request, 'competition/competition_guide.html',
                   {'competition': competition, 'guide_files': guide_files})
+
+
+@login_required
+def confirm_guide_file(request, guide_file_id):
+    guide_file = get_object_or_404(GuideFile, id=guide_file_id)
+
+    # Thêm thuộc tính file_name vào guide_file
+    guide_file.file_name = os.path.basename(guide_file.file.name)
+
+    if request.method == 'POST':
+        guide_file.is_confirmed = True  # Đánh dấu là đã xác nhận
+        guide_file.save()
+        return redirect('competition_guide', competition_id=guide_file.competition.id)  # Quay lại trang danh sách
+
+    return render(request, 'competition/confirm_guide_file.html', {'guide_file': guide_file})
 
 
 @login_required
@@ -1003,3 +1021,32 @@ def delete_guide_file(request, pk):
     competition_id = guide_file.competition.id
     guide_file.delete()
     return redirect('competition_guide', competition_id=competition_id)
+
+
+@login_required
+def preview_guide_file(request, guide_file_id):
+    guide_file = get_object_or_404(GuideFile, id=guide_file_id)
+
+    # Thêm thuộc tính file_name vào guide_file
+    guide_file.file_name = os.path.basename(guide_file.file.name)
+
+    # Tạo URL để xem trước tài liệu
+    file_url = guide_file.file.url
+
+    if guide_file.file.name.endswith('.pdf'):
+        # Nếu là PDF, có thể xem trực tiếp
+        preview_url = file_url
+    else:
+        # Nếu không phải PDF, sử dụng Google Docs hoặc Office Online
+        preview_url = None
+        if guide_file.file.name.endswith(('.doc', '.docx')):
+            preview_url = f"https://docs.google.com/viewer?url={file_url}&embedded=true"
+        elif guide_file.file.name.endswith(('.xls', '.xlsx')):
+            preview_url = f"https://view.officeapps.live.com/op/view.aspx?src={file_url}"
+        elif guide_file.file.name.endswith(('.ppt', '.pptx')):
+            preview_url = f"https://view.officeapps.live.com/op/view.aspx?src={file_url}"
+
+    return render(request, 'competition/preview_guide_file.html', {
+        'guide_file': guide_file,
+        'preview_url': preview_url,
+    })

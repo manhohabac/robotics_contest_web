@@ -1,4 +1,5 @@
 {% load static %}
+{% load form_filters %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -12,55 +13,175 @@
     <!-- Font Awesome từ file offline -->
     <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
     
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        
-        body #sidebar.bg-light {
-            background-color: #E3F2FD !important;
-        }
-        
-        #sidebar {
-            height: 100vh;
-            width: 200px;
-        }
-        .sidebar .nav-link {
-            font-size: 1.1rem;
-            color: #495057;
-        }
-        .sidebar .nav-link.active {
-            color: #007bff;
-            font-weight: bold;
-        }
-        .sidebar .nav-link i {
-            margin-right: 8px;
-        }
-        
-        .main-content {
-            margin-left: -18px;
-            flex: 1; /* Để phần main tự động chiếm không gian còn lại */
-            height: 100vh; /* Chiếm toàn bộ chiều cao viewport */
-            overflow-y: auto; /* Thêm cuộn nếu nội dung dài */
-            padding-right: 0.5rem !important; /* Thêm padding nếu cần */
-            max-width: 100%; /* Đảm bảo nó chiếm hết không gian bên phải */
-        }
-        
-        .form-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .form-control {
-            margin-bottom: 15px;
-        }
-        .btn {
-            margin-top: 20px;
-        }
-    </style>
+<style>
+    /* General */
+    body {
+        font-family: Arial, sans-serif;
+        height: 100%;
+    }
+    
+    #sidebar {
+        background-color: #E3F2FD !important;
+        height: auto;
+        min-height: 100vh;
+        width: 200px;
+    }
+    
+    .sidebar .nav-link {
+        font-size: 1.1rem;
+        color: #495057;
+    }
+    
+    .sidebar .nav-link.active {
+        color: #007bff;
+        font-weight: bold;
+    }
+    
+    .sidebar .nav-link i {
+        margin-right: 8px;
+    }
+
+    /* Main Content */
+    .main-content {
+        margin-top: 50px; /* Tạo khoảng trống bằng chiều cao của top-bar */
+        margin-left: -18px;
+        flex: 1;
+        height: calc(100vh - 50px); /* Trừ đi chiều cao của top-bar */
+        overflow-y: auto;
+        padding-right: 0.5rem !important;
+        max-width: 100%;
+    }
+    
+    main {
+        margin-top: 50px; /* Tạo khoảng trống bằng chiều cao của top-bar */
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .top-bar {
+        position: fixed;
+        top: 0;
+        left: 205px; /* Đẩy top-bar qua phải, tránh trùng với sidebar */
+        width: calc(100% - 215px); /* Độ rộng còn lại trừ sidebar */
+        z-index: 10;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 5px;
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+
+    .top-bar .btn {
+        margin-left: 10px;
+    }
+
+    /* Button and Card Styling */
+    .btn-secondary {
+        color: black;
+        background-color: transparent;
+        border-color: transparent;
+    }
+
+    .btn-secondary:hover {
+        background-color: transparent;
+        border-color: transparent;
+        color: inherit;
+        cursor: default;
+    }
+
+    .btn-group .btn {
+        margin-right: 15px;
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .card-body {
+        flex-grow: 1;
+    }
+
+    .card-img-top {
+        max-height: 200px;
+        object-fit: cover;
+    }
+
+    /* Notification */
+    .notification {
+        display: none;
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(255, 0, 0, 0.8);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 18px;
+    }
+
+    /* Dropdown Menu */
+    .dropdown-menu {
+        padding: 10px 15px;
+        min-width: 180px;
+    }
+
+    .dropdown-menu a.dropdown-item {
+        font-size: 1rem;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        padding: 8px 10px;
+    }
+
+    .dropdown-menu a.dropdown-item i {
+        margin-right: 8px;
+    }
+
+    .dropdown-menu a.dropdown-item:hover {
+        background-color: #e9ecef;
+        color: #007bff;
+    }
+
+    #userDropdown {
+        font-size: 1.2rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    #userDropdown::after {
+        margin-left: 1px;
+    }
+
+    /* Bell Animation */
+    @keyframes ring {
+        0% { transform: rotate(0); }
+        10% { transform: rotate(15deg); }
+        20% { transform: rotate(-10deg); }
+        30% { transform: rotate(5deg); }
+        40% { transform: rotate(-5deg); }
+        50% { transform: rotate(3deg); }
+        60% { transform: rotate(-3deg); }
+        100% { transform: rotate(0); }
+    }
+
+    .bell-animation i {
+        font-size: 1.2rem;
+        animation: ring 1.5s ease infinite;
+    }
+</style>
+
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
+    <div class="container-fluid h-100">
+        <div class="row h-100 d-flex">
             <!-- Sidebar -->
             <nav id="sidebar" class="d-md-block bg-light sidebar">
                 <div class="position-sticky">
@@ -107,10 +228,42 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">                
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 d-flex flex-column main-content">
+                <!-- Top Bar -->
+                <div class="top-bar">
+                    <!-- Notification Button (only icon) -->
+                    <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %} {% if notifications_unread %}bell-animation{% endif %}" href="{% url 'notification' %}">
+                        <i class="fas fa-bell"></i>
+                    </a>
+                
+                    <!-- Dropdown for User with margin -->
+                    <div class="dropdown ml-2">
+                        <a href="#" id="userDropdown" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ request.user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li class="nav-item">
+                                <a class="dropdown-item" href="{% url 'user_profile' %}">
+                                    <i class="fas fa-user"></i> Trang cá nhân
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'change_password' %}">
+                                    <i class="fas fa-lock"></i> Đổi mật khẩu
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'user_logout' %}" style="color: red;">
+                                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            
                 <!-- Content -->
-                <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pt-1 mb-1 border-bottom">
-                    <h1 class="h2">Thêm/sửa thông tin bộ thiết bị</h1>
+                <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center mb-2 border-bottom">
+                    <h1 class="h2" style="margin-top: -15px">Thêm/sửa thông tin bộ thiết bị</h1>
                 </div>
                 
                 <div class="form-container">
@@ -141,7 +294,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Lưu
                             </button>
-                            <a href="{% url 'kit_list' %}" class="btn btn-secondary">
+                            <a href="{% url 'kit_list' %}" class="btn btn-info">
                                 <i class="fas fa-times"></i> Huỷ
                             </a>
                         </div>
@@ -151,9 +304,8 @@
         </div>
     </div>
 
-    <!-- Popper.js từ file offline -->
     <script src="{% static 'js/popper.min.js' %}"></script>
-    
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const priceInput = document.getElementById('priceInput');

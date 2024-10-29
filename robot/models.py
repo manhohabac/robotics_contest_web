@@ -71,14 +71,10 @@ class Competition(models.Model):
     image = models.ImageField(upload_to='competition_images/', null=True, blank=True)  # Hình ảnh cuộc thi
 
     # Thêm các trường cho điểm thưởng và phần thưởng
-    first_prize_points = models.IntegerField(default=10)  # Điểm cho giải Nhất
-    first_prize_award = models.CharField(max_length=255, blank=True)  # Phần thưởng cho giải Nhất
-    second_prize_points = models.IntegerField(default=8)  # Điểm cho giải Nhì
-    second_prize_award = models.CharField(max_length=255, blank=True)  # Phần thưởng cho giải Nhì
-    third_prize_points = models.IntegerField(default=6)  # Điểm cho giải Ba
-    third_prize_award = models.CharField(max_length=255, blank=True)  # Phần thưởng cho giải Ba
-    potential_points = models.IntegerField(default=4)
-    potential_award = models.CharField(max_length=255, blank=True)  # Phần thưởng cho giải Tiềm năng
+    first_prize_points = models.IntegerField(default=0)  # Điểm cho giải Nhất
+    second_prize_points = models.IntegerField(default=0)  # Điểm cho giải Nhì
+    third_prize_points = models.IntegerField(default=0)  # Điểm cho giải Ba
+    potential_points = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -89,6 +85,7 @@ class GuideFile(models.Model):
     file = models.FileField(upload_to='competition_guides/')
     note = models.CharField(max_length=255, blank=True, null=True)  # Trường ghi chú
     uploaded_at = models.DateTimeField(auto_now_add=True)  # Thời gian tải lên
+    is_confirmed = models.BooleanField(default=False)  # Trạng thái xác nhận
 
     def __str__(self):
         return f"{self.file.name} - {self.competition.name}"

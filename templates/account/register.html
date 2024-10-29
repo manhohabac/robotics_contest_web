@@ -254,13 +254,13 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Đã từng tham gia các cuộc thi về robot?</label>
-                                {{ form.has_robot_competition_experience }}
-                                <!-- Hiển thị lỗi cho trường has_robot_competition_experience -->
-                                {% if form.has_robot_competition_experience.errors %}
+                                <label class="form-label">Vai trò</label>
+                                {{ form.role }}
+                                <!-- Hiển thị lỗi cho trường role -->
+                                {% if form.role.errors %}
                                     <div class="form-error">
-                                        {% for error in form.has_robot_competition_experience.errors %}
-                                            <p><strong>{{ form.has_robot_competition_experience.label }}:</strong> {{ error|striptags }}</p>
+                                        {% for error in form.role.errors %}
+                                            <p><strong>{{ form.role.label }}:</strong> {{ error|striptags }}</p>
                                         {% endfor %}
                                     </div>
                                 {% endif %}

@@ -166,10 +166,8 @@ class CompetitionForm(forms.ModelForm):
         model = Competition
         fields = ['name', 'description', 'start_date', 'end_date',
                   'registration_deadline', 'rules', 'max_participants', 'image',
-                  'first_prize_points', 'first_prize_award',
-                  'second_prize_points', 'second_prize_award',
-                  'third_prize_points', 'third_prize_award',
-                  'potential_award', 'potential_points']
+                  'first_prize_points', 'second_prize_points',
+                  'third_prize_points', 'potential_points']
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),

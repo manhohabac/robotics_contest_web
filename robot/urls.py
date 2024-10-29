@@ -50,5 +50,6 @@ urlpatterns = [
     path('competition/<int:competition_id>/guide/', views.competition_guide, name='competition_guide'),
     path('guide-file/edit/<int:pk>/', views.edit_guide_file, name='edit_guide_file'),
     path('guide-file/delete/<int:pk>/', views.delete_guide_file, name='delete_guide_file'),
-
+    path('competition/guide/confirm/<int:guide_file_id>/', views.confirm_guide_file, name='confirm_guide_file'),
+    path('competition/guide/preview/<int:guide_file_id>/', views.preview_guide_file, name='preview_guide_file'),
 ]
