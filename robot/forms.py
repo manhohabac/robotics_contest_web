@@ -310,5 +310,5 @@ class FeedbackForm(forms.ModelForm):
 class GuideFileForm(forms.ModelForm):
     class Meta:
         model = GuideFile
-        fields = ['file', 'note']
+        fields = ['file', 'note', 'document_name']
 

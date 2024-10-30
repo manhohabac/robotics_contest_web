@@ -257,11 +257,10 @@
                 
                 <div class="container text-center">
                     <h2 class="mb-4">Xác nhận tải lên tài liệu</h2>
-                    <p><strong>Tên tài liệu:</strong>
-                        <a href="{{ guide_file.file.url }}" target="_blank">
-                            {{ guide_file.file_name }}
-                        </a>
-                    </p>
+                    <p><strong>Tên tệp tin:</strong> {{ guide_file.original_file_name }}</p>
+
+                    <p><strong>Tên tài liệu:</strong> {{ guide_file.document_name }}</p>
+                    
                     <p><strong>Ghi chú:</strong> {{ guide_file.note }}</p>
                     
                     <form method="post">

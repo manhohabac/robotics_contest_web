@@ -6,7 +6,7 @@ from django.core.files.base import ContentFile
 from openpyxl.drawing.image import Image as OpenPyXLImage
 import os
 from django.core.paginator import Paginator
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.utils.timezone import make_naive
@@ -952,30 +952,32 @@ def competition_guide(request, competition_id):
 
     if request.method == 'POST':
         guide_file = request.FILES.get('guide_file')
-        note = request.POST.get('note')  # Lấy ghi chú từ form
+        document_name = request.POST.get('document_name')
+        note = request.POST.get('note')
         if guide_file:
-            # Tạo một đối tượng GuideFile với trạng thái is_confirmed = False
-            guide_file_instance = GuideFile(competition=competition, file=guide_file, note=note, is_confirmed=False)
-            guide_file_instance.save()  # Lưu tài liệu mà chưa xác nhận
-            return redirect('confirm_guide_file', guide_file_id=guide_file_instance.id)  # Chuyển hướng đến trang xác nhận
+            guide_file_instance = GuideFile(
+                competition=competition,
+                file=guide_file,
+                original_file_name=guide_file.name,  # Lưu tên gốc vào original_file_name
+                document_name=document_name,
+                note=note,
+                is_confirmed=False
+            )
+            guide_file_instance.save()
+            return redirect('confirm_guide_file', guide_file_id=guide_file_instance.id)
 
     # Lấy danh sách tài liệu đã được xác nhận
     guide_files = competition.guide_files.filter(is_confirmed=True)
 
-    # Tạo thuộc tính tên tệp cho từng guide_file
-    for guide_file in guide_files:
-        guide_file.file_name = os.path.basename(guide_file.file.name)
-
-    return render(request, 'competition/competition_guide.html',
-                  {'competition': competition, 'guide_files': guide_files})
+    return render(request, 'competition/competition_guide.html', {
+        'competition': competition,
+        'guide_files': guide_files
+    })
 
 
 @login_required
 def confirm_guide_file(request, guide_file_id):
     guide_file = get_object_or_404(GuideFile, id=guide_file_id)
-
-    # Thêm thuộc tính file_name vào guide_file
-    guide_file.file_name = os.path.basename(guide_file.file.name)
 
     if request.method == 'POST':
         guide_file.is_confirmed = True  # Đánh dấu là đã xác nhận
@@ -993,25 +995,25 @@ def edit_guide_file(request, pk):
         form = GuideFileForm(request.POST, request.FILES, instance=guide_file)
 
         if form.is_valid():
-            # Lưu ghi chú
             guide_file.note = form.cleaned_data['note']
 
             # Kiểm tra xem có tệp mới không
             if 'file' in request.FILES and request.FILES['file']:
                 guide_file.file = request.FILES['file']  # Cập nhật tệp mới
+                guide_file.original_file_name = request.FILES['file'].name  # Cập nhật tên gốc
 
             guide_file.save()  # Lưu thay đổi
             return redirect('competition_guide', competition_id=guide_file.competition.id)
     else:
         form = GuideFileForm(instance=guide_file)
 
-    # Trích xuất tên tệp hiện tại
-    current_file_name = os.path.basename(guide_file.file.name) if guide_file.file else "Chưa có tệp"
+    # Sử dụng `original_file_name` để hiển thị tên gốc của tệp
+    current_file_name = guide_file.original_file_name if guide_file.original_file_name else "Chưa có tệp"
 
     return render(request, 'competition/edit_guide_file.html', {
         'form': form,
         'guide_file': guide_file,
-        'current_file_name': current_file_name  # Thêm biến tên tệp vào ngữ cảnh
+        'current_file_name': current_file_name
     })
 
 
@@ -1024,29 +1026,12 @@ def delete_guide_file(request, pk):
 
 
 @login_required
-def preview_guide_file(request, guide_file_id):
+def download_guide_file(request, guide_file_id):
     guide_file = get_object_or_404(GuideFile, id=guide_file_id)
+    response = FileResponse(guide_file.file.open('rb'), as_attachment=True)
+    response['Content-Disposition'] = f'attachment; filename="{guide_file.original_file_name}"'
+    return response
 
-    # Thêm thuộc tính file_name vào guide_file
-    guide_file.file_name = os.path.basename(guide_file.file.name)
 
-    # Tạo URL để xem trước tài liệu
-    file_url = guide_file.file.url
 
-    if guide_file.file.name.endswith('.pdf'):
-        # Nếu là PDF, có thể xem trực tiếp
-        preview_url = file_url
-    else:
-        # Nếu không phải PDF, sử dụng Google Docs hoặc Office Online
-        preview_url = None
-        if guide_file.file.name.endswith(('.doc', '.docx')):
-            preview_url = f"https://docs.google.com/viewer?url={file_url}&embedded=true"
-        elif guide_file.file.name.endswith(('.xls', '.xlsx')):
-            preview_url = f"https://view.officeapps.live.com/op/view.aspx?src={file_url}"
-        elif guide_file.file.name.endswith(('.ppt', '.pptx')):
-            preview_url = f"https://view.officeapps.live.com/op/view.aspx?src={file_url}"
 
-    return render(request, 'competition/preview_guide_file.html', {
-        'guide_file': guide_file,
-        'preview_url': preview_url,
-    })

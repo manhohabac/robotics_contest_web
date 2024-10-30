@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
@@ -83,12 +85,20 @@ class Competition(models.Model):
 class GuideFile(models.Model):
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='guide_files')
     file = models.FileField(upload_to='competition_guides/')
+    original_file_name = models.CharField(max_length=255, blank=True, null=True)
+    document_name = models.CharField(max_length=255, blank=True, null=True)
     note = models.CharField(max_length=255, blank=True, null=True)  # Trường ghi chú
     uploaded_at = models.DateTimeField(auto_now_add=True)  # Thời gian tải lên
     is_confirmed = models.BooleanField(default=False)  # Trạng thái xác nhận
 
+    def save(self, *args, **kwargs):
+        # Lưu tên gốc nếu file mới được tải lên
+        if self.file and not self.original_file_name:
+            self.original_file_name = os.path.basename(self.file.name)
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.file.name} - {self.competition.name}"
+        return f"{self.original_file_name} - {self.competition.name}"
 
 
 class Registration(models.Model):
