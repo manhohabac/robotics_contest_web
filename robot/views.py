@@ -3,6 +3,7 @@ from io import BytesIO
 
 import openpyxl
 from django.core.files.base import ContentFile
+from django.forms import modelformset_factory
 from openpyxl.drawing.image import Image as OpenPyXLImage
 import os
 from django.core.paginator import Paginator
@@ -16,7 +17,7 @@ from PIL import Image
 import io
 
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
-    CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm
+    CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm, CompetitionRoundForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
@@ -24,7 +25,7 @@ from django.contrib import messages
 from django.utils import timezone
 
 from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, Sponsor, \
-    Feedback, GuideFile
+    Feedback, GuideFile, CompetitionRound
 
 
 def register(request):
@@ -326,14 +327,28 @@ def cancel_registration(request, competition_id):
 
 @login_required
 def add_competition(request):
+    CompetitionRoundFormSet = modelformset_factory(CompetitionRound, form=CompetitionRoundForm, extra=1, can_delete=True)
+
     if request.method == 'POST':
         form = CompetitionForm(request.POST, request.FILES)
-        if form.is_valid():
-            competition = form.save()
-            CustomUser = get_user_model()  # Lấy model CustomUser
+        formset = CompetitionRoundFormSet(request.POST, queryset=CompetitionRound.objects.none())
 
-            # Tạo thông báo cho tất cả người dùng thường
-            users = CustomUser.objects.filter(is_superuser=False)  # Lọc người dùng thường (không phải admin)
+        if form.is_valid() and formset.is_valid():
+            competition = form.save()
+
+            # Lưu từng vòng thi trong formset
+            rounds = formset.save(commit=False)
+            for round_obj in rounds:
+                round_obj.competition = competition
+                round_obj.save()
+
+            # Xóa những vòng thi được đánh dấu xóa
+            for round_obj in formset.deleted_objects:
+                round_obj.delete()
+
+            # Tạo thông báo
+            CustomUser = get_user_model()
+            users = CustomUser.objects.filter(is_superuser=False)
             for user in users:
                 Notification.objects.create(
                     user=user,
@@ -343,8 +358,7 @@ def add_competition(request):
                     notification_type='user'
                 )
 
-            # Tạo thông báo cho admin
-            admin_users = CustomUser.objects.filter(is_superuser=True)  # Lấy danh sách admin
+            admin_users = CustomUser.objects.filter(is_superuser=True)
             for admin in admin_users:
                 Notification.objects.create(
                     user=admin,
@@ -355,15 +369,16 @@ def add_competition(request):
                 )
 
             messages.success(request, f"Cuộc thi '{competition.name}' đã được tạo thành công!")
-            return redirect('contest_list')  # Chuyển hướng về danh sách các cuộc thi sau khi lưu thành công
+            return redirect('contest_list')
         else:
-            # Nếu form không hợp lệ, bạn có thể xử lý lỗi ở đây nếu cần
-            print(form.errors)  # In ra lỗi để kiểm tra
+            print(form.errors)
+            print(formset.errors)
 
     else:
         form = CompetitionForm()
+        formset = CompetitionRoundFormSet(queryset=CompetitionRound.objects.none())
 
-    return render(request, 'competition/add_competition.html', {'form': form})
+    return render(request, 'competition/add_competition.html', {'form': form, 'formset': formset})
 
 
 @login_required
@@ -380,49 +395,37 @@ def registration_list(request, competition_id):
 @login_required
 def edit_competition(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
+    CompetitionRoundFormSet = modelformset_factory(CompetitionRound, form=CompetitionRoundForm, extra=0, can_delete=True)
 
     if request.method == 'POST':
         form = CompetitionForm(request.POST, request.FILES, instance=competition)
+        formset = CompetitionRoundFormSet(request.POST, queryset=competition.rounds.all())
 
-        if form.is_valid():
-            # Kiểm tra xem người dùng có upload hình ảnh mới không
-            new_image = form.cleaned_data.get('new_image')
-            if new_image:
-                competition.image = new_image  # Cập nhật hình ảnh mới cho cuộc thi
+        if form.is_valid() and formset.is_valid():
+            competition = form.save()
 
-            form.save()  # Lưu lại tất cả các thay đổi khác của form
+            # Lưu và xóa vòng thi từ formset
+            rounds = formset.save(commit=False)
+            for round_obj in rounds:
+                round_obj.competition = competition
+                round_obj.save()
 
-            # Tạo thông báo cho tất cả người dùng thường
-            users = CustomUser.objects.filter(is_superuser=False)  # Lọc người dùng thường (không phải admin)
-            for user in users:
-                Notification.objects.create(
-                    user=user,
-                    title="Cuộc thi đã được cập nhật",
-                    content=f"Thông tin về cuộc thi {competition.name} đã được cập nhật. Hãy xem thông tin mới!",
-                    created_at=timezone.now(),
-                    notification_type='user'
-                )
+            # Xóa những vòng thi được đánh dấu xóa
+            for round_obj in formset.deleted_objects:
+                round_obj.delete()
 
-            # Gửi thông báo cho admin về việc cuộc thi đã được cập nhật
-            admin_users = CustomUser.objects.filter(is_superuser=True)  # Lấy danh sách admin
-            for admin in admin_users:
-                Notification.objects.create(
-                    user=admin,
-                    title="Thông tin cuộc thi đã được cập nhật",
-                    content=f"Người dùng {request.user.get_full_name()} đã chỉnh sửa thông tin cuộc thi {competition.name}.",
-                    created_at=timezone.now(),
-                    notification_type='admin'
-                )
-
-            messages.success(request, "Cập nhật thông tin cuộc thi thành công.")
-            return redirect('competition_detail', competition_id=competition.id)
+            messages.success(request, f"Cuộc thi '{competition.name}' đã được cập nhật thành công!")
+            return redirect('contest_list')
         else:
-            print(form.errors)  # In ra lỗi để kiểm tra
+            print(form.errors)
+            print(formset.errors)
+            messages.error(request, "Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.")
 
     else:
         form = CompetitionForm(instance=competition)
+        formset = CompetitionRoundFormSet(queryset=competition.rounds.all())
 
-    return render(request, 'competition/edit_competition.html', {'form': form, 'competition': competition})
+    return render(request, 'competition/edit_competition.html', {'form': form, 'formset': formset})
 
 
 @login_required

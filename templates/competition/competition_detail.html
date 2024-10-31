@@ -301,16 +301,27 @@
                     </div>
                 
                     <div class="col-md-8">
-                        <p><strong>Mô tả:</strong> 
+                        <p><strong>Mô tả cuộc thi:</strong> 
                             {{ competition.description }}
                         </p>
-                        <p><strong>Thời gian diễn ra:</strong> 
-                            Từ ngày {{ competition.start_date|date:"d/m/Y" }} đến ngày {{ competition.end_date|date:"d/m/Y" }}
+                        <p><strong>Đối tượng dự thi:</strong> 
+                            {{ competition.participants_target }}
+                        </p>
+                    
+                        <p><strong>Thời gian diễn ra:</strong></p>
+                        <ul>
+                            {% for round in competition.rounds.all %}
+                                <li>{{ round.round_name }}: {{ round.schedule }}</li>
+                            {% endfor %}
+                        </ul>
+                    
+                        <p><strong>Địa điểm tổ chức:</strong> 
+                            {{ competition.location }}
                         </p>
                         <p><strong>Hạn đăng ký:</strong> 
-                            {{ competition.registration_deadline|date:"d/m/Y" }}
+                            Từ ngày {{ competition.registration_start_date|date:"d/m/Y" }} đến hết ngày {{ competition.registration_end_date|date:"d/m/Y" }}
                         </p>
-                        <p><strong>Quy định:</strong> 
+                        <p><strong>Các quy định chung:</strong> 
                             {{ competition.rules }}
                         </p>
                         <p><strong>Số đội thi tối đa:</strong> 

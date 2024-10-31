@@ -249,11 +249,11 @@
                 <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pt-1 mb-1 border-bottom">
                     <h1 class="h2">Thêm thông tin cuộc thi</h1>
                 </div>
-
+                
                 <div class="container mt-1">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        
+                
                         <!-- Name Field -->
                         <div class="form-group">
                             <label for="id_name">Tên cuộc thi</label>
@@ -280,50 +280,103 @@
                             {% endif %}
                         </div>
                 
+                        <!-- Participants Target Field -->
+                        <div class="form-group">
+                            <label for="id_participants_target">Đối tượng dự thi</label>
+                            {{ form.participants_target|add_class:"form-control" }}
+                        </div>
+                
+                        <!-- Location Field -->
+                        <div class="form-group">
+                            <label for="id_location">Địa điểm tổ chức</label>
+                            {{ form.location|add_class:"form-control" }}
+                        </div>
+                
                         <div class="form-row">
-                            <!-- Start Date Field -->
+                            <!-- Registration Start Date Field -->
                             <div class="form-group" style="max-width: 160px;">   
-                                <label for="id_start_date">Ngày bắt đầu</label>
-                                {{ form.start_date|add_class:"form-control" }}
-                                {% if form.start_date.errors %}
+                                <label for="id_registration_start_date">Ngày bắt đầu đăng ký</label>
+                                {{ form.registration_start_date|add_class:"form-control" }}
+                                {% if form.registration_start_date.errors %}
                                     <div class="text-danger">
-                                        {% for error in form.start_date.errors %}
+                                        {% for error in form.registration_start_date.errors %}
                                             <p>{{ error }}</p>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
                         
-                            <!-- Registration Deadline Field -->
+                            <!-- Registration End Date Field -->
                             <div class="form-group" style="max-width: 160px;">
-                                <label for="id_registration_deadline">Hạn đăng kí</label>
-                                {{ form.registration_deadline|add_class:"form-control" }}
-                                {% if form.registration_deadline.errors %}
+                                <label for="id_registration_end_date">Ngày kết thúc đăng ký</label>
+                                {{ form.registration_end_date|add_class:"form-control" }}
+                                {% if form.registration_end_date.errors %}
                                     <div class="text-danger">
-                                        {% for error in form.registration_deadline.errors %}
-                                            <p>{{ error }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                
-                            <!-- End Date Field -->
-                            <div class="form-group" style="max-width: 160px;">
-                                <label for="id_end_date">Ngày kết thúc</label>
-                                {{ form.end_date|add_class:"form-control" }}
-                                {% if form.end_date.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.end_date.errors %}
+                                        {% for error in form.registration_end_date.errors %}
                                             <p>{{ error }}</p>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
+                
+                        <!-- Round Information -->
+                        <h3>Thông tin vòng thi</h3>
+                        {{ formset.management_form }}
+                        <div id="rounds-container">
+                            {% for form in formset %}
+                                <div class="competition-round mb-3 p-3 border rounded" id="round-{{ forloop.counter0 }}">
+                                    <h4 class="round-title">Vòng thi {{ forloop.counter }}</h4>
+                        
+                                    <!-- Trường ID ẩn (chỉ dùng trong edit) -->
+                                    {% if form.instance.id %}
+                                        <input type="hidden" name="form-{{ forloop.counter0 }}-id" value="{{ form.instance.id }}">
+                                    {% endif %}
+                        
+                                    <!-- Round Name Field -->
+                                    <div class="form-group">
+                                        <label for="{{ form.round_name.id_for_label }}">Tên vòng thi</label>
+                                        {{ form.round_name|add_class:"form-control" }}
+                                        {% if form.round_name.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.round_name.errors %}
+                                                    <p>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                        
+                                    <!-- Schedule Field -->
+                                    <div class="form-group">
+                                        <label for="{{ form.schedule.id_for_label }}">Thời gian diễn ra vòng thi</label>
+                                        {{ form.schedule|add_class:"form-control" }}
+                                        {% if form.schedule.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.schedule.errors %}
+                                                    <p>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                        
+                                    <!-- Nút Xóa Vòng Thi -->
+                                    <button type="button" class="btn btn-danger btn-sm remove-round" data-round-id="round-{{ forloop.counter0 }}">
+                                        <i class="fas fa-trash-alt"></i> Xóa vòng thi
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Nút "Thêm vòng thi" ngoài vòng lặp -->
+                        <div class="text-center mt-3">
+                            <button type="button" id="add-round" class="btn btn-info">
+                                <i class="fas fa-plus"></i> Thêm vòng thi
+                            </button>
+                        </div>
                     
                         <!-- Rules Field -->
                         <div class="form-group">
-                            <label for="id_rules">Quy định</label>
+                            <label for="id_rules">Các quy định chung</label>
                             {{ form.rules|add_class:"form-control" }}
                             {% if form.rules.errors %}
                                 <div class="text-danger">
@@ -333,10 +386,10 @@
                                 </div>
                             {% endif %}
                         </div>
-                    
+                
                         <!-- Max Participants Field -->
                         <div class="form-group">
-                            <label for="id_max_participants">Số đội</label>
+                            <label for="id_max_participants">Số lượng đội thi tối đa</label>
                             {{ form.max_participants|add_class:"form-control" }}
                             {% if form.max_participants.errors %}
                                 <div class="text-danger">
@@ -346,10 +399,28 @@
                                 </div>
                             {% endif %}
                         </div>
-                    
+                
+                        <!-- Prize Points -->
+                        <div class="form-group">
+                            <label for="id_first_prize_points">Điểm thưởng giải Nhất</label>
+                            {{ form.first_prize_points|add_class:"form-control" }}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_second_prize_points">Điểm thưởng giải Nhì</label>
+                            {{ form.second_prize_points|add_class:"form-control" }}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_third_prize_points">Điểm thưởng giải Ba</label>
+                            {{ form.third_prize_points|add_class:"form-control" }}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_potential_points">Điểm thưởng giải Tiềm năng</label>
+                            {{ form.potential_points|add_class:"form-control" }}
+                        </div>
+                
                         <!-- Image Field -->
                         <div class="form-group">
-                            <label for="id_image">Hình ảnh</label>
+                            <label for="id_image">Hình ảnh đại diện cuộc thi</label><br>
                             {{ form.image }}
                             {% if form.image.errors %}
                                 <div class="text-danger">
@@ -359,31 +430,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                    
-                        <!-- Thêm trường cho giải Nhất -->
-                        <div class="form-group">
-                            <label for="id_first_prize_points">Điểm giải Nhất</label>
-                            {{ form.first_prize_points|add_class:"form-control" }}
-                        </div>
-                        
-                        <!-- Thêm trường cho giải Nhì -->
-                        <div class="form-group">
-                            <label for="id_second_prize_points">Điểm giải Nhì</label>
-                            {{ form.second_prize_points|add_class:"form-control" }}
-                        </div>
-                        
-                        <!-- Thêm trường cho giải Ba -->
-                        <div class="form-group">
-                            <label for="id_third_prize_points">Điểm giải Ba</label>
-                            {{ form.third_prize_points|add_class:"form-control" }}
-                        </div>
-                        
-                        <!-- Thêm trường cho giải Tiềm năng -->
-                        <div class="form-group">
-                            <label for="id_potential_points">Điểm giải Tiềm năng</label>
-                            {{ form.potential_points|add_class:"form-control" }}
-                        </div>
-                    
+                
                         <div class="form-group text-center mt-4 mb-5">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save mr-2"></i>Lưu
@@ -401,5 +448,69 @@
     <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="{% static 'js/popper.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addRoundButton = document.getElementById('add-round');
+            const roundsContainer = document.getElementById('rounds-container');
+            const totalForms = document.querySelector('#id_form-TOTAL_FORMS'); // Trường quản lý số lượng form
+            let formCount = parseInt(totalForms.value); // Số form hiện có
+    
+            // Hàm để thêm sự kiện xóa vòng thi
+            function addRemoveButtonEvent(button) {
+                button.addEventListener('click', function() {
+                    const roundElement = button.closest('.competition-round');
+                    if (roundElement) {
+                        roundElement.remove();
+                        formCount--;
+                        totalForms.value = formCount;
+                        updateRoundTitles();
+                    }
+                });
+            }
+    
+            // Cập nhật tiêu đề số thứ tự cho các vòng thi sau khi xóa
+            function updateRoundTitles() {
+                document.querySelectorAll('.competition-round .round-title').forEach((title, index) => {
+                    title.textContent = `Vòng thi ${index + 1}`;
+                });
+            }
+    
+            addRoundButton.addEventListener('click', function() {
+                const newForm = roundsContainer.firstElementChild.cloneNode(true); // Clone form đầu tiên
+                newForm.querySelectorAll('input, textarea').forEach((input) => {
+                    const name = input.name.replace(/-\d+-/, `-${formCount}-`);
+                    input.name = name;
+                    input.id = `id_${name}`;
+                    input.value = ""; // Xóa giá trị cũ
+                });
+    
+                // Cập nhật số thứ tự cho vòng thi mới
+                const roundTitle = newForm.querySelector('.round-title');
+                roundTitle.textContent = `Vòng thi ${formCount + 1}`;
+    
+                // Thêm nút xóa và gán sự kiện xóa cho vòng thi mới
+                let removeButton = newForm.querySelector('.remove-round');
+                if (!removeButton) {
+                    removeButton = document.createElement('button');
+                    removeButton.type = 'button';
+                    removeButton.className = 'btn btn-danger btn-sm remove-round';
+                    removeButton.innerHTML = '<i class="fas fa-trash-alt"></i> Xóa vòng thi';
+                    newForm.appendChild(removeButton);
+                }
+                addRemoveButtonEvent(removeButton);
+    
+                roundsContainer.appendChild(newForm);
+                formCount++;
+    
+                // Cập nhật lại trường quản lý `TOTAL_FORMS`
+                totalForms.value = formCount;
+            });
+    
+            // Gán sự kiện xóa cho tất cả các nút xóa đã có
+            document.querySelectorAll('.remove-round').forEach(button => {
+                addRemoveButtonEvent(button);
+            });
+        });
+    </script>
 </body>
 </html>

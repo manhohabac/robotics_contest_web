@@ -1,4 +1,5 @@
 import os
+from datetime import date
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -64,22 +65,30 @@ def save_user_profile(sender, instance, **kwargs):
 class Competition(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    start_date = models.DateField()
-    end_date = models.DateField()
-    registration_deadline = models.DateField()  # Hạn đăng ký
-    is_active = models.BooleanField(default=True)  # Cuộc thi có đang diễn ra hay không
-    rules = models.TextField(blank=True, null=True)  # Quy định cuộc thi
-    max_participants = models.IntegerField(null=True, blank=True)  # Số lượng thí sinh tối đa
-    image = models.ImageField(upload_to='competition_images/', null=True, blank=True)  # Hình ảnh cuộc thi
-
-    # Thêm các trường cho điểm thưởng và phần thưởng
-    first_prize_points = models.IntegerField(default=0)  # Điểm cho giải Nhất
-    second_prize_points = models.IntegerField(default=0)  # Điểm cho giải Nhì
-    third_prize_points = models.IntegerField(default=0)  # Điểm cho giải Ba
+    registration_start_date = models.DateField(default=date(2024, 1, 1))
+    registration_end_date = models.DateField(default=date(2024, 12, 31))
+    is_active = models.BooleanField(default=True)
+    rules = models.TextField(blank=True, null=True)
+    max_participants = models.IntegerField(null=True, blank=True)
+    image = models.ImageField(upload_to='competition_images/', null=True, blank=True)
+    participants_target = models.CharField(max_length=255, blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    first_prize_points = models.IntegerField(default=0)
+    second_prize_points = models.IntegerField(default=0)
+    third_prize_points = models.IntegerField(default=0)
     potential_points = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
+
+
+class CompetitionRound(models.Model):
+    competition = models.ForeignKey(Competition, related_name='rounds', on_delete=models.CASCADE)
+    round_name = models.CharField(max_length=255, blank=True, null=True)
+    schedule = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.round_name
 
 
 class GuideFile(models.Model):

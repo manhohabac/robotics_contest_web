@@ -3,13 +3,13 @@ import os
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit, KitImage, Sponsor, \
-    Feedback, GuideFile
+    Feedback, GuideFile, CompetitionRound
 import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.utils import timezone
 from PIL import Image as PILImage
-
+from django.forms import modelformset_factory
 
 class UserRegistrationForm(UserCreationForm):
     full_name = forms.CharField(max_length=255, label="Họ và tên")
@@ -162,32 +162,40 @@ class EditUserProfileForm(forms.ModelForm):
 
 
 class CompetitionForm(forms.ModelForm):
+    new_image = forms.ImageField(required=False)  # Thêm trường new_image
+
     class Meta:
         model = Competition
-        fields = ['name', 'description', 'start_date', 'end_date',
-                  'registration_deadline', 'rules', 'max_participants', 'image',
-                  'first_prize_points', 'second_prize_points',
-                  'third_prize_points', 'potential_points']
+        fields = [
+            'name', 'description', 'registration_start_date', 'registration_end_date',
+            'rules', 'max_participants', 'image',
+            'first_prize_points', 'second_prize_points',
+            'third_prize_points', 'potential_points',
+            'participants_target', 'location']
+
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
-            'registration_deadline': forms.DateInput(attrs={'type': 'date'}),
+            'registration_start_date': forms.DateInput(attrs={'type': 'date'}),
+            'registration_end_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def save(self, commit=True):
         competition = super().save(commit=False)
-        # So sánh end_date với thời điểm hiện tại để đặt is_active
-        if competition.end_date >= timezone.now().date():
-            competition.is_active = True
-        else:
-            competition.is_active = False
+
+        # Đặt is_active dựa vào registration_end_date
+        competition.is_active = competition.registration_end_date >= timezone.now().date()
 
         if commit:
             competition.save()
         return competition
 
-    # Thêm trường upload ảnh mới
-    new_image = forms.ImageField(required=False, label='Change')
+
+class CompetitionRoundForm(forms.ModelForm):
+    class Meta:
+        model = CompetitionRound
+        fields = ['round_name', 'schedule']
+
+
+CompetitionRoundFormSet = modelformset_factory(CompetitionRound, form=CompetitionRoundForm, extra=1, can_delete=True)
 
 
 class CompetitionResultForm(forms.ModelForm):
