@@ -3,7 +3,7 @@ from io import BytesIO
 
 import openpyxl
 from django.core.files.base import ContentFile
-from django.forms import modelformset_factory
+from django.forms import modelformset_factory, inlineformset_factory
 from openpyxl.drawing.image import Image as OpenPyXLImage
 import os
 from django.core.paginator import Paginator
@@ -17,7 +17,8 @@ from PIL import Image
 import io
 
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
-    CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm, CompetitionRoundForm
+    CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm
+
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
@@ -25,7 +26,7 @@ from django.contrib import messages
 from django.utils import timezone
 
 from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, Sponsor, \
-    Feedback, GuideFile, CompetitionRound
+    Feedback, GuideFile
 
 
 def register(request):
@@ -327,26 +328,39 @@ def cancel_registration(request, competition_id):
 
 @login_required
 def add_competition(request):
-    CompetitionRoundFormSet = modelformset_factory(CompetitionRound, form=CompetitionRoundForm, extra=1, can_delete=True)
-
     if request.method == 'POST':
         form = CompetitionForm(request.POST, request.FILES)
-        formset = CompetitionRoundFormSet(request.POST, queryset=CompetitionRound.objects.none())
 
-        if form.is_valid() and formset.is_valid():
-            competition = form.save()
+        # Lấy danh sách tên bảng đấu từ request POST
+        group_names = request.POST.getlist('group_names[]')
 
-            # Lưu từng vòng thi trong formset
-            rounds = formset.save(commit=False)
-            for round_obj in rounds:
-                round_obj.competition = competition
-                round_obj.save()
+        # Lấy thông tin vòng thi từ request POST
+        round_names = request.POST.getlist('round_names[]')
+        round_times = request.POST.getlist('round_times[]')
+        round_matches = request.POST.getlist('round_matches[]')
+        round_scoring_methods = request.POST.getlist('round_scoring_methods[]')
 
-            # Xóa những vòng thi được đánh dấu xóa
-            for round_obj in formset.deleted_objects:
-                round_obj.delete()
+        rounds = []  # Danh sách để lưu thông tin vòng thi
 
-            # Tạo thông báo
+        for name, time, matches, scoring_method in zip(round_names, round_times, round_matches, round_scoring_methods):
+            if name:  # Kiểm tra nếu tên vòng thi không rỗng
+                rounds.append({
+                    'round_name': name,  # Sửa lại đây cho đúng
+                    'schedule': time,  # Sửa lại đây cho đúng
+                    'matches_count': int(matches) if matches else 0,  # Sửa lại đây cho đúng
+                    'scoring_method': scoring_method
+                })
+
+        if form.is_valid():
+            competition = form.save(commit=False)
+
+            # Lưu danh sách nhóm
+            competition.groups = [{"group_name": name} for name in group_names]
+            # Lưu thông tin vòng thi dưới dạng JSON
+            competition.rounds = rounds  # Nếu bạn có trường `rounds` trong model Competition
+            competition.save()
+
+            # Tạo thông báo cho người dùng
             CustomUser = get_user_model()
             users = CustomUser.objects.filter(is_superuser=False)
             for user in users:
@@ -372,13 +386,13 @@ def add_competition(request):
             return redirect('contest_list')
         else:
             print(form.errors)
-            print(formset.errors)
 
     else:
         form = CompetitionForm()
-        formset = CompetitionRoundFormSet(queryset=CompetitionRound.objects.none())
 
-    return render(request, 'competition/add_competition.html', {'form': form, 'formset': formset})
+    return render(request, 'competition/add_competition.html', {
+        'form': form,
+    })
 
 
 @login_required
@@ -395,37 +409,56 @@ def registration_list(request, competition_id):
 @login_required
 def edit_competition(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
-    CompetitionRoundFormSet = modelformset_factory(CompetitionRound, form=CompetitionRoundForm, extra=0, can_delete=True)
 
     if request.method == 'POST':
         form = CompetitionForm(request.POST, request.FILES, instance=competition)
-        formset = CompetitionRoundFormSet(request.POST, queryset=competition.rounds.all())
 
-        if form.is_valid() and formset.is_valid():
-            competition = form.save()
+        # Lấy danh sách tên bảng đấu từ request POST
+        group_names = request.POST.getlist('group_names[]')
 
-            # Lưu và xóa vòng thi từ formset
-            rounds = formset.save(commit=False)
-            for round_obj in rounds:
-                round_obj.competition = competition
-                round_obj.save()
+        # Lấy thông tin vòng thi từ request POST
+        round_names = request.POST.getlist('round_names[]')
+        round_times = request.POST.getlist('round_times[]')
+        round_matches = request.POST.getlist('round_matches[]')
+        round_scoring_methods = request.POST.getlist('round_scoring_methods[]')
 
-            # Xóa những vòng thi được đánh dấu xóa
-            for round_obj in formset.deleted_objects:
-                round_obj.delete()
+        rounds = []  # Danh sách để lưu thông tin vòng thi
+
+        for name, time, matches, scoring_method in zip(round_names, round_times, round_matches, round_scoring_methods):
+            if name:  # Kiểm tra nếu tên vòng thi không rỗng
+                rounds.append({
+                    'round_name': name,
+                    'schedule': time,
+                    'matches_count': int(matches) if matches else 0,
+                    'scoring_method': scoring_method
+                })
+
+        if form.is_valid():
+            competition = form.save(commit=False)
+
+            # Lưu danh sách nhóm
+            competition.groups = [{"group_name": name} for name in group_names]
+            # Lưu thông tin vòng thi dưới dạng JSON
+            competition.rounds = rounds
+
+            # Log để kiểm tra dữ liệu
+            print("Groups:", competition.groups)
+            print("Rounds:", competition.rounds)
+
+            competition.save()
 
             messages.success(request, f"Cuộc thi '{competition.name}' đã được cập nhật thành công!")
             return redirect('contest_list')
         else:
             print(form.errors)
-            print(formset.errors)
-            messages.error(request, "Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.")
 
     else:
         form = CompetitionForm(instance=competition)
-        formset = CompetitionRoundFormSet(queryset=competition.rounds.all())
 
-    return render(request, 'competition/edit_competition.html', {'form': form, 'formset': formset})
+    return render(request, 'competition/edit_competition.html', {
+        'form': form,
+        'competition': competition,  # Truyền thông tin cuộc thi cho template
+    })
 
 
 @login_required

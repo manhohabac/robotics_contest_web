@@ -3,13 +3,14 @@ import os
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit, KitImage, Sponsor, \
-    Feedback, GuideFile, CompetitionRound
+    Feedback, GuideFile
 import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.utils import timezone
 from PIL import Image as PILImage
 from django.forms import modelformset_factory
+
 
 class UserRegistrationForm(UserCreationForm):
     full_name = forms.CharField(max_length=255, label="Họ và tên")
@@ -163,6 +164,14 @@ class EditUserProfileForm(forms.ModelForm):
 
 class CompetitionForm(forms.ModelForm):
     new_image = forms.ImageField(required=False)  # Thêm trường new_image
+    rounds = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Nhập thông tin vòng thi dưới dạng JSON'}),
+        required=False
+    )
+    groups = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Nhập thông tin các bảng đấu dưới dạng JSON'}),
+        required=False
+    )
 
     class Meta:
         model = Competition
@@ -171,11 +180,12 @@ class CompetitionForm(forms.ModelForm):
             'rules', 'max_participants', 'image',
             'first_prize_points', 'second_prize_points',
             'third_prize_points', 'potential_points',
-            'participants_target', 'location']
+            'participants_target', 'location', 'rounds', 'groups'
+        ]
 
         widgets = {
-            'registration_start_date': forms.DateInput(attrs={'type': 'date'}),
-            'registration_end_date': forms.DateInput(attrs={'type': 'date'}),
+            'registration_start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'registration_end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
 
     def save(self, commit=True):
@@ -184,46 +194,19 @@ class CompetitionForm(forms.ModelForm):
         # Đặt is_active dựa vào registration_end_date
         competition.is_active = competition.registration_end_date >= timezone.now().date()
 
+        # Chuyển đổi chuỗi JSON thành danh sách và gán cho trường rounds và groups
+        if self.cleaned_data['rounds']:
+            competition.rounds = self.cleaned_data['rounds']
+        if self.cleaned_data['groups']:
+            competition.groups = self.cleaned_data['groups']
+
         if commit:
             competition.save()
         return competition
 
 
-class CompetitionRoundForm(forms.ModelForm):
-    class Meta:
-        model = CompetitionRound
-        fields = ['round_name', 'schedule']
-
-
-CompetitionRoundFormSet = modelformset_factory(CompetitionRound, form=CompetitionRoundForm, extra=1, can_delete=True)
-
-
 class CompetitionResultForm(forms.ModelForm):
-    class Meta:
-        model = CompetitionResult
-        fields = ['registration', 'score']
-        widgets = {
-            'registration': forms.Select(attrs={'class': 'form-control'}),
-            'score': forms.NumberInput(attrs={'class': 'form-control'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        competition = kwargs.pop('competition', None)  # Nhận tham số competition
-        super().__init__(*args, **kwargs)
-
-        if competition:
-            # Lọc các registration theo cuộc thi và is_cancelled=False
-            registrations = Registration.objects.filter(
-                competition=competition,
-                is_cancelled=False
-            )
-
-            # Tạo danh sách lựa chọn cho registration với thông tin hiển thị mong muốn
-            self.fields['registration'].queryset = registrations
-            self.fields['registration'].choices = [
-                (reg.id, f"{reg.user.full_name} - {reg.user.date_of_birth:%d-%m-%Y} - {reg.user.school_name}")
-                for reg in registrations
-            ]
+    pass
 
 
 class KitForm(forms.ModelForm):

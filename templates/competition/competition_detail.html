@@ -308,13 +308,15 @@
                             {{ competition.participants_target }}
                         </p>
                     
-                        <p><strong>Thời gian diễn ra:</strong></p>
+                        <p><strong>Thông tin các vòng thi:</strong></p>
                         <ul>
-                            {% for round in competition.rounds.all %}
-                                <li>{{ round.round_name }}: {{ round.schedule }}</li>
+                            {% for round in competition.rounds %}
+                                <li>{{ round.round_name }}: {{ round.schedule }}</li>  <!-- Đảm bảo sử dụng đúng tên thuộc tính -->
+                            {% empty %}
+                                <li>Chưa có vòng thi nào được thêm.</li>
                             {% endfor %}
                         </ul>
-                    
+
                         <p><strong>Địa điểm tổ chức:</strong> 
                             {{ competition.location }}
                         </p>

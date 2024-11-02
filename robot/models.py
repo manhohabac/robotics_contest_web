@@ -77,18 +77,15 @@ class Competition(models.Model):
     second_prize_points = models.IntegerField(default=0)
     third_prize_points = models.IntegerField(default=0)
     potential_points = models.IntegerField(default=0)
+    groups = models.JSONField(default=list, blank=True)
+    rounds = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return self.name
 
 
-class CompetitionRound(models.Model):
-    competition = models.ForeignKey(Competition, related_name='rounds', on_delete=models.CASCADE)
-    round_name = models.CharField(max_length=255, blank=True, null=True)
-    schedule = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return self.round_name
+class CompetitionResult(models.Model):
+    pass
 
 
 class GuideFile(models.Model):
@@ -175,15 +172,6 @@ class Team(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class CompetitionResult(models.Model):
-    registration = models.OneToOneField(Registration, on_delete=models.CASCADE,
-                                        related_name='result', null=True, blank=True)
-    score = models.FloatField()  # Điểm số
-
-    def __str__(self):
-        return f"{self.registration.user.full_name} - {self.registration.competition.name} - Score: {self.score}"
 
 
 class Kit(models.Model):

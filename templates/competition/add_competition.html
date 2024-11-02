@@ -147,11 +147,17 @@
             display: flex;
             gap: 100px; /* Khoảng cách giữa các trường */
         }
+
         .form-group {
             flex: 1; /* Đảm bảo các phần tử form-group chiếm không gian đồng đều */
         }
+
         .form-control {
             width: 100%; /* Đảm bảo trường input chiếm toàn bộ chiều rộng của form-group */
+        }
+
+        textarea.form-control {
+            height: 130px;
         }
     </style>
     
@@ -160,6 +166,24 @@
             display: flex;
             justify-content: center; /* Căn giữa theo chiều ngang */
             align-items: center; /* Căn giữa theo chiều dọc */
+        }
+
+        .btn-custom {
+            display: flex; /* Sử dụng flexbox để dễ dàng căn giữa */
+            justify-content: center; /* Căn giữa theo chiều ngang */
+            align-items: center; /* Căn giữa theo chiều dọc */
+            width: 48px; /* Đặt chiều rộng tùy chỉnh nếu cần */
+            height: 38px; /* Đặt chiều cao tùy chỉnh nếu cần */
+            padding: 0; /* Xóa padding để tránh icon bị lệch */
+        }
+
+        .btn-custom2 {
+            display: flex; /* Sử dụng flexbox để dễ dàng căn giữa */
+            justify-content: center; /* Căn giữa icon theo chiều ngang */
+            align-items: center; /* Căn giữa icon theo chiều dọc */
+            width: 210px; /* Đặt chiều rộng tùy chỉnh cho nút */
+            height: 38px; /* Đặt chiều cao tùy chỉnh cho nút */
+            padding: 0; /* Xóa padding để tránh icon bị lệch */
         }
     </style>
 </head>
@@ -253,7 +277,7 @@
                 <div class="container mt-1">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                
+
                         <!-- Name Field -->
                         <div class="form-group">
                             <label for="id_name">Tên cuộc thi</label>
@@ -266,7 +290,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                
+
                         <!-- Description Field -->
                         <div class="form-group">
                             <label for="id_description">Thông tin mô tả</label>
@@ -279,22 +303,22 @@
                                 </div>
                             {% endif %}
                         </div>
-                
+
                         <!-- Participants Target Field -->
                         <div class="form-group">
                             <label for="id_participants_target">Đối tượng dự thi</label>
                             {{ form.participants_target|add_class:"form-control" }}
                         </div>
-                
+
                         <!-- Location Field -->
                         <div class="form-group">
                             <label for="id_location">Địa điểm tổ chức</label>
                             {{ form.location|add_class:"form-control" }}
                         </div>
-                
+
                         <div class="form-row">
                             <!-- Registration Start Date Field -->
-                            <div class="form-group" style="max-width: 160px;">   
+                            <div class="form-group" style="max-width: 160px;">
                                 <label for="id_registration_start_date">Ngày bắt đầu đăng ký</label>
                                 {{ form.registration_start_date|add_class:"form-control" }}
                                 {% if form.registration_start_date.errors %}
@@ -305,7 +329,7 @@
                                     </div>
                                 {% endif %}
                             </div>
-                        
+
                             <!-- Registration End Date Field -->
                             <div class="form-group" style="max-width: 160px;">
                                 <label for="id_registration_end_date">Ngày kết thúc đăng ký</label>
@@ -319,61 +343,46 @@
                                 {% endif %}
                             </div>
                         </div>
-                
-                        <!-- Round Information -->
-                        <h3>Thông tin vòng thi</h3>
-                        {{ formset.management_form }}
-                        <div id="rounds-container">
-                            {% for form in formset %}
-                                <div class="competition-round mb-3 p-3 border rounded" id="round-{{ forloop.counter0 }}">
-                                    <h4 class="round-title">Vòng thi {{ forloop.counter }}</h4>
-                        
-                                    <!-- Trường ID ẩn (chỉ dùng trong edit) -->
-                                    {% if form.instance.id %}
-                                        <input type="hidden" name="form-{{ forloop.counter0 }}-id" value="{{ form.instance.id }}">
-                                    {% endif %}
-                        
-                                    <!-- Round Name Field -->
-                                    <div class="form-group">
-                                        <label for="{{ form.round_name.id_for_label }}">Tên vòng thi</label>
-                                        {{ form.round_name|add_class:"form-control" }}
-                                        {% if form.round_name.errors %}
-                                            <div class="text-danger">
-                                                {% for error in form.round_name.errors %}
-                                                    <p>{{ error }}</p>
-                                                {% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                        
-                                    <!-- Schedule Field -->
-                                    <div class="form-group">
-                                        <label for="{{ form.schedule.id_for_label }}">Thời gian diễn ra vòng thi</label>
-                                        {{ form.schedule|add_class:"form-control" }}
-                                        {% if form.schedule.errors %}
-                                            <div class="text-danger">
-                                                {% for error in form.schedule.errors %}
-                                                    <p>{{ error }}</p>
-                                                {% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                        
-                                    <!-- Nút Xóa Vòng Thi -->
-                                    <button type="button" class="btn btn-danger btn-sm remove-round" data-round-id="round-{{ forloop.counter0 }}">
-                                        <i class="fas fa-trash-alt"></i> Xóa vòng thi
-                                    </button>
-                                </div>
-                            {% endfor %}
+
+                        <h3 class="text-center">Thông tin bảng đấu</h3>
+                        <div id="group-names" class="mb-3">
+                            <div class="group mb-3 d-flex align-items-center">
+                                <input type="text" name="group_names[]" placeholder="Tên bảng đấu" class="form-control mr-2" required>
+                                <button type="button" class="btn btn-danger btn-custom" onclick="removeGroupField(this)">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
                         </div>
-                        
-                        <!-- Nút "Thêm vòng thi" ngoài vòng lặp -->
-                        <div class="text-center mt-3">
-                            <button type="button" id="add-round" class="btn btn-info">
+
+                        <div class="text-center">
+                            <button type="button" class="btn btn-info" onclick="addGroupField()">
+                                <i class="fas fa-plus"></i> Thêm bảng đấu
+                            </button>
+                        </div>
+
+                        <h3 class="text-center mt-3">Thông tin vòng thi</h3>
+                        <div id="rounds" class="mb-3">
+                            <div class="round mb-2 d-flex align-items-center">
+                                <input type="text" name="round_names[]" placeholder="Tên vòng thi" required class="form-control mr-2">
+                                <input type="text" name="round_times[]" placeholder="Thời gian diễn ra" required class="form-control mr-2">
+                                <input type="number" name="round_matches[]" placeholder="Số lượt thi đấu" required class="form-control mr-2">
+                                <select name="round_scoring_methods[]" required class="form-control mr-2">
+                                    <option value="">Chọn cách thức tính điểm</option>
+                                    <option value="Điểm cao nhất trong các lượt">Điểm cao nhất trong các lượt</option>
+                                    <option value="Tổng điểm toàn bộ các lượt thi">Tổng điểm toàn bộ các lượt thi</option>
+                                </select>
+                                <button type="button" class="btn btn-danger btn-custom2" onclick="removeRound(this)">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="btn btn-info" onclick="addRound()">
                                 <i class="fas fa-plus"></i> Thêm vòng thi
                             </button>
                         </div>
-                    
+
                         <!-- Rules Field -->
                         <div class="form-group">
                             <label for="id_rules">Các quy định chung</label>
@@ -386,7 +395,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                
+
                         <!-- Max Participants Field -->
                         <div class="form-group">
                             <label for="id_max_participants">Số lượng đội thi tối đa</label>
@@ -399,7 +408,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                
+
                         <!-- Prize Points -->
                         <div class="form-group">
                             <label for="id_first_prize_points">Điểm thưởng giải Nhất</label>
@@ -417,7 +426,7 @@
                             <label for="id_potential_points">Điểm thưởng giải Tiềm năng</label>
                             {{ form.potential_points|add_class:"form-control" }}
                         </div>
-                
+
                         <!-- Image Field -->
                         <div class="form-group">
                             <label for="id_image">Hình ảnh đại diện cuộc thi</label><br>
@@ -430,7 +439,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                
+
                         <div class="form-group text-center mt-4 mb-5">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save mr-2"></i>Lưu
@@ -448,69 +457,50 @@
     <!-- Liên kết tới Bootstrap JS từ CDN -->
     <script src="{% static 'js/popper.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const addRoundButton = document.getElementById('add-round');
-            const roundsContainer = document.getElementById('rounds-container');
-            const totalForms = document.querySelector('#id_form-TOTAL_FORMS'); // Trường quản lý số lượng form
-            let formCount = parseInt(totalForms.value); // Số form hiện có
-    
-            // Hàm để thêm sự kiện xóa vòng thi
-            function addRemoveButtonEvent(button) {
-                button.addEventListener('click', function() {
-                    const roundElement = button.closest('.competition-round');
-                    if (roundElement) {
-                        roundElement.remove();
-                        formCount--;
-                        totalForms.value = formCount;
-                        updateRoundTitles();
-                    }
-                });
-            }
-    
-            // Cập nhật tiêu đề số thứ tự cho các vòng thi sau khi xóa
-            function updateRoundTitles() {
-                document.querySelectorAll('.competition-round .round-title').forEach((title, index) => {
-                    title.textContent = `Vòng thi ${index + 1}`;
-                });
-            }
-    
-            addRoundButton.addEventListener('click', function() {
-                const newForm = roundsContainer.firstElementChild.cloneNode(true); // Clone form đầu tiên
-                newForm.querySelectorAll('input, textarea').forEach((input) => {
-                    const name = input.name.replace(/-\d+-/, `-${formCount}-`);
-                    input.name = name;
-                    input.id = `id_${name}`;
-                    input.value = ""; // Xóa giá trị cũ
-                });
-    
-                // Cập nhật số thứ tự cho vòng thi mới
-                const roundTitle = newForm.querySelector('.round-title');
-                roundTitle.textContent = `Vòng thi ${formCount + 1}`;
-    
-                // Thêm nút xóa và gán sự kiện xóa cho vòng thi mới
-                let removeButton = newForm.querySelector('.remove-round');
-                if (!removeButton) {
-                    removeButton = document.createElement('button');
-                    removeButton.type = 'button';
-                    removeButton.className = 'btn btn-danger btn-sm remove-round';
-                    removeButton.innerHTML = '<i class="fas fa-trash-alt"></i> Xóa vòng thi';
-                    newForm.appendChild(removeButton);
-                }
-                addRemoveButtonEvent(removeButton);
-    
-                roundsContainer.appendChild(newForm);
-                formCount++;
-    
-                // Cập nhật lại trường quản lý `TOTAL_FORMS`
-                totalForms.value = formCount;
-            });
-    
-            // Gán sự kiện xóa cho tất cả các nút xóa đã có
-            document.querySelectorAll('.remove-round').forEach(button => {
-                addRemoveButtonEvent(button);
-            });
-        });
+        function addGroupField() {
+            const groupContainer = document.getElementById('group-names');
+            const newGroup = document.createElement('div');
+            newGroup.classList.add('group', 'mb-3', 'd-flex', 'align-items-center'); // Thêm các class tương tự như hiện tại
+            newGroup.innerHTML = `
+                <input type="text" name="group_names[]" placeholder="Tên bảng đấu" class="form-control mr-2" required>
+                <button type="button" class="btn btn-danger btn-custom" onclick="removeGroupField(this)">
+                    <i class="fas fa-trash-alt mb-2"></i>
+                </button>
+            `;
+            groupContainer.appendChild(newGroup);
+        }
+
+        function removeGroupField(button) {
+            const groupContainer = document.getElementById('group-names');
+            groupContainer.removeChild(button.parentElement);  // Xóa nhóm chứa trường nhập liệu
+        }
+
+        function addRound() {
+            const roundsDiv = document.getElementById('rounds');
+            const newRound = document.createElement('div');
+            newRound.classList.add('round', 'mb-2', 'd-flex', 'align-items-center'); // Thêm các class tương tự như hiện tại
+            newRound.innerHTML = `
+                <input type="text" name="round_names[]" placeholder="Tên vòng thi" required class="form-control mr-2">
+                <input type="text" name="round_times[]" placeholder="Thời gian diễn ra" required class="form-control mr-2">
+                <input type="number" name="round_matches[]" placeholder="Số lượt thi đấu" required class="form-control mr-2">
+                <select name="round_scoring_methods[]" required class="form-control mr-2">
+                    <option value="">Chọn cách thức tính điểm</option>
+                    <option value="Điểm cao nhất trong các lượt">Điểm cao nhất trong các lượt</option>
+                    <option value="Tổng điểm toàn bộ các lượt thi">Tổng điểm toàn bộ các lượt thi</option>
+                </select>
+                <button type="button" class="btn btn-danger btn-custom2" onclick="removeRound(this)">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            `;
+            roundsDiv.appendChild(newRound);
+        }
+
+        function removeRound(button) {
+            const roundsDiv = document.getElementById('rounds');
+            roundsDiv.removeChild(button.parentElement);  // Xóa vòng thi chứa trường nhập liệu
+        }
     </script>
 </body>
 </html>
