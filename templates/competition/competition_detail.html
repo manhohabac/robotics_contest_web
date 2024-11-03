@@ -234,10 +234,10 @@
                     <h1 class="h2">Thông tin chi tiết của cuộc thi {{ competition.name }}</h1>
                     <div class="button-group mb-2">
                         {% if not request.user.is_superuser %}
-                            <!-- Phần này chỉ hiển thị cho người dùng không phải là admin (superuser) -->
-                            {% if today < competition.start_date %}
+                            <!-- Chỉ hiển thị cho người dùng không phải admin -->
+                            {% if today < competition.registration_start_date %}
                                 <span class="text-muted">Chưa bắt đầu đăng ký</span>
-                            {% elif today > competition.registration_deadline %}
+                            {% elif today > competition.registration_end_date %}
                                 <span class="text-muted">Đã hết hạn đăng ký</span>
                             {% else %}
                                 {% if user.is_authenticated %}
@@ -260,15 +260,18 @@
                                     {% else %}
                                         {% if competition.max_participants is not None and current_participants >= competition.max_participants %}
                                             <button class="btn btn-primary" disabled>
-                                                <i class="fas fa-user-friends"></i> Số lượng đăng ký đã đầy
+                                                <i class="fas fa-user-friends"></i> Số lượng đội đã đầy
                                             </button>
                                         {% else %}
+                                            <!-- Chuyển hướng tới trang đăng ký đội -->
                                             <a href="{% url 'register_competition' competition.id %}" class="btn btn-primary">
-                                                <i class="fas fa-user-plus"></i> Đăng ký
+                                                <i class="fas fa-users"></i> Đăng ký đội
                                             </a>
-                                            <button class="btn btn-danger" disabled> Bạn chưa đăng ký thành công </button>
+                                            <button class="btn btn-danger" disabled> Bạn chưa đăng ký đội thành công </button>
                                         {% endif %}
                                     {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Vui lòng đăng nhập để đăng ký</span>
                                 {% endif %}
                             {% endif %}
                         {% endif %}

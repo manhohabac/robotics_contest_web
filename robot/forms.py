@@ -3,13 +3,12 @@ import os
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit, KitImage, Sponsor, \
-    Feedback, GuideFile
+    Feedback, GuideFile, Team, Participant
 import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.utils import timezone
 from PIL import Image as PILImage
-from django.forms import modelformset_factory
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -206,7 +205,43 @@ class CompetitionForm(forms.ModelForm):
 
 
 class CompetitionResultForm(forms.ModelForm):
-    pass
+    class Meta:
+        model = CompetitionResult
+        fields = ['competition', 'team', 'round_number', 'group_number', 'score', 'rank', 'participant']
+        widgets = {
+            'competition': forms.Select(attrs={'class': 'form-control'}),
+            'team': forms.Select(attrs={'class': 'form-control'}),
+            'round_number': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'group_number': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'score': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
+            'rank': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'participant': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        competition = kwargs.pop('competition', None)
+        super().__init__(*args, **kwargs)
+        if competition:
+            self.fields['team'].queryset = Team.objects.filter(competition=competition)
+            self.fields['participant'].queryset = Participant.objects.filter(competition=competition)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        round_number = cleaned_data.get("round_number")
+        group_number = cleaned_data.get("group_number")
+        team = cleaned_data.get("team")
+
+        # Kiểm tra tính hợp lệ cho round_number và group_number nếu cần thiết
+        if round_number and group_number and team:
+            if CompetitionResult.objects.filter(
+                    competition=self.instance.competition,
+                    team=team,
+                    round_number=round_number,
+                    group_number=group_number
+            ).exists():
+                raise forms.ValidationError("Đội này đã có kết quả trong vòng và bảng này.")
+
+        return cleaned_data
 
 
 class KitForm(forms.ModelForm):

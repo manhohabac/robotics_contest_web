@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import random
 
 
 class CustomUser(AbstractUser):
@@ -84,8 +85,55 @@ class Competition(models.Model):
         return self.name
 
 
+class Team(models.Model):
+    name = models.CharField(max_length=255)
+    members = models.ManyToManyField(CustomUser, related_name='teams')
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='teams')
+    coach = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                              related_name='coached_teams')  # Huấn luyện viên liên kết đến CustomUser
+
+    def __str__(self):
+        return self.name
+
+
+class Participant(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='participants')
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='participants')
+    sbd = models.CharField(max_length=6, unique=True, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.sbd:
+            self.sbd = self.generate_sbd()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_sbd():
+        return str(random.randint(100000, 999999))
+
+    def __str__(self):
+        return f"{self.user.username} - {self.sbd} ({self.competition.name})"
+
+
 class CompetitionResult(models.Model):
-    pass
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='results', null=True, blank=True)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='results', null=True, blank=True)
+    round_number = models.IntegerField(default=1)  # Số vòng thi đấu (hoặc bạn có thể giữ kiểu này)
+    group_number = models.IntegerField(default=1)  # Số bảng đấu (hoặc bạn có thể giữ kiểu này)
+    score = models.FloatField(default=0)  # Điểm số của đội thi
+    rank = models.IntegerField(null=True, blank=True)  # Thứ hạng của đội trong vòng thi
+    participant = models.ForeignKey(
+        Participant,
+        on_delete=models.CASCADE,
+        related_name='results',
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.team.name} - {self.competition.name} - Round {self.round_number} - Group {self.group_number}"
+
+    class Meta:
+        unique_together = ('competition', 'team', 'round_number', 'group_number')  # Đảm bảo không có kết quả trùng lặp cho cùng một đội trong cùng một vòng và bảng
 
 
 class GuideFile(models.Model):
@@ -108,13 +156,13 @@ class GuideFile(models.Model):
 
 
 class Registration(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='registrations')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='registrations', null=True, blank=True)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='registrations')
     registration_date = models.DateTimeField(auto_now_add=True)
     is_cancelled = models.BooleanField(default=False)  # Trạng thái đăng ký (hủy hay không)
 
     def __str__(self):
-        return f"{self.user.username} - {self.competition.name}"
+        return f"{self.team.name} - {self.competition.name}"
 
 
 class Exam(models.Model):
@@ -162,16 +210,6 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"Feedback by {self.user.username} - {self.subject}"
-
-
-class Team(models.Model):
-    name = models.CharField(max_length=255)
-    members = models.ManyToManyField(CustomUser, related_name='teams')
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='teams')
-    coach = models.CharField(max_length=255, blank=True, null=True)  # Huấn luyện viên
-
-    def __str__(self):
-        return self.name
 
 
 class Kit(models.Model):

@@ -255,48 +255,48 @@
             
                 <div class="row">
                     <div class="col-12">
-                        {% if registrations %}
+                        {% if registration_data %}
                             <table class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
                                         <th style="width: 0.5%; text-align: center">STT</th>
-                                        <th style="width: 16%; text-align: center">Họ và tên</th>
-                                        <th style="width: 8%; text-align: center">Ngày sinh</th>
-                                        <th style="width: 25%; text-align: center">Tên trường</th>
+                                        <th style="width: 16%; text-align: center">Tên đội</th>
+                                        <th style="width: 10%; text-align: center">Số lượng thành viên</th>
+                                        <th style="width: 20%; text-align: center">Huấn luyện viên</th>
+                                        <th style="width: 30%; text-align: center">Thí sinh</th>
                                         <th style="width: 8%; text-align: center">Ngày đăng ký</th>
-                                        <th style="width: 10%; text-align: center">Ảnh đại diện</th>
-                                        <th style="width: 10%; text-align: center">Trạng thái</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for registration in registrations %}
+                                    {% for entry in registration_data %}
                                     <tr>
                                         <!-- Số thứ tự -->
                                         <td class="text-center">{{ forloop.counter }}</td>
-                                        <!-- Họ và tên -->
-                                        <td class="text-center">{{ registration.user.full_name }}</td>
-                                        <!-- Ngày sinh -->
-                                        <td class="text-center">{{ registration.user.date_of_birth|date:"d/m/Y" }}</td>
-                                        <!-- Tên trường -->
-                                        <td class="text-center">{{ registration.user.school_name }}</td>
+                                        <!-- Tên đội -->
+                                        <td class="text-center">{{ entry.registration.team.name }}</td>
+                                        <!-- Số lượng thành viên -->
+                                        <td class="text-center">{{ entry.registration.team.members.count }}</td>
+                                        <!-- Huấn luyện viên -->
+                                        <td class="text-center">
+                                            {% if entry.registration.team.coach %}
+                                                {{ entry.registration.team.coach.get_full_name }} ({{ entry.registration.team.coach.username }})
+                                                - SBD: {{ entry.coach_participant.sbd }}
+                                            {% else %}
+                                                Chưa có huấn luyện viên
+                                            {% endif %}
+                                        </td>
+                                        <!-- Danh sách thí sinh -->
+                                        <td>
+                                            <ul style="list-style: none; padding: 0;">
+                                                {% for member in entry.members_participants %}
+                                                <li>
+                                                    {{ member.full_name }} ({{ member.username }}) - SBD: {{ member.sbd }}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </td>
                                         <!-- Ngày đăng ký -->
-                                        <td class="text-center">{{ registration.registration_date|date:"d/m/Y" }}</td>
-                                        <!-- Ảnh đại diện -->
-                                        <td class="text-center">
-                                            {% if registration.user.profile_picture %}
-                                                <img src="{{ registration.user.profile_picture.url }}" alt="Avatar" class="avatar-img">
-                                            {% else %}
-                                                <img src="{% static 'images/default.jpg' %}" alt="Avatar" class="avatar-img">
-                                            {% endif %}
-                                        </td>
-                                        <!-- Trạng thái -->
-                                        <td class="text-center">
-                                            {% if registration.is_cancelled %}
-                                                Đã hủy đăng ký
-                                            {% else %}
-                                                Đã đăng ký
-                                            {% endif %}
-                                        </td>
+                                        <td class="text-center">{{ entry.registration.registration_date|date:"d/m/Y" }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
