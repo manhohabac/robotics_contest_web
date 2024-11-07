@@ -3,51 +3,55 @@ import os
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, UserProfile, Competition, CompetitionResult, Registration, Kit, KitImage, Sponsor, \
-    Feedback, GuideFile, Team, Participant
+    Feedback, GuideFile, Team
 import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.utils import timezone
 from PIL import Image as PILImage
+import json
 
 
 class UserRegistrationForm(UserCreationForm):
-    full_name = forms.CharField(max_length=255, label="Họ và tên")
+    full_name = forms.CharField(max_length=255, label="Họ và tên", required=True)
     date_of_birth = forms.DateField(
         widget=forms.DateInput(attrs={'placeholder': 'dd/mm/yyyy', 'class': 'form-control'}, format='%d/%m/%Y'),
         input_formats=['%d/%m/%Y'],
-        label="Ngày sinh (dd/mm/yyyy)"
+        label="Ngày sinh (dd/mm/yyyy)",
+        required=True
     )
-    address = forms.CharField(max_length=255, label="Địa chỉ")
-    school_name = forms.CharField(max_length=255, label="Đang là học sinh trường")
-
+    address = forms.CharField(max_length=255, label="Địa chỉ", required=True)
+    school_name = forms.CharField(max_length=255, label="Đang là học sinh trường", required=False)
     role = forms.ChoiceField(
         choices=[('student', 'Thí sinh'), ('coach', 'Huấn luyện viên')],
         widget=forms.RadioSelect,
-        label="Vai trò"
+        label="Vai trò",
+        required=True
     )
-
     profile_picture = forms.ImageField(required=False, label="Ảnh đại diện")
-    phone_number = forms.CharField(max_length=15, required=False, label="Số điện thoại")
-    email = forms.EmailField(label="Email")
+    phone_number = forms.CharField(max_length=15, label="Số điện thoại", required=True)
+    email = forms.EmailField(label="Email", required=True)
 
-    # Thêm các trường mới
+    # Điều chỉnh trường gender để bỏ đi lựa chọn "khác" và bắt buộc
     gender = forms.ChoiceField(
-        choices=[('nam', 'Nam'), ('nữ', 'Nữ'), ('khác', 'Khác')],
+        choices=[('nam', 'Nam'), ('nữ', 'Nữ')],
         widget=forms.RadioSelect,
-        initial='khác',
-        label="Giới tính"
+        initial='nam',
+        label="Giới tính",
+        required=True
     )
-    id_number = forms.CharField(max_length=20, required=False, label="Số CMND/CCCD")
+
+    id_number = forms.CharField(max_length=20, label="Số CMND/CCCD", required=False)
 
     class Meta:
         model = CustomUser
         fields = [
             'username', 'full_name', 'date_of_birth', 'address', 'school_name',
-            'role', 'profile_picture', 'phone_number',
-            'email', 'gender', 'id_number', 'password1', 'password2'
+            'role', 'profile_picture', 'phone_number', 'email', 'gender',
+            'id_number', 'password1', 'password2'
         ]
 
+    # Các phương thức clean cho từng trường
     def clean_username(self):
         username = self.cleaned_data.get('username')
         if not re.match(r'^[a-zA-Z0-9_]+$', username):
@@ -64,7 +68,7 @@ class UserRegistrationForm(UserCreationForm):
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number')
-        if phone_number and CustomUser.objects.filter(phone_number=phone_number).exists():
+        if CustomUser.objects.filter(phone_number=phone_number).exists():
             raise forms.ValidationError("Số điện thoại này đã được sử dụng.")
         return phone_number
 
@@ -118,6 +122,74 @@ class ChangePasswordForm(forms.Form):
                 password_validation.validate_password(new_password, self.user)
             except ValidationError as e:
                 self.add_error('new_password', e)
+
+
+class RegistrationForm(forms.ModelForm):
+    # Thêm trường tùy chỉnh không thuộc về model
+    agree_rules = forms.BooleanField(
+        label="Tôi đồng ý với Thể lệ và các Quy định của Cuộc thi",
+        required=True,
+        error_messages={'required': 'Bạn phải đồng ý với Thể lệ để tiếp tục.'}
+    )
+    confirm_info = forms.BooleanField(
+        label="Tôi đã kiểm tra kỹ thông tin thí sinh và chịu trách nhiệm",
+        required=True,
+        error_messages={'required': 'Bạn phải xác nhận thông tin đã cung cấp.'}
+    )
+
+    class Meta:
+        model = Registration
+        fields = [
+            'region', 'city', 'competition_group', 'team_name', 'team_email',
+            'coach_name', 'coach_unit', 'coach_phone',
+            'guardian_name', 'relationship', 'guardian_phone', 'guardian_email',
+            'student_name', 'student_phone', 'student_email', 'student_class',
+            'birth_year', 'gender', 'ethnicity', 'address', 'student_photo', 'member_count'
+        ]
+        labels = {
+            'region': 'Khu vực đăng ký',
+            'city': 'Tỉnh/Thành phố',
+            'competition_group': 'Bảng thi',
+            'team_name': 'Tên đội thi',
+            'team_email': 'Email đội thi',
+            'coach_name': 'Họ tên HLV',
+            'coach_unit': 'Đơn vị công tác',
+            'coach_phone': 'Số điện thoại HLV',
+            'member_count': 'Số lượng thí sinh',
+            'guardian_name': 'Họ và tên phụ huynh',
+            'relationship': 'Quan hệ với thí sinh',
+            'guardian_phone': 'Số điện thoại phụ huynh',
+            'guardian_email': 'Email phụ huynh',
+            'student_name': 'Họ và tên thí sinh',
+            'student_phone': 'Số điện thoại thí sinh',
+            'student_email': 'Email thí sinh',
+            'student_class': 'Lớp, trường',
+            'birth_year': 'Năm sinh',
+            'gender': 'Giới tính',
+            'ethnicity': 'Dân tộc',
+            'address': 'Địa chỉ thường trú',
+            'student_photo': 'Ảnh chân dung thí sinh',
+        }
+        widgets = {
+            'address': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    # Xóa required=True cho các trường không bắt buộc
+    student_phone = forms.CharField(required=False)  # Không bắt buộc
+    student_email = forms.EmailField(required=False)  # Không bắt buộc
+
+    def clean(self):
+        cleaned_data = super().clean()
+        agree_rules = cleaned_data.get("agree_rules")
+        confirm_info = cleaned_data.get("confirm_info")
+
+        if not agree_rules:
+            raise ValidationError("Bạn phải đồng ý với Thể lệ và các Quy định của Cuộc thi.")
+
+        if not confirm_info:
+            raise ValidationError("Bạn phải xác nhận thông tin đã cung cấp.")
+
+        return cleaned_data
 
 
 class EditProfileForm(forms.ModelForm):
@@ -202,46 +274,6 @@ class CompetitionForm(forms.ModelForm):
         if commit:
             competition.save()
         return competition
-
-
-class CompetitionResultForm(forms.ModelForm):
-    class Meta:
-        model = CompetitionResult
-        fields = ['competition', 'team', 'round_number', 'group_number', 'score', 'rank', 'participant']
-        widgets = {
-            'competition': forms.Select(attrs={'class': 'form-control'}),
-            'team': forms.Select(attrs={'class': 'form-control'}),
-            'round_number': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'group_number': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'score': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
-            'rank': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'participant': forms.Select(attrs={'class': 'form-control'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        competition = kwargs.pop('competition', None)
-        super().__init__(*args, **kwargs)
-        if competition:
-            self.fields['team'].queryset = Team.objects.filter(competition=competition)
-            self.fields['participant'].queryset = Participant.objects.filter(competition=competition)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        round_number = cleaned_data.get("round_number")
-        group_number = cleaned_data.get("group_number")
-        team = cleaned_data.get("team")
-
-        # Kiểm tra tính hợp lệ cho round_number và group_number nếu cần thiết
-        if round_number and group_number and team:
-            if CompetitionResult.objects.filter(
-                    competition=self.instance.competition,
-                    team=team,
-                    round_number=round_number,
-                    group_number=group_number
-            ).exists():
-                raise forms.ValidationError("Đội này đã có kết quả trong vòng và bảng này.")
-
-        return cleaned_data
 
 
 class KitForm(forms.ModelForm):
@@ -337,4 +369,3 @@ class GuideFileForm(forms.ModelForm):
     class Meta:
         model = GuideFile
         fields = ['file', 'note', 'document_name']
-

@@ -5,13 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Robot Contest</title>
-    
+
     <!-- Bootstrap CSS từ CDN -->
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
 
     <!-- Font Awesome từ CDN -->
     <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
-    
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,7 +20,7 @@
         body #sidebar.bg-light {
             background-color: #E3F2FD !important;
         }
-        
+
         #sidebar {
             height: 100vh;
             width: 200px;
@@ -49,7 +49,7 @@
             max-width: 100%;
         }
     </style>
-    
+
     <style>
         .top-bar {
             display: flex;
@@ -92,13 +92,13 @@
             border-radius: 5px;
             font-size: 18px;
         }
-        
+
         /* Căn chỉnh dropdown của người dùng */
         .dropdown-menu {
             padding: 10px 15px;
             min-width: 180px; /* Đảm bảo đủ không gian cho các mục */
         }
-        
+
         .dropdown-menu a.dropdown-item {
             font-size: 1rem; /* Căn chỉnh kích thước chữ */
             color: #495057;
@@ -106,27 +106,27 @@
             align-items: center; /* Giúp biểu tượng và chữ cùng hàng ngang */
             padding: 8px 10px; /* Khoảng cách đều giữa các mục */
         }
-        
+
         .dropdown-menu a.dropdown-item i {
             margin-right: 8px; /* Khoảng cách giữa icon và chữ */
         }
-        
+
         .dropdown-menu a.dropdown-item:hover {
             background-color: #e9ecef; /* Hiệu ứng hover cho các mục */
             color: #007bff; /* Thay đổi màu chữ khi hover */
         }
-        
+
         #userDropdown {
             font-size: 1.2rem;
             display: inline-flex;
             align-items: center;
             gap: 5px; /* Điều chỉnh khoảng cách giữa icon và username */
         }
-        
+
         #userDropdown::after {
             margin-left: 1px; /* Điều chỉnh khoảng cách của mũi tên (icon) */
         }
-        
+
         @keyframes ring {
             0% { transform: rotate(0); }
             10% { transform: rotate(15deg); }
@@ -137,7 +137,7 @@
             60% { transform: rotate(-3deg); }
             100% { transform: rotate(0); }
         }
-        
+
         .bell-animation i {
             font-size: 1.2rem;
             animation: ring 1.5s ease infinite; /* Lặp lại hiệu ứng */
@@ -153,12 +153,12 @@
                     <h4 class="mt-3 mb-4 text-center">Dashboard</h4>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'home' %}">
+                            <a class="nav-link" href="{% url 'home' %}">
                                 <i class="fas fa-home"></i> Trang chủ
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'contest_list' %}">
+                            <a class="nav-link active" href="{% url 'contest_list' %}">
                                 <i class="fas fa-trophy"></i> Cuộc thi
                             </a>
                         </li>
@@ -200,7 +200,7 @@
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %} {% if notifications_unread %}bell-animation{% endif %}" href="{% url 'notification' %}">
                         <i class="fas fa-bell"></i>
                     </a>
-                
+
                     <!-- Dropdown for User with margin -->
                     <div class="dropdown ml-2">
                         <a href="#" id="userDropdown" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -225,34 +225,115 @@
                         </ul>
                     </div>
                 </div>
-            
+
                 <div class="container mt-5">
                     <h2>Đăng ký đội cho cuộc thi {{ competition.name }}</h2>
-                    <form method="post" action="{% url 'register_competition' competition.id %}">
+                    <form method="post" action="{% url 'register_competition' competition.id %}" enctype="multipart/form-data">
                         {% csrf_token %}
-                
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
                         <div class="form-group">
-                            <label for="team_name">Tên đội:</label>
-                            <input type="text" name="team_name" id="team_name" class="form-control" required>
+                            <label for="region">Khu vực đăng ký:</label>
+                            <input type="text" name="region" id="region" class="form-control" required value="{{ form.region.value }}">
                         </div>
-                
+
                         <div class="form-group">
-                            <label for="member_count">Số lượng thành viên:</label>
-                            <input type="number" name="member_count" id="member_count" class="form-control" min="1" required>
+                            <label for="city">Tỉnh/Thành phố:</label>
+                            <input type="text" name="city" id="city" class="form-control" required value="{{ form.city.value }}">
                         </div>
-                
+
                         <div class="form-group">
-                            <label for="coach_username">Tên đăng nhập huấn luyện viên:</label>
-                            <input type="text" name="coach_username" id="coach_username" class="form-control" required>
+                            <label for="competition_group">Bảng thi:</label>
+                            <select name="competition_group" id="competition_group" class="form-control" required>
+                                <option value="">Chọn bảng thi</option>
+                                {% for group in competition.groups %}
+                                    <option value="{{ group.group_name }}" {% if group.group_name == form.competition_group.value %}selected{% endif %}>{{ group.group_name }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
-                
-                        <div id="members-fields">
-                            <label for="member_usernames">Tên đăng nhập các thành viên:</label>
-                            <!-- Các trường nhập cho thành viên sẽ được thêm ở đây bằng JavaScript -->
+
+                        <div class="form-group">
+                            <label for="member_count">Số lượng thí sinh:</label>
+                            <input type="number" name="member_count" id="member_count" class="form-control" min="1" required value="{{ form.member_count.value|default_if_none:'' }}">
                         </div>
-                
+
+                        <div class="form-group">
+                            <label for="team_name">Tên đội thi:</label>
+                            <input type="text" name="team_name" id="team_name" class="form-control" required value="{{ form.team_name.value }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="team_email">Email đội thi:</label>
+                            <input type="email" name="team_email" id="team_email" class="form-control" required value="{{ form.team_email.value }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="coach_name">Họ tên HLV:</label>
+                            <input type="text" name="coach_name" id="coach_name" class="form-control" required value="{{ form.coach_name.value }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="coach_unit">Đơn vị công tác của HLV:</label>
+                            <input type="text" name="coach_unit" id="coach_unit" class="form-control" required value="{{ form.coach_unit.value }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="coach_phone">Số điện thoại của HLV:</label>
+                            <input type="tel" name="coach_phone" id="coach_phone" class="form-control" required value="{{ form.coach_phone.value }}">
+                        </div>
+
+                        <h5>Thông tin phụ huynh/Người giám hộ</h5>
+                        <div id="guardian-fields"></div> <!-- Container cho thông tin phụ huynh -->
+
+                        <h5>Thông tin thí sinh</h5>
+                        <div id="participants-fields"></div> <!-- Container cho thông tin thí sinh -->
+
+                        <!-- Điều khoản -->
+                        <div class="form-group">
+                            <input type="checkbox" name="agree_rules" id="agree_rules" required {% if form.agree_rules.value %}checked{% endif %}>
+                            <label for="agree_rules">Tôi đồng ý với Thể lệ và các Quy định của Cuộc thi</label>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="checkbox" name="confirm_info" id="confirm_info" required {% if form.confirm_info.value %}checked{% endif %}>
+                            <label for="confirm_info">Tôi đã kiểm tra kỹ thông tin thí sinh và chịu trách nhiệm</label>
+                        </div>
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <ul>
+                                    {% for field in form.visible_fields %}
+                                        {% if field.errors %}
+                                            <li><strong>{{ field.label }}:</strong>
+                                                <ul>
+                                                    {% for error in field.errors %}
+                                                        <li>{{ error }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if form.non_field_errors %}
+                                        <li><strong>General errors:</strong>
+                                            <ul>
+                                                {% for error in form.non_field_errors %}
+                                                    <li>{{ error }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
                         <button type="submit" class="btn btn-primary mt-3">Đăng ký đội</button>
-                        <a href="{% url 'competition_detail' competition.id %}" class="btn btn-secondary mt-3">Quay lại</a>
+                        <a href="{% url 'competition_detail' competition.id %}" class="btn btn-info mt-3">Quay lại</a>
                     </form>
                 </div>
             </main>
@@ -262,21 +343,93 @@
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 
     <script>
-        // Thêm các trường nhập tên đăng nhập thành viên theo số lượng thành viên
         document.getElementById('member_count').addEventListener('change', function() {
             let count = parseInt(this.value);
-            let container = document.getElementById('members-fields');
-            container.innerHTML = '';
-            
-            for (let i = 0; i < count; i++) {
-                let input = document.createElement('input');
-                input.type = 'text';
-                input.name = 'member_usernames';
-                input.placeholder = `Tên đăng nhập thành viên ${i + 1}`;
-                input.className = 'form-control mt-2';
-                container.appendChild(input);
+            let participantContainer = document.getElementById('participants-fields');
+            let guardianContainer = document.getElementById('guardian-fields');
+
+            // Xóa nội dung cũ
+            participantContainer.innerHTML = '';
+            guardianContainer.innerHTML = '';
+
+            // Tạo thông tin cho từng thí sinh
+            for (let i = 1; i <= count; i++) {
+                let participantDiv = document.createElement('div');
+                participantDiv.className = 'participant-info mb-3';
+                participantDiv.innerHTML = `
+                    <h6>Thông tin thí sinh ${i}</h6>
+                    <div class="form-group">
+                        <label for="student_name_${i}">Họ và tên thí sinh:</label>
+                        <input type="text" name="student_name[${i}]" id="student_name_${i}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student_phone_${i}">Số điện thoại thí sinh:</label>
+                        <input type="tel" name="student_phone[${i}]" id="student_phone_${i}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student_email_${i}">Email thí sinh:</label>
+                        <input type="email" name="student_email[${i}]" id="student_email_${i}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student_class_${i}">Lớp/Trường:</label>
+                        <input type="text" name="student_class[${i}]" id="student_class_${i}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="birth_year_${i}">Năm sinh:</label>
+                        <input type="number" name="birth_year[${i}]" id="birth_year_${i}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gender_${i}">Giới tính:</label>
+                        <select name="gender[${i}]" id="gender_${i}" class="form-control" required>
+                            <option value="">Chọn giới tính</option>
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                            <!-- <option value="Khác">Khác</option> -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ethnicity_${i}">Dân tộc:</label>
+                        <input type="text" name="ethnicity[${i}]" id="ethnicity_${i}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address_${i}">Địa chỉ thường trú:</label>
+                        <input type="text" name="address[${i}]" id="address_${i}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student_photo_${i}">Ảnh chân dung thí sinh:</label>
+                        <input type="file" name="student_photo[${i}]" id="student_photo_${i}" class="form-control" accept="image/*" required>
+                    </div>
+                `;
+                participantContainer.appendChild(participantDiv);
+            }
+
+            // Tạo thông tin phụ huynh cho mỗi thí sinh
+            for (let j = 1; j <= count; j++) {
+                let guardianDiv = document.createElement('div');
+                guardianDiv.className = 'guardian-info mb-3';
+                guardianDiv.innerHTML = `
+                    <h6>Thông tin phụ huynh cho thí sinh ${j}</h6>
+                    <div class="form-group">
+                        <label for="guardian_name_${j}">Họ và tên phụ huynh:</label>
+                        <input type="text" name="guardian_name[${j}]" id="guardian_name_${j}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="relationship_${j}">Quan hệ với thí sinh:</label>
+                        <input type="text" name="relationship[${j}]" id="relationship_${j}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="guardian_phone_${j}">Số điện thoại phụ huynh:</label>
+                        <input type="tel" name="guardian_phone[${j}]" id="guardian_phone_${j}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="guardian_email_${j}">Email phụ huynh:</label>
+                        <input type="email" name="guardian_email[${j}]" id="guardian_email_${j}" class="form-control" required>
+                    </div>
+                `;
+                guardianContainer.appendChild(guardianDiv);
             }
         });
     </script>
 </body>
 </html>
+

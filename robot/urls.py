@@ -28,7 +28,7 @@ urlpatterns = [
     path('results/', views.result_list, name='result_list'),
     path('results/<int:competition_id>/', views.result_detail, name='result_detail'),
     path('results/<int:competition_id>/add/', views.add_result, name='add_result'),
-    path('edit_result/<int:result_id>/', views.edit_result, name='edit_result'),
+    path('edit_result/<int:competition_id>/<int:result_id>/', views.edit_result, name='edit_result'),
     path('kits/', views.kit_list, name='kit_list'),
     path('kits/new/', views.kit_create, name='kit_create'),
     path('kits/<int:pk>/edit/', views.kit_update, name='kit_update'),
@@ -52,4 +52,6 @@ urlpatterns = [
     path('guide-file/delete/<int:pk>/', views.delete_guide_file, name='delete_guide_file'),
     path('competition/guide/confirm/<int:guide_file_id>/', views.confirm_guide_file, name='confirm_guide_file'),
     path('download_guide_file/<int:guide_file_id>/', views.download_guide_file, name='download_guide_file'),
+    path('competition/<int:competition_id>/team/<int:team_id>/', views.team_detail, name='registration_info_detail'),
+    path('registration/history/', views.registration_history, name='registration_history'),
 ]

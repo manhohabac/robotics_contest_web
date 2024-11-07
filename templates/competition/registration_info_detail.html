@@ -1,0 +1,324 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Contest</title>
+    
+    <!-- Bootstrap CSS từ CDN -->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <!-- Font Awesome từ CDN -->
+    <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        body #sidebar.bg-light {
+            background-color: #E3F2FD !important;
+        }
+        
+        #sidebar {
+            height: 100vh;
+            width: 200px;
+        }
+
+        .sidebar .nav-link {
+            font-size: 1.1rem;
+            color: #495057;
+        }
+
+        .sidebar .nav-link.active {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 8px;
+        }
+
+        .main-content {
+            margin-left: -18px;
+            flex: 1;
+            height: 100vh;
+            overflow-y: auto;
+            padding-right: 0.5rem !important;
+            max-width: 100%;
+        }
+    </style>
+    
+    <style>
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 4px;
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+
+        .top-bar .btn {
+            margin-left: 10px;
+        }
+
+        /* Làm cho nút btn-secondary trong suốt */
+        .btn-secondary {
+            color: black;
+            background-color: transparent;
+            border-color: transparent;
+        }
+
+        /* Loại bỏ hiệu ứng hover cho btn-secondary */
+        .btn-secondary:hover {
+            background-color: transparent;
+            border-color: transparent;
+            color: inherit;
+            cursor: default;
+        }
+
+        /* Phần thông báo */
+        .notification {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+        
+        /* Căn chỉnh dropdown của người dùng */
+        .dropdown-menu {
+            padding: 10px 15px;
+            min-width: 180px; /* Đảm bảo đủ không gian cho các mục */
+        }
+        
+        .dropdown-menu a.dropdown-item {
+            font-size: 1rem; /* Căn chỉnh kích thước chữ */
+            color: #495057;
+            display: flex;
+            align-items: center; /* Giúp biểu tượng và chữ cùng hàng ngang */
+            padding: 8px 10px; /* Khoảng cách đều giữa các mục */
+        }
+        
+        .dropdown-menu a.dropdown-item i {
+            margin-right: 8px; /* Khoảng cách giữa icon và chữ */
+        }
+        
+        .dropdown-menu a.dropdown-item:hover {
+            background-color: #e9ecef; /* Hiệu ứng hover cho các mục */
+            color: #007bff; /* Thay đổi màu chữ khi hover */
+        }
+        
+        #userDropdown {
+            font-size: 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px; /* Điều chỉnh khoảng cách giữa icon và username */
+        }
+        
+        #userDropdown::after {
+            margin-left: 1px; /* Điều chỉnh khoảng cách của mũi tên (icon) */
+        }
+        
+        @keyframes ring {
+            0% { transform: rotate(0); }
+            10% { transform: rotate(15deg); }
+            20% { transform: rotate(-10deg); }
+            30% { transform: rotate(5deg); }
+            40% { transform: rotate(-5deg); }
+            50% { transform: rotate(3deg); }
+            60% { transform: rotate(-3deg); }
+            100% { transform: rotate(0); }
+        }
+        
+        .bell-animation i {
+            font-size: 1.2rem;
+            animation: ring 1.5s ease infinite; /* Lặp lại hiệu ứng */
+        }
+
+        .custom-container {
+            max-width: 1800px; /* Thay đổi giá trị này theo ý muốn */
+            margin: 0 auto; /* Để căn giữa phần tử */
+        }
+
+        .fixed-card-height {
+            height: 650px; /* Chiều cao cố định, tùy chỉnh theo nhu cầu */
+            overflow-y: auto; /* Tạo thanh cuộn dọc nếu nội dung vượt quá chiều cao */
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="d-md-block bg-light sidebar">
+                <div class="position-sticky">
+                    <h4 class="mt-3 mb-4 text-center">Dashboard</h4>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'home' %}">
+                                <i class="fas fa-home"></i> Trang chủ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'contest_list' %}">
+                                <i class="fas fa-trophy"></i> Cuộc thi
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'result_list' %}">
+                                <i class="fas fa-chart-line"></i> Kết quả
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'kit_list' %}">
+                                <i class="fas fa-box"></i> Bộ thiết bị
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'sponsor_list' %}">
+                                <i class="fas fa-people-arrows"></i> Nhà tài trợ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            {% if request.user.is_superuser %}
+                                <a class="nav-link" href="{% url 'feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'submit_feedback' %}">
+                                    <i class="fas fa-comment-dots"></i> Gửi phản hồi
+                                </a>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-4 main-content">
+                <!-- Top Bar -->
+                <div class="top-bar">
+                    <!-- Notification Button (only icon) -->
+                    <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %} {% if notifications_unread %}bell-animation{% endif %}" href="{% url 'notification' %}">
+                        <i class="fas fa-bell"></i>
+                    </a>
+                
+                    <!-- Dropdown for User with margin -->
+                    <div class="dropdown ml-2">
+                        <a href="#" id="userDropdown" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ request.user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li class="nav-item">
+                                <a class="dropdown-item" href="{% url 'user_profile' %}">
+                                    <i class="fas fa-user"></i> Trang cá nhân
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'change_password' %}">
+                                    <i class="fas fa-lock"></i> Đổi mật khẩu
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'user_logout' %}" style="color: red;">
+                                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="container mt-2 custom-container">
+                    <div class="d-flex justify-content-start mb-3">
+                        {% if user.is_superuser %}
+                            <a href="{% url 'registration_list' competition_id=team_info.competition.id %}" class="btn btn-primary">
+                                <i class="fas fa-arrow-left"></i> Quay lại danh sách đăng ký
+                            </a>
+                        {% else %}
+                            <a href="{% url 'registration_history' %}" class="btn btn-primary">
+                                <i class="fas fa-history"></i> Quay lại lịch sử đăng ký
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tiêu đề phần -->
+                    <div class="row mb-2">
+                        <div class="col-md-3">
+                            <h2 class="text-center">Thông tin chi tiết đội {{ registrations.0.team_name }}</h2>
+                        </div>
+                        <div class="col-md-9">
+                            <h2 class="text-center">Thông tin chi tiết từng thí sinh</h2>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Phần thông tin chi tiết đội (bên trái) dưới dạng card grid -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card fixed-card-height">
+                                <div class="card-body">
+                                    <h5 class="card-title text-center">Thông tin đội</h5>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Số báo danh:</strong> {{ team_info.sbd }}</li>
+                                        <li><strong>Khu vực đăng ký:</strong> {{ registrations.0.region }}</li>
+                                        <li><strong>Tỉnh/Thành phố:</strong> {{ registrations.0.city }}</li>
+                                        <li><strong>Bảng đấu:</strong> {{ registrations.0.competition_group }}</li>
+                                        <li><strong>Số lượng thí sinh:</strong> {{ registrations.0.member_count }}</li>
+                                        <li><strong>Email đội thi:</strong> {{ registrations.0.team_email }}</li>
+                                        <li><strong>Tên huấn luyện viên:</strong> {{ registrations.0.coach_name }}</li>
+                                        <li><strong>Đơn vị công tác của HLV:</strong> {{ registrations.0.coach_unit }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phần thông tin chi tiết từng thí sinh (bên phải) dưới dạng card grid -->
+                        <div class="col-md-9">
+                            <div class="row">
+                                {% for registration in registrations %}
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card fixed-card-height">
+                                            <div class="card-body">
+                                                <div class="text-center">
+                                                    <img src="{{ registration.student_photo.url }}" class="rounded-circle mb-3" alt="Học sinh {{ registration.student_name }}" style="width: 120px; height: 120px;">
+                                                    <h5 class="card-title">{{ registration.student_name }}</h5>
+                                                </div>
+                                                <h5 class="card-title text-center">Thông tin học sinh</h5>
+                                                <ul class="list-unstyled">
+                                                    <li><strong>Lớp/Trường:</strong> {{ registration.student_class }}</li>
+                                                    <li><strong>Năm sinh:</strong> {{ registration.birth_year }}</li>
+                                                    <li><strong>Giới tính:</strong> {{ registration.gender }}</li>
+                                                    <li><strong>Dân tộc:</strong> {{ registration.ethnicity }}</li>
+                                                    <li><strong>Địa chỉ thường trú:</strong> {{ registration.address }}</li>
+                                                    <li><strong>Số điện thoại:</strong> {{ registration.student_phone }}</li>
+                                                    <li><strong>Email:</strong> {{ registration.student_email }}</li>
+                                                </ul>
+                                                <h5 class="card-title text-center">Thông tin phụ huynh</h5>
+                                                <ul class="list-unstyled">
+                                                    <li><strong>Họ và tên phụ huynh:</strong> {{ registration.guardian_name }}</li>
+                                                    <li><strong>Quan hệ với thí sinh:</strong> {{ registration.relationship }}</li>
+                                                    <li><strong>Số điện thoại:</strong> {{ registration.guardian_phone }}</li>
+                                                    <li><strong>Email:</strong> {{ registration.guardian_email }}</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

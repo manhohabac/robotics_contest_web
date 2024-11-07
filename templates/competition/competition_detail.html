@@ -275,13 +275,13 @@
                                 {% endif %}
                             {% endif %}
                         {% endif %}
-                
+
                         {% if request.user.is_superuser or request.user.is_staff %}
                             <a href="{% url 'registration_list' competition.id %}" class="btn btn-info">
                                 <i class="fas fa-list"></i> Danh sách đăng ký
                             </a>
                         {% endif %}
-                    
+
                         <!-- Phần này chỉ hiển thị cho admin (superuser) -->
                         {% if request.user.is_superuser %}
                             <a href="{% url 'edit_competition' competition.id %}" class="btn btn-warning">
@@ -293,7 +293,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-4">
                         {% if competition.image %}
@@ -302,15 +302,15 @@
                             <img src="{% static 'images/robot1.jpg' %}" class="img-fluid" alt="{{ competition.name }}">
                         {% endif %}
                     </div>
-                
+
                     <div class="col-md-8">
-                        <p><strong>Mô tả cuộc thi:</strong> 
+                        <p><strong>Mô tả cuộc thi:</strong>
                             {{ competition.description }}
                         </p>
-                        <p><strong>Đối tượng dự thi:</strong> 
+                        <p><strong>Đối tượng dự thi:</strong>
                             {{ competition.participants_target }}
                         </p>
-                    
+
                         <p><strong>Thông tin các vòng thi:</strong></p>
                         <ul>
                             {% for round in competition.rounds %}
@@ -320,21 +320,47 @@
                             {% endfor %}
                         </ul>
 
-                        <p><strong>Địa điểm tổ chức:</strong> 
+                        <p><strong>Địa điểm tổ chức:</strong>
                             {{ competition.location }}
                         </p>
-                        <p><strong>Hạn đăng ký:</strong> 
+                        <p><strong>Hạn đăng ký:</strong>
                             Từ ngày {{ competition.registration_start_date|date:"d/m/Y" }} đến hết ngày {{ competition.registration_end_date|date:"d/m/Y" }}
                         </p>
-                        <p><strong>Các quy định chung:</strong> 
+                        <p><strong>Các quy định chung:</strong>
                             {{ competition.rules }}
                         </p>
-                        <p><strong>Số đội thi tối đa:</strong> 
+                        <p><strong>Số đội thi tối đa:</strong>
                             Tối đa {{ competition.max_participants }} đội
                         </p>
-                        <p><strong>Tài liệu hướng dẫn:</strong> 
+                        <p><strong>Tài liệu hướng dẫn:</strong>
                             <a href="{% url 'competition_guide' competition.id %}">Xem chi tiết</a>
                         </p>
+
+                        <!-- Danh sách tài liệu hướng dẫn -->
+                        <div class="container mt-1">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%;" class="text-center">STT</th>
+                                        <th style="width: 40%;" class="text-center">Tên tài liệu</th>
+                                        <th style="width: 55%;" class="text-center">Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for guide_file in guide_files|slice:":5" %}
+                                        <tr>
+                                            <td class="text-center">{{ forloop.counter }}</td>
+                                            <td class="text-center">{{ guide_file.document_name }}</td>
+                                            <td class="text-center">{{ guide_file.note|default:"" }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center">Chưa có tài liệu hướng dẫn nào.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </main>

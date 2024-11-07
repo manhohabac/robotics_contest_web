@@ -8,31 +8,30 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import random
+from .utils import generate_unique_code
 
 
 class CustomUser(AbstractUser):
     full_name = models.CharField(max_length=255)
-    date_of_birth = models.DateField(blank=True, null=True)
+    date_of_birth = models.DateField(blank=False, null=False)
     address = models.CharField(max_length=255)
-    school_name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)
-    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    school_name = models.CharField(max_length=255, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=False, null=False)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     gender = models.CharField(
         max_length=10,
-        choices=[('nam', 'Nam'), ('nữ', 'Nữ'), ('khác', 'Khác')],
-        default='khác'
+        choices=[('nam', 'Nam'), ('nữ', 'Nữ')],
+        default='nam'
     )
-    id_number = models.CharField(max_length=12, unique=True, null=True, blank=True)
+    id_number = models.CharField(max_length=12, blank=True, null=True)
 
-    # Phân biệt vai trò người dùng
     ROLE_CHOICES = [
         ('student', 'Học sinh thi đấu'),
         ('coach', 'Huấn luyện viên')
     ]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
 
-    # Điểm Elo tích lũy qua các cuộc thi
     elo_score = models.FloatField(default=0.0)
 
     def __str__(self):
@@ -87,53 +86,88 @@ class Competition(models.Model):
 
 class Team(models.Model):
     name = models.CharField(max_length=255)
-    members = models.ManyToManyField(CustomUser, related_name='teams')
+    members = models.CharField(max_length=200, null=True, blank=True)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='teams')
-    coach = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                              related_name='coached_teams')  # Huấn luyện viên liên kết đến CustomUser
+    coach = models.CharField(max_length=255, null=True, blank=True)
+    sbd = models.CharField(max_length=6, blank=True, null=True)  # Bỏ unique=True
+
+    class Meta:
+        unique_together = ('competition', 'sbd')  # Đảm bảo SBD duy nhất trong từng cuộc thi
+
+    def save(self, *args, **kwargs):
+        if not self.sbd:  # Tạo SBD nếu chưa có
+            self.sbd = self.generate_sbd()
+        super().save(*args, **kwargs)
+
+    def generate_sbd(self):
+        # Lấy số lượng đội trong cuộc thi này và tăng thêm 1
+        count = Team.objects.filter(competition=self.competition).count()
+        return str(count + 1).zfill(6)  # Tạo SBD với 6 chữ số, ví dụ: "000001"
 
     def __str__(self):
         return self.name
 
 
-class Participant(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='participants')
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='participants')
-    sbd = models.CharField(max_length=6, unique=True, blank=True, null=True)
+class Registration(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                             related_name='registrations')  # Thêm trường liên kết với người dùng
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='registrations', null=True, blank=True)
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="registrations", null=True, blank=True)
+    region = models.CharField(max_length=50, null=True, blank=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    competition_group = models.CharField(max_length=50, null=True, blank=True)
+    team_name = models.CharField(max_length=100, null=True, blank=True)
+    team_email = models.EmailField(null=True, blank=True)
+    coach_name = models.CharField(max_length=100, null=True, blank=True)
+    coach_unit = models.CharField(max_length=100, null=True, blank=True)
+    coach_phone = models.CharField(max_length=15, null=True, blank=True)
+    member_count = models.IntegerField(default=0)
+    guardian_name = models.CharField(max_length=100, null=True, blank=True)
+    relationship = models.CharField(max_length=50, null=True, blank=True)
+    guardian_phone = models.CharField(max_length=15, null=True, blank=True)
+    guardian_email = models.EmailField(null=True, blank=True)
+    student_name = models.CharField(max_length=100, null=True, blank=True)
+    student_phone = models.CharField(max_length=15, null=True, blank=True)
+    student_email = models.EmailField(null=True, blank=True)
+    student_class = models.CharField(max_length=50, null=True, blank=True)
+    birth_year = models.IntegerField(default=2010, null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=[('Nam', 'Nam'), ('Nữ', 'Nữ')], null=True, blank=True)
+    ethnicity = models.CharField(max_length=50, null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
+    student_photo = models.ImageField(upload_to='photos/', null=True, blank=True)
+    registration_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, null=True, blank=True)
+    registration_code = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    is_cancelled = models.BooleanField(default=False)  # Trạng thái đăng ký (hủy hay không)
 
     def save(self, *args, **kwargs):
-        if not self.sbd:
-            self.sbd = self.generate_sbd()
+        if not self.registration_code:
+            self.registration_code = generate_unique_code()  # Hàm để tạo mã đăng ký duy nhất
         super().save(*args, **kwargs)
-
-    @staticmethod
-    def generate_sbd():
-        return str(random.randint(100000, 999999))
-
-    def __str__(self):
-        return f"{self.user.username} - {self.sbd} ({self.competition.name})"
 
 
 class CompetitionResult(models.Model):
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='results', null=True, blank=True)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='results', null=True, blank=True)
-    round_number = models.IntegerField(default=1)  # Số vòng thi đấu (hoặc bạn có thể giữ kiểu này)
-    group_number = models.IntegerField(default=1)  # Số bảng đấu (hoặc bạn có thể giữ kiểu này)
-    score = models.FloatField(default=0)  # Điểm số của đội thi
-    rank = models.IntegerField(null=True, blank=True)  # Thứ hạng của đội trong vòng thi
-    participant = models.ForeignKey(
-        Participant,
-        on_delete=models.CASCADE,
-        related_name='results',
-        null=True,
-        blank=True
-    )
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE,
+                                    related_name='results', null=True, blank=True)
+
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='competition_results', null=True, blank=True)
+
+    # Thêm trường lưu tên bảng đấu và tên vòng thi
+    group_name = models.CharField(max_length=255, null=True, blank=True)  # Tên bảng đấu
+    round_name = models.CharField(max_length=255, null=True, blank=True)  # Tên vòng thi
+
+    # Điểm của đội thi trong từng lượt đấu
+    score = models.JSONField(default=list)  # Lưu trữ điểm từng lượt đấu, dưới dạng danh sách
+
+    # Điểm xếp hạng cuối cùng của đội trong vòng thi
+    ranking_score = models.FloatField(null=True, blank=True)
+
+    prize_points = models.IntegerField(default=0)  # Điểm thưởng nếu đội thi giành giải
+
+    result_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.team.name} - {self.competition.name} - Round {self.round_number} - Group {self.group_number}"
-
-    class Meta:
-        unique_together = ('competition', 'team', 'round_number', 'group_number')  # Đảm bảo không có kết quả trùng lặp cho cùng một đội trong cùng một vòng và bảng
+        return f"{self.team.name} - {self.competition.name} - Rank {self.ranking_score}"
 
 
 class GuideFile(models.Model):
@@ -153,16 +187,6 @@ class GuideFile(models.Model):
 
     def __str__(self):
         return f"{self.original_file_name} - {self.competition.name}"
-
-
-class Registration(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='registrations', null=True, blank=True)
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='registrations')
-    registration_date = models.DateTimeField(auto_now_add=True)
-    is_cancelled = models.BooleanField(default=False)  # Trạng thái đăng ký (hủy hay không)
-
-    def __str__(self):
-        return f"{self.team.name} - {self.competition.name}"
 
 
 class Exam(models.Model):
@@ -241,4 +265,3 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.title
-

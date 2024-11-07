@@ -65,6 +65,15 @@
             margin-top: 0.5rem;
         }
 
+<!--        .required-field {-->
+<!--            border: 2px solid #dc3545; /* Đỏ cho các trường bắt buộc */-->
+<!--            box-shadow: 0 0 5px rgba(220, 53, 69, 0.5); /* Hiệu ứng bóng */-->
+<!--        }-->
+
+        .text-danger {
+            color: #dc3545; /* Màu đỏ cho dấu hoa thị */
+        }
+
         /* CSS cho Flatpickr */
         .flatpickr-calendar {
             background: white;
@@ -99,18 +108,20 @@
 <body>
     {% load form_filters %}
     <div class="bg-image">
-        <div class="container register-container">
+        <div class="container register-container mt-5">
             <div class="register-card col-md-8">
                 <h3>Đăng ký</h3>
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
+                    <!-- Chú thích về dấu '*' -->
+                    <p class="text-muted mt-3">
+                        <span class="text-danger">*</span> Thông tin bắt buộc
+                    </p>
                     <div class="row">
-                        <!-- Các trường nhập liệu khác -->
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="{{ form.username.id_for_label }}" class="form-label">Tên người dùng</label>
+                                <label for="{{ form.username.id_for_label }}" class="form-label">Tên người dùng <span class="text-danger">*</span></label>
                                 {{ form.username|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường username -->
                                 {% if form.username.errors %}
                                     <div class="form-error">
                                         {% for error in form.username.errors %}
@@ -120,9 +131,8 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
-                                <label for="{{ form.full_name.id_for_label }}" class="form-label">Họ và tên</label>
+                                <label for="{{ form.full_name.id_for_label }}" class="form-label">Họ và tên <span class="text-danger">*</span></label>
                                 {{ form.full_name|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường full_name -->
                                 {% if form.full_name.errors %}
                                     <div class="form-error">
                                         {% for error in form.full_name.errors %}
@@ -132,9 +142,8 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
-                                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Ngày sinh</label>
+                                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Ngày sinh <span class="text-danger">*</span></label>
                                 {{ form.date_of_birth|add_class:"datepicker form-control custom-width" }}
-                                <!-- Hiển thị lỗi cho trường date_of_birth -->
                                 {% if form.date_of_birth.errors %}
                                     <div class="form-error">
                                         {% for error in form.date_of_birth.errors %}
@@ -144,33 +153,8 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
-                                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
-                                {{ form.email|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường email -->
-                                {% if form.email.errors %}
-                                    <div class="form-error">
-                                        {% for error in form.email.errors %}
-                                            <p><strong>{{ form.email.label }}:</strong> {{ error|striptags }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="mb-3">
-                                <label for="{{ form.phone_number.id_for_label }}" class="form-label">Số điện thoại</label>
-                                {{ form.phone_number|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường phone_number -->
-                                {% if form.phone_number.errors %}
-                                    <div class="form-error">
-                                        {% for error in form.phone_number.errors %}
-                                            <p><strong>{{ form.phone_number.label }}:</strong> {{ error|striptags }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="mb-3">
-                                <label for="{{ form.address.id_for_label }}" class="form-label">Địa chỉ</label>
+                                <label for="{{ form.address.id_for_label }}" class="form-label">Địa chỉ <span class="text-danger">*</span></label>
                                 {{ form.address|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường address -->
                                 {% if form.address.errors %}
                                     <div class="form-error">
                                         {% for error in form.address.errors %}
@@ -180,9 +164,30 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email <span class="text-danger">*</span></label>
+                                {{ form.email|add_class:"form-control" }}
+                                {% if form.email.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.email.errors %}
+                                            <p><strong>{{ form.email.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.phone_number.id_for_label }}" class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                                {{ form.phone_number|add_class:"form-control" }}
+                                {% if form.phone_number.errors %}
+                                    <div class="form-error">
+                                        {% for error in form.phone_number.errors %}
+                                            <p><strong>{{ form.phone_number.label }}:</strong> {{ error|striptags }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
                                 <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Ảnh đại diện</label>
                                 {{ form.profile_picture|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường address -->
                                 {% if form.profile_picture.errors %}
                                     <div class="form-error">
                                         {% for error in form.profile_picture.errors %}
@@ -196,7 +201,6 @@
                             <div class="mb-3">
                                 <label for="{{ form.school_name.id_for_label }}" class="form-label">Tên trường đang theo học</label>
                                 {{ form.school_name|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường school_name -->
                                 {% if form.school_name.errors %}
                                     <div class="form-error">
                                         {% for error in form.school_name.errors %}
@@ -208,7 +212,6 @@
                             <div class="mb-3">
                                 <label for="{{ form.id_number.id_for_label }}" class="form-label">Số CMND/CCCD</label>
                                 {{ form.id_number|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường id_card -->
                                 {% if form.id_number.errors %}
                                     <div class="form-error">
                                         {% for error in form.id_number.errors %}
@@ -218,9 +221,8 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
-                                <label for="{{ form.gender.id_for_label }}" class="form-label">Giới tính</label>
+                                <label for="{{ form.gender.id_for_label }}" class="form-label">Giới tính <span class="text-danger">*</span></label>
                                 {{ form.gender }}
-                                <!-- Hiển thị lỗi cho trường gender -->
                                 {% if form.gender.errors %}
                                     <div class="form-error">
                                         {% for error in form.gender.errors %}
@@ -230,9 +232,11 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
-                                <label for="{{ form.password1.id_for_label }}" class="form-label">Mật khẩu</label>
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
                                 {{ form.password1|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường password -->
+                                <small class="text-muted">
+                                    Mật khẩu phải có ít nhất 8 ký tự, chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một chữ số, và một ký tự đặc biệt (@, #, hoặc $).
+                                </small>
                                 {% if form.password1.errors %}
                                     <div class="form-error">
                                         {% for error in form.password1.errors %}
@@ -242,9 +246,8 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
-                                <label for="{{ form.password2.id_for_label }}" class="form-label">Nhập lại mật khẩu</label>
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">Nhập lại mật khẩu <span class="text-danger">*</span></label>
                                 {{ form.password2|add_class:"form-control" }}
-                                <!-- Hiển thị lỗi cho trường confirm_password -->
                                 {% if form.password2.errors %}
                                     <div class="form-error">
                                         {% for error in form.password2.errors %}
@@ -254,9 +257,8 @@
                                 {% endif %}
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Vai trò</label>
+                                <label class="form-label">Vai trò <span class="text-danger">*</span></label>
                                 {{ form.role }}
-                                <!-- Hiển thị lỗi cho trường role -->
                                 {% if form.role.errors %}
                                     <div class="form-error">
                                         {% for error in form.role.errors %}

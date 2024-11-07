@@ -150,6 +150,24 @@
             animation: ring 1.5s ease infinite; /* Lặp lại hiệu ứng */
         }
     </style>
+
+    <style>
+        /* Căn giữa tiêu đề bảng */
+        .table th {
+            text-align: center;
+        }
+
+        /* Căn giữa nội dung của các ô trong bảng */
+        .table td {
+            text-align: center;
+        }
+
+        .container.mt-5 {
+            max-width: 100%; /* Make container take full width of the screen */
+            padding-left: 0;
+            padding-right: 0;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -238,59 +256,91 @@
                     <h1 class="h2">Thêm kết quả cho cuộc thi {{ competition.name }}</h1>
                 </div>
             
-                <div class="row">
-                    <div class="col-12">
+                <div class="container mt-5">
+                    <form method="get">
+                        <div class="form-group row">
+                            <div class="col-md-6">
+                                <label for="round">Vòng đấu:</label>
+                                <select name="round" id="round" class="form-control" onchange="this.form.submit()">
+                                    <option value="">Chọn vòng đấu</option>
+                                    {% for round in rounds_data %}
+                                        <option value="{{ round.round_name }}" {% if round.round_name == selected_round %}selected{% endif %}>{{ round.round_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="group">Bảng đấu:</label>
+                                <select name="group" id="group" class="form-control" onchange="this.form.submit()">
+                                    <option value="">Chọn bảng đấu</option>
+                                    {% for group in groups_data %}
+                                        <option value="{{ group.group_name }}" {% if group.group_name == selected_group %}selected{% endif %}>{{ group.group_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+
+                    {% if teams %}
                         <form method="post">
                             {% csrf_token %}
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="id_team">Đội thi</label>
-                                        <select name="team" class="form-control" id="id_team" required>
-                                            {% for team in teams %}
-                                                <option value="{{ team.id }}">{{ team.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="id_round_number">Vòng thi</label>
-                                        <input type="number" name="round_number" class="form-control" id="id_round_number" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="id_group_number">Bảng thi</label>
-                                        <input type="number" name="group_number" class="form-control" id="id_group_number" required>
-                                    </div>
-                                </div>
-                            </div>
-                        
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="id_score">Điểm số</label>
-                                        <input type="number" name="score" step="0.1" class="form-control" id="id_score" required>
-                                    </div>
-                                </div>
-                            </div>
-                        
-                            <div class="form-group text-center mt-4 mb-5">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save mr-1"></i> Lưu kết quả
+                            <table class="table table-bordered mt-4">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 3%;">STT</th>
+                                        <th style="width: 10%;">Số báo danh</th>
+                                        <th style="width: 10%;">Tên đội</th>
+                                        <th style="width: 15%;">Huấn luyện viên</th>
+                                        <th style="width: 15%;">Thành viên</th>
+                                        <th style="width: 47%;">Điểm lượt đấu</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for team in teams %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ team.sbd }}</td>
+                                            <td>{{ team.name }}</td>
+                                            <td>{{ team.coach }}</td>
+                                            <td>
+                                                <ul style="list-style: none; padding: 0; margin: 0;">
+                                                    {% for member in team.members_list %}
+                                                        <li>{{ member }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </td>
+                                            <td>
+                                                <input type="hidden" name="team_ids" value="{{ team.id }}">
+                                                <div class="d-flex" id="scores-container-{{ team.id }}">
+                                                    <script type="text/javascript">
+                                                        const matchesCount = {{ matches_count }};
+                                                        const container = document.getElementById('scores-container-{{ team.id }}');
+                                                        for (let i = 1; i <= matchesCount; i++) {
+                                                            const input = document.createElement('input');
+                                                            input.type = 'number';
+                                                            input.name = `score_{{ team.id }}_${i}`;
+                                                            input.className = 'form-control me-1';
+                                                            input.placeholder = `Điểm lượt ${i}`;
+                                                            container.appendChild(input);
+                                                        }
+                                                    </script>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                            <div class="text-center mt-3">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> Lưu kết quả
                                 </button>
-                                
-                                <button type="button" class="btn btn-info ml-2" onclick="window.location.href='{% url 'result_detail' competition.id %}'">
-                                    <i class="fas fa-arrow-left mr-1"></i> Quay lại
-                                </button>
+                                <a href="{% url 'result_detail' competition.id %}" class="btn btn-info">
+                                    <i class="fas fa-times"></i> Hủy
+                                </a>
                             </div>
                         </form>
-                    </div>
+                    {% endif %}
                 </div>
             </main>
         </div>
@@ -300,3 +350,5 @@
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>
+
+

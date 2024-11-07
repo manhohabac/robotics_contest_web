@@ -14,10 +14,12 @@ from django.utils.timezone import make_naive
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from PIL import Image
-import io, random
+import io, json
+
+from openpyxl.workbook import Workbook
 
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
-    CompetitionResultForm, KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm
+    KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm, RegistrationForm
 
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
@@ -26,7 +28,7 @@ from django.contrib import messages
 from django.utils import timezone
 
 from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, Sponsor, \
-    Feedback, GuideFile, Team, Participant
+    Feedback, GuideFile, Team
 
 
 def register(request):
@@ -217,7 +219,8 @@ def edit_profile(request):
 
 @login_required
 def contest_list(request):
-    competitions = Competition.objects.filter(is_active=True)
+    # competitions = Competition.objects.filter(is_active=True)
+    competitions = Competition.objects.filter()
     today = date.today()
     return render(request, 'competition/contest.html', {'competitions': competitions, 'today': today})
 
@@ -225,6 +228,7 @@ def contest_list(request):
 @login_required
 def competition_detail(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
+    guide_files = competition.guide_files.filter(is_confirmed=True).order_by('-uploaded_at')
     today = timezone.now().date()
 
     # Tìm đội mà người dùng tham gia trong cuộc thi này
@@ -232,100 +236,299 @@ def competition_detail(request, competition_id):
 
     # Nếu có đội, tìm đăng ký của đội đó
     if team:
-        registration = team.registrations.filter(competition=competition).first()
+        registration = Registration.objects.filter(team=team, competition=competition).first()
     else:
         registration = None
 
-    # Đếm số lượng người tham gia hiện tại
-    current_participants = competition.teams.exclude(registrations__is_cancelled=True).count()
+    # Đếm số lượng đội đã đăng ký nhưng chưa bị hủy trong cuộc thi này
+    current_participants = Registration.objects.filter(
+        competition=competition,
+        is_cancelled=False
+    ).count()
 
     return render(request, 'competition/competition_detail.html', {
         'competition': competition,
         'today': today,
         'registration': registration,
         'current_participants': current_participants,
+        'guide_files': guide_files,
     })
 
 
 @login_required
 def register_competition(request, competition_id):
+    # Lấy thông tin cuộc thi theo ID đã cho
     competition = get_object_or_404(Competition, id=competition_id)
-    today = timezone.now().date()
+    today = timezone.now().date()  # Lấy ngày hiện tại
+    user = request.user
 
+    # Kiểm tra khoảng thời gian đăng ký
     if not (competition.registration_start_date <= today <= competition.registration_end_date):
-        messages.error(request, 'Ngoài khoảng thời gian đăng ký.')
-        return redirect('competition_detail', competition_id=competition.id)
+        messages.error(request, 'Ngoài khoảng thời gian đăng ký.')  # Thông báo nếu không trong khoảng thời gian
+        return redirect('competition_detail', competition_id=competition.id)  # Quay lại trang chi tiết cuộc thi
 
-    current_participants = competition.teams.count()
+    # Kiểm tra số lượng đội đăng ký
+    current_participants = competition.teams.count()  # Đếm số đội hiện tại đã đăng ký
     if competition.max_participants is not None and current_participants >= competition.max_participants:
-        messages.error(request, 'Số lượng đội đã đầy.')
-        return redirect('competition_detail', competition_id=competition.id)
+        messages.error(request, 'Số lượng đội đã đầy.')  # Thông báo nếu số lượng đội đã đầy
+        return redirect('competition_detail', competition_id=competition.id)  # Quay lại trang chi tiết cuộc thi
 
-    if request.method == 'POST':
-        team_name = request.POST.get('team_name')
-        member_count = int(request.POST.get('member_count'))
-        coach_username = request.POST.get('coach_username')
-        member_usernames = request.POST.getlist('member_usernames')
+    if request.method == 'POST':  # Kiểm tra xem có phải là request POST không
+        form = RegistrationForm(request.POST, request.FILES)  # Khởi tạo form với dữ liệu từ request
 
-        # Kiểm tra số lượng username được nhập có trùng với số lượng thành viên không
-        if len(member_usernames) != member_count:
-            messages.error(request, 'Số lượng thành viên không khớp với số lượng đã chọn.')
-            return redirect('register_competition', competition_id=competition.id)
-
-        # Lấy đối tượng huấn luyện viên dựa trên username
-        try:
-            coach = CustomUser.objects.get(username=coach_username, role='coach')
-        except CustomUser.DoesNotExist:
-            messages.error(request, 'Tên đăng nhập của huấn luyện viên không hợp lệ.')
-            return redirect('register_competition', competition_id=competition.id)
-
-        # Tạo đối tượng Team mới với huấn luyện viên được liên kết
-        team = Team.objects.create(name=team_name, competition=competition, coach=coach)
-
-        # Thêm thành viên vào đội và tạo Participant cho từng thành viên
-        for username in member_usernames:
-            try:
-                member = CustomUser.objects.get(username=username, role='student')
-                team.members.add(member)
-                Participant.objects.create(user=member, competition=competition)
-            except CustomUser.DoesNotExist:
-                messages.error(request, f'Tên đăng nhập {username} không hợp lệ.')
-                return redirect('register_competition', competition_id=competition.id)
-
-        # Tạo Participant cho huấn luyện viên
-        Participant.objects.create(user=coach, competition=competition)
-
-        # Tạo bản ghi đăng ký
-        Registration.objects.create(team=team, competition=competition)
-
-        # Tạo thông báo cho người dùng và admin
-        messages.success(request, f'Đăng ký đội {team_name} thành công!')
-        Notification.objects.create(
-            user=request.user,
-            title="Đăng ký đội thành công",
-            content=f"Bạn đã đăng ký đội {team.name} cho cuộc thi {competition.name}.",
-            created_at=timezone.now(),
-            notification_type='user'
-        )
-
-        # Tạo thông báo cho admin
-        admin_users = get_user_model().objects.filter(is_superuser=True)
-        for admin in admin_users:
-            Notification.objects.create(
-                user=admin,
-                title="Thông báo đăng ký đội mới",
-                content=f"Đội {team.name} đã đăng ký cuộc thi {competition.name}.",
-                created_at=timezone.now(),
-                notification_type='admin'
+        if form.is_valid():  # Kiểm tra tính hợp lệ của form
+            # Tạo đối tượng Team mới
+            print(form.cleaned_data['team_name'])
+            team = Team.objects.create(
+                name=form.cleaned_data['team_name'],  # Lấy tên đội từ form
+                competition=competition,  # Liên kết với cuộc thi
+                coach=form.cleaned_data['coach_name']  # Lấy thông tin huấn luyện viên từ form
             )
 
-        return redirect('competition_detail', competition_id=competition.id)
+            # Khởi tạo danh sách để lưu trữ thông tin
+            student_names = []
+            relationships = []
+            guardian_names = []
+            guardian_phones = []
+            guardian_emails = []
+            student_phones = []
+            student_emails = []
+            student_classes = []
+            birth_years = []
+            genders = []
+            ethnicities = []
+            addresses = []
+            student_photos = []
+
+            # Lấy dữ liệu từ POST cho số lượng thành viên
+            member_count = int(request.POST['member_count'])
+            print("member_count", member_count)
+            # Lấy thông tin từ POST
+            city = request.POST.get('city')
+            coach_name = request.POST.get('coach_name')
+            coach_phone = request.POST.get('coach_phone')
+            coach_unit = request.POST.get('coach_unit')
+            competition_group = request.POST.get('competition_group')
+            region = request.POST.get('region')
+            team_email = request.POST.get('team_email')
+            team_name = request.POST.get('team_name')
+
+            for i in range(1, member_count + 1):
+                # Lấy thông tin cho từng học sinh
+                student_names.append(request.POST.get(f'student_name[{i}]'))
+                relationships.append(request.POST.get(f'relationship[{i}]'))
+                guardian_names.append(request.POST.get(f'guardian_name[{i}]'))
+                guardian_phones.append(request.POST.get(f'guardian_phone[{i}]'))
+                guardian_emails.append(request.POST.get(f'guardian_email[{i}]'))
+                student_phones.append(request.POST.get(f'student_phone[{i}]'))
+                student_emails.append(request.POST.get(f'student_email[{i}]'))
+                student_classes.append(request.POST.get(f'student_class[{i}]'))
+                birth_years.append(request.POST.get(f'birth_year[{i}]'))
+                genders.append(request.POST.get(f'gender[{i}]'))
+                ethnicities.append(request.POST.get(f'ethnicity[{i}]'))
+                addresses.append(request.POST.get(f'address[{i}]'))
+                student_photos.append(request.FILES.get(f'student_photo[{i}]'))
+
+            # Lưu danh sách tên vào trường members của Team, phân tách bằng dấu phẩy
+            team.members = ', '.join(student_names)  # Cập nhật danh sách thành viên của đội
+            team.save()  # Lưu lại đối tượng Team
+
+            # Lặp qua từng thành viên và tạo Registration cho từng thành viên
+            for i in range(len(student_names)):
+                # Tạo đối tượng Registration và lưu thông tin
+                registration = Registration.objects.create(
+                    competition=competition,
+                    team=team,
+                    user=user,
+                    guardian_name=guardian_names[i],
+                    relationship=relationships[i],
+                    guardian_phone=guardian_phones[i],
+                    guardian_email=guardian_emails[i],
+                    student_name=student_names[i],
+                    student_phone=student_phones[i],
+                    student_email=student_emails[i],
+                    student_class=student_classes[i],
+                    birth_year=birth_years[i],
+                    gender=genders[i],
+                    ethnicity=ethnicities[i],
+                    address=addresses[i],
+                    student_photo=student_photos[i],
+                    city=city,
+                    coach_name=coach_name,
+                    coach_phone=coach_phone,
+                    coach_unit=coach_unit,
+                    competition_group=competition_group,
+                    region=region,
+                    team_email=team_email,
+                    team_name=team_name,
+                    member_count=member_count,
+                    registration_date=timezone.now(),
+                    status="Đăng ký thành công"
+                )
+
+            # Thông báo thành công
+            messages.success(request, f'Đăng ký đội {team.name} thành công!')  # Thông báo cho người dùng
+
+            # Tạo thông báo cho người dùng
+            Notification.objects.create(
+                user=request.user,
+                title="Đăng ký đội thành công",
+                content=f"Bạn đã đăng ký đội {team.name} cho cuộc thi {competition.name}.",
+                created_at=timezone.now(),
+                notification_type='user'
+            )
+
+            # Thông báo cho admin
+            admin_users = get_user_model().objects.filter(is_superuser=True)  # Lấy danh sách admin
+
+            # Tạo danh sách các thông báo dành cho admin
+            admin_notifications = [
+                Notification(
+                    user=admin,
+                    title="Thông báo đăng ký đội mới",
+                    content=f"Đội {team.name} đã đăng ký cuộc thi {competition.name}.",
+                    created_at=timezone.now(),
+                    notification_type='admin'
+                )
+                for admin in admin_users
+            ]
+
+            # Sử dụng bulk_create để tạo tất cả thông báo cùng lúc
+            Notification.objects.bulk_create(admin_notifications)
+
+            # Redirect đến trang chi tiết cuộc thi
+            return redirect('competition_detail', competition_id=competition.id)
+        else:
+            # In ra các lỗi trong form nếu form không hợp lệ
+            print(form.errors)  # In lỗi ra console
+            participants_data = request.POST.getlist('student_name')  # Lưu dữ liệu người dùng nhập vào
+            guardians_data = request.POST.getlist('guardian_name')  # Lưu dữ liệu người dùng nhập vào
+
+            # Truyền lại dữ liệu người dùng nhập vào cho các trường trong context
+            return render(request, 'competition/register_team.html', {
+                'competition': competition,
+                'form': form,
+                'today': today,
+                'participants_data': participants_data,
+                'guardians_data': guardians_data,
+            })
+
+    else:
+        form = RegistrationForm()  # Nếu không phải POST, khởi tạo form trống
+        participants_data = []  # Danh sách thành viên trống
+        guardians_data = []  # Danh sách phụ huynh trống
+
+    # Tạo context cho template
+    context = {
+        'competition': competition,
+        'form': form,
+        'today': today,
+        'participants_data': participants_data,
+        'guardians_data': guardians_data,
+    }
+
+    return render(request, 'competition/register_team.html', context)  # Render template
+
+
+@login_required
+def registration_list(request, competition_id):
+    # Lấy thông tin của cuộc thi cụ thể
+    competition = get_object_or_404(Competition, id=competition_id)
+
+    # Lấy tất cả các đăng ký hợp lệ cho cuộc thi này
+    registrations = Registration.objects.filter(
+        competition=competition,
+        is_cancelled=False
+    )
+
+    # Chuyển đổi dữ liệu đăng ký thành danh sách có định dạng dễ hiển thị trong template
+    registration_data = []
+    for registration in registrations:
+        # Kiểm tra xem đã có thông tin đội trong registration_data chưa
+        team_entry = next((entry for entry in registration_data if entry['team_sbd'] == registration.team.sbd), None)
+
+        # Nếu chưa có, tạo entry mới cho đội
+        if not team_entry:
+            team_entry = {
+                'registration': registration,
+                'team_name': registration.team.name if registration.team else 'Chưa có tên đội',
+                'team_sbd': registration.team.sbd if registration.team else 'Chưa có SBD',
+                'competition_group': registration.competition_group,
+                'competition': competition,  # Thêm thuộc tính competition
+                'team': registration.team,  # Thêm thuộc tính team
+                'coach_name': registration.coach_name,  # Thêm tên huấn luyện viên
+                'registration_date': registration.registration_date,  # Thêm thời gian đăng ký
+                'members_participants': []
+            }
+            registration_data.append(team_entry)
+
+        # Thêm thành viên vào danh sách của đội
+        team_entry['members_participants'].append({
+            'name': registration.student_name,
+            'parent_email': registration.guardian_email
+        })
 
     context = {
         'competition': competition,
-        'today': today,
+        'registration_data': registration_data,
     }
-    return render(request, 'competition/register_team.html', context)
+    return render(request, 'competition/registration_list.html', context)
+
+
+@login_required
+def registration_history(request):
+    user = request.user
+
+    # Lấy tất cả các đăng ký của người dùng
+    registrations = Registration.objects.filter(user=user, is_cancelled=False)
+
+    registration_data = []
+    for registration in registrations:
+        # Kiểm tra xem đã có thông tin đội trong registration_data chưa
+        team_entry = next((entry for entry in registration_data if entry['team_sbd'] == registration.team.sbd), None)
+
+        # Nếu chưa có, tạo entry mới cho đội
+        if not team_entry:
+            team_entry = {
+                'registration': registration,
+                'team_name': registration.team.name if registration.team else 'Chưa có tên đội',
+                'team_sbd': registration.team.sbd if registration.team else 'Chưa có SBD',
+                'competition_group': registration.competition_group,
+                'competition': registration.competition,  # Thêm thuộc tính competition
+                'team': registration.team,  # Thêm thuộc tính team
+                'coach_name': registration.coach_name,  # Thêm tên huấn luyện viên
+                'registration_date': registration.registration_date,  # Thêm thời gian đăng ký
+                'members_participants': []  # Danh sách thành viên
+            }
+            registration_data.append(team_entry)
+
+        # Thêm thành viên vào danh sách của đội
+        team_entry['members_participants'].append({
+            'name': registration.student_name,
+            'parent_email': registration.guardian_email  # Nếu bạn cần thêm thông tin khác
+        })
+
+    # Tính số lượng bản ghi đã đăng ký thành công
+    total_registrations = len(registration_data)
+
+    # Gửi dữ liệu đến template
+    return render(request, 'competition/registration_history.html', {
+        'registrations': registration_data,
+        'total_registrations': total_registrations
+    })
+
+
+@login_required
+def team_detail(request, competition_id, team_id):
+    # Lấy thông tin đội và các đăng ký của họ trong cuộc thi cụ thể
+    registrations = Registration.objects.filter(competition_id=competition_id, team_id=team_id, is_cancelled=False)
+    team_info = get_object_or_404(Team, id=team_id)  # Lấy thông tin đội thi
+
+    context = {
+        'registrations': registrations,
+        'team_info': team_info  # Thêm thông tin đội vào context
+    }
+    return render(request, 'competition/registration_info_detail.html', context)
 
 
 @login_required
@@ -436,46 +639,6 @@ def add_competition(request):
 
 
 @login_required
-def registration_list(request, competition_id):
-    competition = get_object_or_404(Competition, id=competition_id)
-
-    # Lấy tất cả các đăng ký của cuộc thi (chưa bị hủy) cùng với thông tin đội và huấn luyện viên
-    registrations = Registration.objects.filter(competition=competition, is_cancelled=False).select_related('team__coach')
-
-    # Tạo danh sách chứa dữ liệu đăng ký cùng với thông tin SBD của huấn luyện viên và thí sinh
-    registration_data = []
-    for registration in registrations:
-        # Lấy SBD của huấn luyện viên nếu có
-        coach_participant = None
-        if registration.team.coach:
-            coach_participant = Participant.objects.filter(user=registration.team.coach, competition=competition).first()
-
-        # Lấy SBD của từng thành viên trong đội
-        members_participants = []
-        for member in registration.team.members.all():
-            participant = Participant.objects.filter(user=member, competition=competition).first()
-            if participant:
-                members_participants.append({
-                    'full_name': member.get_full_name(),
-                    'username': member.username,
-                    'sbd': participant.sbd,
-                })
-
-        # Thêm dữ liệu đăng ký vào danh sách
-        registration_data.append({
-            'registration': registration,
-            'coach_participant': coach_participant,
-            'members_participants': members_participants,
-        })
-
-    context = {
-        'competition': competition,
-        'registration_data': registration_data,
-    }
-    return render(request, 'competition/registration_list.html', context)
-
-
-@login_required
 def edit_competition(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
 
@@ -568,67 +731,97 @@ def delete_competition(request, competition_id):
 
 @login_required
 def add_result(request, competition_id):
+    # Lấy đối tượng Competition theo competition_id
     competition = get_object_or_404(Competition, id=competition_id)
 
+    # Lấy dữ liệu về vòng đấu và bảng đấu từ Competition (trường JSONField)
+    rounds_data = competition.rounds
+    groups_data = competition.groups
+
+    # Lấy giá trị vòng đấu và bảng đấu được chọn từ GET request
+    selected_round = request.GET.get('round')
+    selected_group = request.GET.get('group')
+
+    # Nếu không có vòng đấu hoặc bảng đấu được chọn, dùng giá trị mặc định
+    if not selected_round:
+        selected_round = rounds_data[0]['round_name']  # Giá trị mặc định là vòng đấu đầu tiên
+    if not selected_group:
+        selected_group = groups_data[0]['group_name']  # Giá trị mặc định là bảng đấu đầu tiên
+
+    # Khởi tạo danh sách các đội thi
+    teams = []
+    matches_count = 0
+    scoring_method = None
+
+    if selected_round and selected_group:
+        # Lọc các dữ liệu vòng đấu và bảng đấu
+        selected_group_data = next((g for g in groups_data if g['group_name'] == selected_group), None)
+        selected_round_data = next((r for r in rounds_data if r['round_name'] == selected_round), None)
+
+        # Lấy giá trị matches_count và scoring_method từ selected_round_data
+        if selected_round_data:
+            matches_count = selected_round_data.get('matches_count', 0)  # Đảm bảo matches_count có giá trị mặc định là 0
+            scoring_method = selected_round_data.get('scoring_method', 'Tổng điểm tất cả các lượt thi')  # Giá trị mặc định
+
+        if selected_group_data and selected_round_data:
+            # Lọc các đội tham gia trong bảng đấu và vòng đấu này
+            teams = Team.objects.filter(
+                id__in=Registration.objects.filter(
+                    competition=competition,
+                    competition_group=selected_group_data['group_name']
+                ).values('team_id')
+            )
+
+            for team in teams:
+                team.members_list = team.members.split(',')
+
+    # Xử lý khi người dùng gửi form (POST request)
     if request.method == 'POST':
-        form = CompetitionResultForm(request.POST, competition=competition)
-        team_id = request.POST.get('team')
-        round_number = request.POST.get('round_number')
-        group_number = request.POST.get('group_number')
-        score = request.POST.get('score')
+        for team_id in request.POST.getlist('team_ids'):
+            print('scoring_method', scoring_method)
+            team_score = []
+            for i in range(1, matches_count + 1):
+                score_field = f'score_{team_id}_{i}'  # Trường lưu điểm của đội
+                score = request.POST.get(score_field, 0)
+                team_score.append(float(score))
 
-        # Kiểm tra nếu đã tồn tại kết quả cho cùng đội, vòng thi và bảng thi
-        if CompetitionResult.objects.filter(
-            team_id=team_id,
-            competition=competition,
-            round_number=round_number,
-            group_number=group_number
-        ).exists():
-            messages.add_message(
-                request, messages.ERROR,
-                "Đội thi này đã có kết quả cho vòng thi và bảng thi này trong cuộc thi này.",
-                extra_tags='duplicate-error'
-            )
-            return render(request, 'result/add_result.html', {'form': form, 'competition': competition})
+            # Tính điểm ranking_score dựa trên scoring_method
+            if scoring_method == "Tổng điểm toàn bộ các lượt thi":
+                ranking_score = sum(team_score)
+            elif scoring_method == "Điểm cao nhất trong các lượt":
+                ranking_score = max(team_score) if team_score else 0
+            else:
+                ranking_score = 0  # Đặt giá trị mặc định nếu có trường hợp bất ngờ
 
-        if form.is_valid():
-            result = form.save(commit=False)
-            result.competition = competition
-            result.team_id = team_id
-            result.round_number = round_number
-            result.group_number = group_number
-            result.score = score
-            result.save()
+            # Kiểm tra xem đội đã có kết quả cho vòng đấu và bảng đấu này chưa
+            if CompetitionResult.objects.filter(team_id=team_id, competition=competition,
+                                                round_name=selected_round, group_name=selected_group).exists():
+                messages.error(request,
+                               f"Đội {team_id} đã có kết quả cho vòng {selected_round} và bảng {selected_group}.")
+                continue
 
-            # Gửi thông báo cho đội thi hoặc người dùng liên quan (nếu cần)
-            Notification.objects.create(
-                user=result.team.user,  # Giả định rằng mỗi đội liên kết với một user
-                title="Kết quả cuộc thi đã được cập nhật",
-                content=f"Kết quả của đội bạn trong cuộc thi {competition.name} đã được cập nhật.",
-                created_at=timezone.now(),
-                notification_type='team'
+            # Lưu kết quả cho đội
+            CompetitionResult.objects.create(
+                competition=competition,
+                team_id=team_id,
+                round_name=selected_round,
+                group_name=selected_group,
+                score=team_score,
+                ranking_score=ranking_score  # Điểm được tính theo scoring_method
             )
 
-            # Sắp xếp thứ hạng theo điểm số
-            competition_results = CompetitionResult.objects.filter(
-                competition=competition
-            ).order_by('-score')
+        messages.success(request, "Kết quả đã được lưu thành công.")
+        return redirect('result_detail', competition_id=competition.id)
 
-            for idx, competition_result in enumerate(competition_results, start=1):
-                print(
-                    f"Đội: {competition_result.team.name} - Hạng: {idx} - Điểm: {competition_result.score}"
-                )
-
-            return redirect('result_detail', competition_id=competition.id)
-
-    else:
-        form = CompetitionResultForm(competition=competition)
-
-    teams = Team.objects.filter(competition=competition)  # Lấy danh sách đội của cuộc thi
+    # Trả về template với các thông tin cần thiết
     return render(request, 'result/add_result.html', {
-        'form': form,
         'competition': competition,
+        'rounds_data': rounds_data,
+        'groups_data': groups_data,
         'teams': teams,
+        'selected_round': selected_round,
+        'selected_group': selected_group,
+        'matches_count': matches_count,
     })
 
 
@@ -640,53 +833,146 @@ def result_list(request):
 
 @login_required
 def result_detail(request, competition_id):
+    # Lấy đối tượng cuộc thi theo ID
     competition = get_object_or_404(Competition, id=competition_id)
-    results = CompetitionResult.objects.filter(competition=competition).order_by('-score')
-    return render(request, 'result/result_detail.html', {'competition': competition, 'results': results})
+
+    # Lấy thông tin bảng đấu và vòng đấu từ cuộc thi
+    groups = competition.groups  # Ví dụ: [{"group_name": "Bảng Tiểu học"}, {"group_name": "Bảng THCS"}]
+    rounds = competition.rounds  # Ví dụ: [{"round_name": "Vòng 1"}, {"round_name": "Vòng 2"}]
+
+    # Tổ chức dữ liệu kết quả theo cấu trúc {group_name: {round_name: [kết quả]}}
+    results = {}
+    for group in groups:
+        group_name = group.get('group_name')  # Lấy tên bảng đấu
+        results[group_name] = {}
+
+        for round_info in rounds:
+            round_name = round_info.get('round_name')  # Lấy tên vòng đấu
+            # Truy vấn kết quả của các đội thi cho bảng và vòng hiện tại, sắp xếp theo điểm giảm dần
+            round_results = CompetitionResult.objects.filter(
+                competition=competition,
+                group_name=group_name,
+                round_name=round_name
+            ).order_by('-score')
+
+            # Lưu kết quả vào cấu trúc dữ liệu
+            results[group_name][round_name] = []
+
+            # Lấy thông tin thành viên cho từng kết quả
+            for result in round_results:
+                # Lấy thông tin đăng ký cho đội thi
+                registrations = Registration.objects.filter(team=result.team)
+
+                # Tạo danh sách thành viên của đội
+                team_members = []
+                for registration in registrations:
+                    team_members.append({
+                        'name': registration.student_name,
+                        'parent_email': registration.guardian_email
+                    })
+
+                # Lưu thông tin kết quả và thành viên
+                results[group_name][round_name].append({
+                    'result': result,
+                    'members': team_members
+                })
+
+    # Truyền dữ liệu đến template
+    return render(request, 'result/result_detail.html', {
+        'competition': competition,
+        'results': results,
+    })
 
 
 @login_required
-def edit_result(request, result_id):
-    result = get_object_or_404(CompetitionResult, id=result_id)
-    competition = result.competition
-    teams = Team.objects.all()  # Lấy tất cả các đội thi để hiển thị trong select box
+def edit_result(request, competition_id, result_id):
+    # Lấy đối tượng Competition theo competition_id
+    competition = get_object_or_404(Competition, id=competition_id)
 
+    # Lấy đối tượng CompetitionResult cần chỉnh sửa
+    result = get_object_or_404(CompetitionResult, id=result_id, competition=competition)
+
+    # Lấy dữ liệu về vòng đấu và bảng đấu từ Competition (trường JSONField)
+    rounds_data = competition.rounds
+    groups_data = competition.groups
+
+    # Lấy giá trị vòng đấu và bảng đấu được chọn từ GET request
+    selected_round = result.round_name
+    selected_group = result.group_name
+
+    # Khởi tạo danh sách các đội thi
+    teams = []
+    matches_count = 0
+    scoring_method = None
+
+    # Lọc các dữ liệu vòng đấu và bảng đấu
+    selected_group_data = next((g for g in groups_data if g['group_name'] == selected_group), None)
+    selected_round_data = next((r for r in rounds_data if r['round_name'] == selected_round), None)
+
+    # Lấy giá trị matches_count và scoring_method từ selected_round_data
+    if selected_round_data:
+        matches_count = selected_round_data.get('matches_count', 0)  # Đảm bảo matches_count có giá trị mặc định là 0
+        scoring_method = selected_round_data.get('scoring_method', 'Tổng điểm tất cả các lượt thi')  # Giá trị mặc định
+
+    if selected_group_data and selected_round_data:
+        # Lọc các đội tham gia trong bảng đấu và vòng đấu này
+        teams = Team.objects.filter(
+            id__in=Registration.objects.filter(
+                competition=competition,
+                competition_group=selected_group_data['group_name']
+            ).values('team_id')
+        )
+
+    print(f"Result score: {result.score}")
+
+    # Truyền điểm số cũ vào context
+    team_scores = {}
+
+    # Lặp qua từng đội trong danh sách teams
+    for team in teams:
+        team.members_list = team.members.split(',')
+        team_scores[team.id] = result.score
+
+    # Kiểm tra kết quả
+    print("team_scores:", team_scores)
+
+    # Xử lý khi người dùng gửi form (POST request)
     if request.method == 'POST':
-        form = CompetitionResultForm(request.POST, instance=result, competition=competition)
-        if form.is_valid():
-            form.save()
+        team_score = []
+        for i in range(1, matches_count + 1):
+            score_field = f'score_{result.team_id}_{i}'  # Trường lưu điểm của đội
+            score = request.POST.get(score_field, 0)
+            team_score.append(float(score))
 
-            # Lấy thông tin người dùng tương ứng với kết quả được cập nhật
-            user = result.participant.user
+        # Tính điểm ranking_score dựa trên scoring_method
+        if scoring_method == "Tổng điểm toàn bộ các lượt thi":
+            ranking_score = sum(team_score)
+        elif scoring_method == "Điểm cao nhất trong các lượt":
+            ranking_score = max(team_score) if team_score else 0
+        else:
+            ranking_score = 0  # Đặt giá trị mặc định nếu có trường hợp bất ngờ
 
-            # Gửi thông báo đến người dùng
-            Notification.objects.create(
-                user=user,
-                title="Kết quả cuộc thi đã được cập nhật",
-                content=f"Kết quả của bạn trong cuộc thi {competition.name} đã được cập nhật.",
-                created_at=timezone.now(),
-                notification_type='user'
-            )
+        # Cập nhật kết quả cho đội
+        result.score = team_score
+        result.ranking_score = ranking_score
 
-            # Tự động sắp xếp thứ hạng dựa trên điểm số sau khi cập nhật
-            with transaction.atomic():  # Sử dụng transaction để đảm bảo tính nhất quán khi cập nhật thứ hạng
-                competition_results = CompetitionResult.objects.filter(
-                    competition=competition
-                ).order_by('-score')
+        # Lưu kết quả đã chỉnh sửa
+        result.save()
 
-                for idx, competition_result in enumerate(competition_results, start=1):
-                    competition_result.rank = idx  # Cập nhật thứ hạng cho từng kết quả
-                    competition_result.save(update_fields=['rank'])  # Chỉ lưu trường 'rank'
+        messages.success(request, "Kết quả đã được cập nhật thành công.")
+        return redirect('result_detail', competition_id=competition.id)
 
-            return redirect('result_detail', competition_id=competition.id)
-    else:
-        form = CompetitionResultForm(instance=result, competition=competition)
-
+    # Trả về template với các thông tin cần thiết
     return render(request, 'result/edit_result.html', {
-        'form': form,
         'competition': competition,
-        'result': result,
-        'teams': teams  # Truyền danh sách các đội thi vào context
+        'rounds_data': rounds_data,
+        'groups_data': groups_data,
+        'teams': teams,
+        'selected_round': selected_round,
+        'selected_group': selected_group,
+        'matches_count': matches_count,
+        'result': result,  # Truyền dữ liệu kết quả hiện tại vào template
+        'team_scores': team_scores,  # Truyền điểm số của các đội vào template
     })
 
 
@@ -1026,47 +1312,74 @@ def export_registrations_to_excel(request, competition_id):
 @login_required
 def export_results_to_excel(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
-    results = CompetitionResult.objects.filter(registration__competition=competition).order_by('-score')
 
-    # Tạo workbook và worksheet
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = f'Kết quả {competition.name}'[:31]  # Giới hạn 31 ký tự
+    # Lấy thông tin bảng đấu và vòng đấu từ cuộc thi
+    groups = competition.groups  # [{"group_name": "Bảng Tiểu học"}, {"group_name": "Bảng THCS"}]
+    rounds = competition.rounds  # [{"round_name": "Vòng loại"}, {"round_name": "Vòng chung kết"}]
 
-    # Thêm tiêu đề cột
-    columns = ['Thứ hạng', 'Thí sinh', 'Ngày sinh', 'Học sinh trường', 'Điểm số']
-    ws.append(columns)
+    # Tạo workbook
+    wb = Workbook()
+    wb.remove(wb.active)  # Xóa sheet mặc định
 
-    # Bôi đậm và căn giữa tiêu đề cột
-    for cell in ws[1]:  # ws[1] là hàng tiêu đề (hàng đầu tiên)
-        cell.font = Font(bold=True, size=14)  # Bôi đậm
-        cell.alignment = Alignment(horizontal='center', vertical='center')  # Căn giữa
+    # Duyệt qua từng bảng đấu và vòng đấu để tạo các sheet riêng
+    for group in groups:
+        group_name = group.get('group_name')
+        for round_info in rounds:
+            round_name = round_info.get('round_name')
 
-    # Thêm dữ liệu vào file Excel
-    for idx, result in enumerate(results, start=1):
-        row = [
-            idx,
-            result.registration.user.full_name,
-            result.registration.user.date_of_birth.strftime('%d/%m/%Y'),
-            result.registration.user.school_name,
-            result.score
-        ]
-        ws.append(row)
+            # Tạo tên sheet dựa trên bảng và vòng đấu
+            sheet_title = f'{group_name}_{round_name}'[:31]  # Giới hạn tên sheet tối đa 31 ký tự
+            ws = wb.create_sheet(title=sheet_title)
 
-    # Căn giữa nội dung các ô
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):  # Bắt đầu từ hàng thứ 2 để bỏ qua tiêu đề
-        for cell in row:
-            cell.alignment = Alignment(horizontal='center', vertical='center')  # Căn giữa
+            # Thêm tiêu đề cột cho sheet
+            columns = ['Thứ hạng', 'Số báo danh', 'Tên đội', 'Huấn luyện viên', 'Thành viên', 'Điểm xếp hạng']
+            ws.append(columns)
 
-    # Điều chỉnh độ rộng của cột theo nội dung
-    for column_cells in ws.columns:
-        length = max(len(str(cell.value)) for cell in column_cells)
-        ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+            # Bôi đậm và căn giữa tiêu đề cột
+            for cell in ws[1]:
+                cell.font = Font(bold=True, size=12)
+                cell.alignment = Alignment(horizontal='center', vertical='center')
 
-    # Lưu workbook vào một đối tượng file ảo
+            # Truy vấn kết quả của các đội thi cho bảng và vòng hiện tại
+            round_results = CompetitionResult.objects.filter(
+                competition=competition,
+                group_name=group_name,
+                round_name=round_name
+            ).order_by('-score')
+
+            # Duyệt qua các kết quả để thêm vào sheet
+            for rank, result in enumerate(round_results, start=1):
+                # Lấy thông tin đăng ký của đội
+                registrations = Registration.objects.filter(team=result.team)
+
+                # Tạo danh sách tên thành viên
+                team_members = ", ".join([reg.student_name for reg in registrations])
+
+                # Thêm hàng dữ liệu
+                row = [
+                    rank,
+                    result.team.sbd,  # Số báo danh
+                    result.team.name,  # Tên đội
+                    result.team.coach,  # Huấn luyện viên
+                    team_members,  # Thành viên
+                    result.ranking_score  # Điểm xếp hạng
+                ]
+                ws.append(row)
+
+            # Căn giữa nội dung các ô
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+                for cell in row:
+                    cell.alignment = Alignment(horizontal='center', vertical='center')
+
+            # Điều chỉnh độ rộng của cột cho từng sheet
+            for column_cells in ws.columns:
+                length = max(len(str(cell.value)) for cell in column_cells if cell.value)
+                ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+
+    # Lưu workbook vào file ảo
     file_stream = io.BytesIO()
     wb.save(file_stream)
-    file_stream.seek(0)  # Đặt con trỏ đọc file về đầu
+    file_stream.seek(0)
 
     # Thiết lập response để tải về file Excel
     response = HttpResponse(file_stream,
@@ -1097,7 +1410,7 @@ def competition_guide(request, competition_id):
             return redirect('confirm_guide_file', guide_file_id=guide_file_instance.id)
 
     # Lấy danh sách tài liệu đã được xác nhận
-    guide_files = competition.guide_files.filter(is_confirmed=True)
+    guide_files = competition.guide_files.filter(is_confirmed=True).order_by('-uploaded_at')
 
     return render(request, 'competition/competition_guide.html', {
         'competition': competition,
@@ -1161,4 +1474,3 @@ def download_guide_file(request, guide_file_id):
     response = FileResponse(guide_file.file.open('rb'), as_attachment=True)
     response['Content-Disposition'] = f'attachment; filename="{guide_file.original_file_name}"'
     return response
-

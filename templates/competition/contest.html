@@ -243,6 +243,10 @@
                         <a class="btn btn-success mb-2" href="{% url 'add_competition' %}">
                             <i class="fas fa-plus"></i> Thêm cuộc thi
                         </a>
+                    {% else %}
+                        <a class="btn btn-info mb-2" href="{% url 'registration_history' %}">
+                            <i class="fas fa-history"></i> Lịch sử đăng ký
+                        </a>
                     {% endif %}
                 </div>
                 

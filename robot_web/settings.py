@@ -131,3 +131,22 @@ LOGIN_URL = 'login'
 MEDIA_URL = '/media/'  # Đường dẫn URL để truy cập file media
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Thư mục lưu trữ file upload
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',  # Đảm bảo mức độ log là DEBUG để ghi được tất cả logs
+            'class': 'logging.FileHandler',
+            'filename': 'django_debug.log',  # Tên file ghi log
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],  # Sử dụng handler này để ghi log
+            'level': 'DEBUG',  # Mức độ log là DEBUG
+            'propagate': True,
+        },
+    },
+}
+
