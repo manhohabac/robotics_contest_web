@@ -1,7 +1,8 @@
 #!/bin/bash
+set -o igncr  # Ignore carriage return
 
 # Cài đặt các phụ thuộc từ requirements.txt
 pip install -r requirements.txt
 
-# Chạy migrations để cập nhật cơ sở dữ liệu
+# Chạy migrations
 python manage.py migrate
