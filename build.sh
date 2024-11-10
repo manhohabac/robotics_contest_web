@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Đảm bảo các kí tự dòng mới là Unix-style (LF)
-dos2unix requirements.txt  # Nếu có lệnh dos2unix, hãy chạy nó trên file requirements.txt
+# Tạo môi trường ảo (virtual environment) và kích hoạt nó
+python -m venv venv
+source venv/bin/activate  # Kích hoạt môi trường ảo trên OnRender (Linux)
+
+# Loại bỏ kí tự \r trong requirements.txt
+sed -i 's/\r//' requirements.txt
 
 # Cài đặt các phụ thuộc từ requirements.txt
 pip install -r requirements.txt
