@@ -129,16 +129,24 @@ STATIC_URL = '/static/'
 # Thư mục để chứa các tệp tĩnh được thu thập
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# Thư mục chứa các tệp static của dự án, bao gồm cả các tệp media mà bạn đã chuyển vào
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'robot/static'),  # Đảm bảo chỉ đường dẫn chính xác đến thư mục static
+]
+
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Cấu hình phục vụ tệp tĩnh với WhiteNoise
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-LOGIN_URL = 'login'
 
-MEDIA_URL = '/media/'  # Đường dẫn URL để truy cập file media
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Thư mục lưu trữ file upload
+# Để lưu các tệp trong thư mục static/media thay vì media
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
+# Đảm bảo tệp media được phục vụ từ thư mục static/media
+MEDIA_URL = '/static/media/'
+
+# Email backend (có thể tùy chỉnh theo nhu cầu)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
