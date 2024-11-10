@@ -244,11 +244,11 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <h5 class="card-title">Thông tin cá nhân</h5>
                                     <!-- Button chỉnh sửa -->
-                                    <a href="{% url 'edit_profile' %}" class="btn btn-primary custom-btn">
+                                    <a href="{% url 'edit_profile' %}" class="btn btn-primary custom-btn" style="margin-top: -12px; margin-right: -12px;">
                                         <i class="fas fa-pencil-alt"></i> Chỉnh sửa
                                     </a>
                                 </div>
-                            
+                                
                                 <div class="row mt-1">
                                     <!-- Phần khung ảnh đại diện -->
                                     <div class="col-md-2">
@@ -264,24 +264,97 @@
                                     {% load form_filters %}
                                     <!-- Phần thông tin chi tiết -->
                                     <div class="col-md-10">
-                                        <p><strong>Họ và tên:</strong> {{ profile.user.full_name }}</p>
-                                        <p><strong>Ngày sinh:</strong> {{ profile.user.date_of_birth|date:"d/m/Y" }}</p>
-                                        <p><strong>Địa chỉ:</strong> {{ profile.user.address }}</p>
-                                        <p><strong>Số điện thoại:</strong> {{ profile.user.phone_number }}</p>
-                                        <p><strong>Email:</strong> {{ profile.user.email }}</p>
-                                        <p><strong>Giới tính:</strong> {{ profile.user.get_gender_display }}</p>
-                                        <p><strong>Thông tin giới thiệu:</strong> {{ profile.bio }}</p>
-                                        <p><strong>Sở thích:</strong> {{ profile.interests }}</p>
-                                        <p><strong>Liên kết mạng xã hội:</strong></p>
-                                        <ul>
-                                            {% for link in profile.social_links|trim %}
-                                                <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>
-                                            {% endfor %}
-                                        </ul>
-                                        <p><strong>Vai trò:</strong> 
-                                            {{ profile.user.get_role_display }}
-                                        </p>
-                                        <p><strong>Điểm Elo:</strong> {{ profile.user.elo_score }}</p>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <p><strong>Họ và tên:</strong> {{ profile.user.full_name }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p><strong>Ngày sinh:</strong> {{ profile.user.date_of_birth|date:"d/m/Y" }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p><strong>Địa chỉ:</strong> {{ profile.user.address }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <p><strong>Số điện thoại:</strong> {{ profile.user.phone_number }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p><strong>Email:</strong> {{ profile.user.email }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p><strong>Giới tính:</strong> {{ profile.user.get_gender_display }}</p>
+                                            </div>
+                                        </div>
+{#                                        <p><strong>Thông tin giới thiệu:</strong> {{ profile.bio }}</p>#}
+{#                                        <p><strong>Sở thích:</strong> {{ profile.interests }}</p>#}
+{#                                        <p><strong>Liên kết mạng xã hội:</strong></p>#}
+{#                                        <ul>#}
+{#                                            {% for link in profile.social_links|trim %}#}
+{#                                                <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>#}
+{#                                            {% endfor %}#}
+{#                                        </ul>#}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                
+                        <!-- Card for History of Participation -->
+                        <div class="card mt-2">
+                            <div class="card-body">
+                                <h5 class="card-title">Lịch sử tham gia các cuộc thi</h5>
+                                <div class="row">
+                                    <div class="col-md-12" style="text-align: center;">
+{#                                        <table class="table table-bordered" style="margin: 0 auto;">#}
+{#                                            <thead>#}
+{#                                                <tr>#}
+{#                                                    <th style="width: 3%;">STT</th>#}
+{#                                                    <th style="width: 60%;">Tên giải đấu đã tham dự</th>#}
+{#                                                    <th style="width: 37%;">Thành tích đạt được</th>#}
+{#                                                </tr>#}
+{#                                            </thead>#}
+{#                                            <tbody>#}
+{#                                                <tr>#}
+{#                                                    <td>1</td>#}
+{#                                                    <td>Giải đấu A</td>#}
+{#                                                    <td>Hạng 1</td>#}
+{#                                                </tr>#}
+{#                                                <tr>#}
+{#                                                    <td>2</td>#}
+{#                                                    <td>Giải đấu B</td>#}
+{#                                                    <td>Hạng 2</td>#}
+{#                                                </tr>#}
+{#                                                <tr>#}
+{#                                                    <td>3</td>#}
+{#                                                    <td>Giải đấu C</td>#}
+{#                                                    <td>Hạng 3</td>#}
+{#                                                </tr>#}
+{#                                                <tr>#}
+{#                                                    <td>4</td>#}
+{#                                                    <td>Giải đấu D</td>#}
+{#                                                    <td>Hạng 4</td>#}
+{#                                                </tr>#}
+{#                                                <tr>#}
+{#                                                    <td>5</td>#}
+{#                                                    <td>Giải đấu E</td>#}
+{#                                                    <td>Hạng 5</td>#}
+{#                                                </tr>#}
+{#                                            </tbody>#}
+{#                                        </table>#}
+                                        <table class="table table-bordered" style="margin: 0 auto;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 3%;">STT</th>
+                                                    <th style="width: 60%;">Tên giải đấu đã tham dự</th>
+                                                    <th style="width: 37%;">Thành tích đạt được</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="3" style="text-align: center;">Chưa có dữ liệu</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>

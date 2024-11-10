@@ -1,6 +1,7 @@
 import os
 from datetime import date
 
+import unicodedata
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
@@ -28,9 +29,13 @@ class CustomUser(AbstractUser):
 
     ROLE_CHOICES = [
         ('student', 'Học sinh thi đấu'),
-        ('coach', 'Huấn luyện viên')
+        ('coach', 'Huấn luyện viên'),
+        ('admin', 'Admin'),
+        ('leader', 'Trưởng Ban Tổ Chức'),
+        ('deputy_leader', 'Phó Ban Tổ Chức'),
+        ('referee', 'Trưởng Ban Trọng Tài'),
     ]
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
+    role = models.CharField(max_length=15, choices=ROLE_CHOICES, default='student')
 
     elo_score = models.FloatField(default=0.0)
 
@@ -71,6 +76,7 @@ class Competition(models.Model):
     rules = models.TextField(blank=True, null=True)
     max_participants = models.IntegerField(null=True, blank=True)
     image = models.ImageField(upload_to='competition_images/', null=True, blank=True)
+    video = models.FileField(upload_to='competitions/videos/', null=True, blank=True)
     participants_target = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     first_prize_points = models.IntegerField(default=0)
@@ -88,8 +94,9 @@ class Team(models.Model):
     name = models.CharField(max_length=255)
     members = models.CharField(max_length=200, null=True, blank=True)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='teams')
+    group_name = models.CharField(max_length=255, null=True, blank=True)
     coach = models.CharField(max_length=255, null=True, blank=True)
-    sbd = models.CharField(max_length=6, blank=True, null=True)  # Bỏ unique=True
+    sbd = models.CharField(max_length=8, blank=True, null=True)
 
     class Meta:
         unique_together = ('competition', 'sbd')  # Đảm bảo SBD duy nhất trong từng cuộc thi
@@ -100,12 +107,17 @@ class Team(models.Model):
         super().save(*args, **kwargs)
 
     def generate_sbd(self):
-        # Lấy số lượng đội trong cuộc thi này và tăng thêm 1
         count = Team.objects.filter(competition=self.competition).count()
-        return str(count + 1).zfill(6)  # Tạo SBD với 6 chữ số, ví dụ: "000001"
+        return f"BG{str(count + 1).zfill(4)}"  # Định dạng BGxxxx với 4 chữ số
 
     def __str__(self):
         return self.name
+
+
+@receiver(post_save, sender=Team)
+def handle_team_save(sender, instance, created, **kwargs):
+    if created:  # Chỉ thực hiện chuẩn hóa SBD khi đội được tạo mới
+        instance.standardize_sbd()
 
 
 class Registration(models.Model):

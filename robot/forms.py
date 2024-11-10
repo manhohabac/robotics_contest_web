@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.utils import timezone
 from PIL import Image as PILImage
-import json
+from django.contrib.auth import get_user_model
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -210,14 +210,13 @@ class EditProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['full_name', 'date_of_birth', 'address', 'school_name',
-                  'phone_number', 'profile_picture', 'gender', 'role']
+                  'phone_number', 'profile_picture', 'gender']
         widgets = {
             'full_name': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'school_name': forms.TextInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
-            'role': forms.Select(attrs={'class': 'form-control'}),
             'profile_picture': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
@@ -369,3 +368,19 @@ class GuideFileForm(forms.ModelForm):
     class Meta:
         model = GuideFile
         fields = ['file', 'note', 'document_name']
+
+
+User = get_user_model()
+
+
+class UserRoleForm(forms.Form):
+    ROLE_CHOICES = [
+        ('student', 'Học sinh thi đấu'),
+        ('coach', 'Huấn luyện viên'),
+        ('admin', 'Admin'),
+        ('leader', 'Trưởng Ban Tổ Chức'),
+        ('deputy_leader', 'Phó Ban Tổ Chức'),
+        ('referee', 'Trưởng Ban Trọng Tài'),
+    ]
+    username = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'placeholder': 'Tên đăng nhập'}))
+    role = forms.ChoiceField(choices=ROLE_CHOICES, label="Chọn vai trò")

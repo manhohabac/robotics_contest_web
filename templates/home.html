@@ -11,7 +11,7 @@
 
     <!-- Font Awesome từ CDN -->
     <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
-    
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,7 +20,7 @@
         body #sidebar.bg-light {
             background-color: #E3F2FD !important;
         }
-        
+
         #sidebar {
             height: 100vh;
             width: 200px;
@@ -49,7 +49,7 @@
             max-width: 100%;
         }
     </style>
-    
+
     <style>
         .top-bar {
             display: flex;
@@ -92,13 +92,13 @@
             border-radius: 5px;
             font-size: 18px;
         }
-        
+
         /* Căn chỉnh dropdown của người dùng */
         .dropdown-menu {
             padding: 10px 15px;
             min-width: 180px; /* Đảm bảo đủ không gian cho các mục */
         }
-        
+
         .dropdown-menu a.dropdown-item {
             font-size: 1rem; /* Căn chỉnh kích thước chữ */
             color: #495057;
@@ -106,27 +106,27 @@
             align-items: center; /* Giúp biểu tượng và chữ cùng hàng ngang */
             padding: 8px 10px; /* Khoảng cách đều giữa các mục */
         }
-        
+
         .dropdown-menu a.dropdown-item i {
             margin-right: 8px; /* Khoảng cách giữa icon và chữ */
         }
-        
+
         .dropdown-menu a.dropdown-item:hover {
             background-color: #e9ecef; /* Hiệu ứng hover cho các mục */
             color: #007bff; /* Thay đổi màu chữ khi hover */
         }
-        
+
         #userDropdown {
             font-size: 1.2rem;
             display: inline-flex;
             align-items: center;
             gap: 5px; /* Điều chỉnh khoảng cách giữa icon và username */
         }
-        
+
         #userDropdown::after {
             margin-left: 1px; /* Điều chỉnh khoảng cách của mũi tên (icon) */
         }
-        
+
         @keyframes ring {
             0% { transform: rotate(0); }
             10% { transform: rotate(15deg); }
@@ -137,10 +137,169 @@
             60% { transform: rotate(-3deg); }
             100% { transform: rotate(0); }
         }
-        
+
         .bell-animation i {
             font-size: 1.2rem;
             animation: ring 1.5s ease infinite; /* Lặp lại hiệu ứng */
+        }
+
+        .hero-section h1 {
+            font-size: 3em; /* Đặt kích thước phông chữ cho tiêu đề h1 là 3 lần kích thước chuẩn của văn bản */
+            font-weight: bold; /* Đặt trọng lượng phông chữ là đậm (bold) */
+            background: linear-gradient(90deg, #00c6ff, #0072ff); /* Tạo một gradient nền từ màu #00c6ff (xanh sáng) sang #0072ff (xanh đậm), góc 90 độ (từ trái sang phải) */
+            -webkit-background-clip: text; /* Dùng clip nền vào chữ (chỉ hoạt động trên trình duyệt hỗ trợ webkit như Chrome và Safari) */
+            color: transparent; /* Làm cho màu chữ trở nên trong suốt, để chỉ hiển thị gradient nền */
+            text-align: center; /* Canh giữa nội dung của h1 */
+            display: inline-block; /* Đặt h1 dưới dạng một phần tử inline-block, cho phép sử dụng thuộc tính kích thước như width, height */
+            white-space: nowrap; /* Không cho phép nội dung trong h1 xuống dòng, nội dung sẽ hiển thị trên một dòng duy nhất */
+            overflow: hidden; /* Giấu phần nội dung bị tràn ra ngoài (sẽ cắt phần chữ chưa được gõ trong hiệu ứng typing) */
+            border-right: .15em solid #00c6ff; /* Thêm một đường viền màu xanh sáng ở bên phải của chữ, tạo hiệu ứng "caret" (con trỏ nhấp nháy) */
+            animation: typing 5s steps(40) 1s 1 normal both, blinkCaret 0.75s step-end 5s forwards; /* Điều chỉnh lại cách chạy animation:
+            - 'typing' kéo dài 5s, dùng 40 bước để tạo hiệu ứng gõ chữ, bắt đầu sau 1s, chỉ chạy 1 lần và giữ lại trạng thái cuối cùng.
+            - 'blinkCaret' chạy trong 0.75s với chu kỳ nháy ở cuối, bắt đầu sau 5s và dừng lại ở trạng thái cuối (forwards). */
+        }
+
+        @keyframes typing {
+            from {
+                width: 0; /* Bắt đầu từ chiều rộng bằng 0 (chữ chưa hiển thị) */
+            }
+            to {
+                width: 100%; /* Kết thúc khi chiều rộng đạt 100% (chữ sẽ hiển thị đầy đủ) */
+            }
+        }
+
+        @keyframes blinkCaret {
+            0%, 100% {
+                border-color: transparent; /* Khi bắt đầu và khi kết thúc hiệu ứng, không có đường viền, ẩn dấu nháy */
+            }
+            50% {
+                border-color: #00c6ff; /* Ở giữa chu kỳ, màu đường viền (caret) là màu xanh sáng (#00c6ff) */
+            }
+        }
+
+        .feature-highlights {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 2rem;
+            background-color: white;
+        }
+
+        .highlight-card {
+            cursor: pointer;
+            background-color: #fff;
+            padding: 2rem;
+            width: 30%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            background-color: powderblue;
+        }
+
+        .highlight-card:hover {
+            transform: translateY(-10px);
+            background-color: lightgreen; /* Thay đổi màu nền khi hover */
+            transition: 0.3s ease;
+        }
+
+        .highlight-card i {
+            font-size: 3rem;
+            color: #007bff;
+        }
+
+        .stats {
+            text-align: center;
+            padding: 2rem 0;
+            background-color: white;
+        }
+
+        .stats .stat-card {
+            display: inline-block;
+            margin: 1rem;
+            padding: 1rem 2rem;
+            background-color: #fff;
+            border-radius: 8px;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+    </style>
+
+    <style>
+        .robot-animation-container {
+            position: relative;
+            overflow: hidden; /* Ngăn robot thoát ra khỏi container */
+            height: 130px; /* Chiều cao giới hạn của không gian */
+            width: 100%; /* Độ rộng của không gian chuyển động */
+        }
+
+        .robot-animation2 img {
+            position: absolute;
+            top: 50%; /* Đặt robot vào giữa chiều cao container */
+            transform: translateY(-50%); /* Căn giữa theo chiều dọc */
+            animation: robotMoveWithin 3s ease-in-out infinite alternate; /* Thiết lập chuyển động */
+        }
+
+        /* Animation chuyển động qua lại */
+        @keyframes robotMoveWithin {
+            0% { left: 5%; } /* Giới hạn robot không chạm vào mép trái */
+            100% { left: calc(95% - 120px); } /* Giới hạn robot không chạm vào mép phải */
+        }
+
+        .robot-arena-container {
+            width: 100%;
+            max-height: 1250px;
+            overflow: hidden;
+        }
+
+        .robot-arena-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+
+    <style>
+        .footer {
+            background-color: #2c3e50; /* Điều chỉnh màu nền nếu cần */
+            padding: 10px 20px;
+            color: #ffffff;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-section {
+            margin: 0 10px;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .footer-links li {
+            display: inline;
+        }
+
+        .footer-links a {
+            color: yellow;
+            text-decoration: none;
+        }
+
+        .footer-section a
+        {
+            color: yellow;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -178,9 +337,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            {% if request.user.is_superuser %}
+                            {% if request.user.role == 'admin' %}
                                 <a class="nav-link" href="{% url 'feedback_list' %}">
                                     <i class="fas fa-comment-dots"></i> Phản hồi
+                                </a>
+                                <a class="nav-link" href="{% url 'manage_users' %}">
+                                    <i class="fas fa-users-cog"></i> Quản lý người dùng
                                 </a>
                             {% else %}
                                 <a class="nav-link" href="{% url 'submit_feedback' %}">
@@ -200,7 +362,7 @@
                     <a class="btn {% if notifications_unread %}btn-warning{% else %}btn-secondary{% endif %} {% if notifications_unread %}bell-animation{% endif %}" href="{% url 'notification' %}">
                         <i class="fas fa-bell"></i>
                     </a>
-                
+
                     <!-- Dropdown for User with margin -->
                     <div class="dropdown ml-2">
                         <a href="#" id="userDropdown" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -225,6 +387,73 @@
                         </ul>
                     </div>
                 </div>
+
+                <div id="robotArenaCarousel" class="carousel slide robot-arena-container" data-bs-ride="carousel" data-bs-interval="6000">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <img src="{% static 'images/rbc_bg_2025.jpg' %}" alt="Robot Arena 1" class="robot-arena-img">
+                        </div>
+                        <div class="carousel-item">
+                            <img src="{% static 'images/rbc_bg_2025.jpg' %}" alt="Robot Arena 2" class="robot-arena-img">
+                        </div>
+                        <div class="carousel-item">
+                            <img src="{% static 'images/rbc_bg_2025.jpg' %}" alt="Robot Arena 3" class="robot-arena-img">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-section mt-2">
+                    <h1>Chào mừng đến với cuộc thi Robocon Bắc Giang lần thứ hai năm 2025</h1>
+                </div>
+
+                <div class="robot-animation-container">
+                    <div class="robot-animation2">
+                        <img src="{% static 'images/robot-animation.gif' %}" alt="Robot Animation" width="120" height="120">
+                    </div>
+                </div>
+
+                <div class="container feature-highlights">
+                    <div class="highlight-card" onclick="window.location.href='{% url 'contest_list' %}';">
+                        <i class="fas fa-trophy"></i>
+                        <h3>Robocon Bắc Giang 2025</h3>
+                        <p>Thông tin giải đấu và đăng ký</p>
+                    </div>
+
+                    <div class="highlight-card" onclick="window.location.href='{% url 'result_list' %}';">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>Kết quả thi đấu</h3>
+                        <p>Xem kết quả và bảng xếp hạng</p>
+                    </div>
+
+                    <div class="highlight-card" onclick="window.location.href='{% url 'kit_list' %}';">
+                        <i class="fas fa-box"></i>
+                        <h3>Tài liệu & bộ thiết bị</h3>
+                        <p>Tài liệu dành cho người tham gia</p>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">Không giới hạn số đội tham gia thi đấu</div>
+                    <div class="stat-card">Nhiều vòng thi đấu hấp dẫn</div>
+                    <div class="stat-card">Giải thưởng hấp dẫn, giá trị</div>
+                </div>
+
+                <footer class="footer">
+                    <div class="footer-content">
+                        <div class="footer-section">
+                            <p>&copy; 2024 Robot Arena. All rights reserved.</p>
+                        </div>
+                        <div class="footer-section">
+                            <p>Contact us: sangtaobusta@gmail.com</p>
+                        </div>
+                        <div class="footer-section">
+                            <ul class="footer-links">
+                                <li><a href="https://zalo.me/g/jintjo424" target="_blank">Zalo</a></li>
+                                <li><a href="https://www.facebook.com/profile.php?id=61558584212479&mibextid=LQQJ4d" target="_blank">Facebook</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </footer>
             </main>
         </div>
     </div>

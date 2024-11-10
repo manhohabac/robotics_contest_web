@@ -153,6 +153,29 @@
             overflow-y: auto; /* Tạo thanh cuộn dọc nếu nội dung vượt quá chiều cao */
         }
     </style>
+
+    <style>
+        /* Giảm khoảng cách giữa các card */
+        .p-1 {
+            padding: 3px; /* Điều chỉnh giá trị này nếu cần thêm hoặc bớt khoảng cách */
+        }
+
+        /* Loại bỏ margin giữa các cột */
+        .no-gutters {
+            margin-right: 0;
+            margin-left: 0;
+        }
+
+        /* Đảm bảo card không có khoảng trống */
+        .card {
+            margin: 0;
+            padding: 3px; /* Điều chỉnh để tăng hoặc giảm khoảng cách bên trong card */
+        }
+
+        .card-body {
+            margin-left: -12px;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -239,11 +262,11 @@
                 <div class="container mt-2 custom-container">
                     <div class="d-flex justify-content-start mb-3">
                         {% if user.is_superuser %}
-                            <a href="{% url 'registration_list' competition_id=team_info.competition.id %}" class="btn btn-primary">
+                            <a href="{% url 'registration_list' competition_id=team_info.competition.id %}" class="btn btn-primary" style="margin-top: -4px; margin-left: -16px;">
                                 <i class="fas fa-arrow-left"></i> Quay lại danh sách đăng ký
                             </a>
                         {% else %}
-                            <a href="{% url 'registration_history' %}" class="btn btn-primary">
+                            <a href="{% url 'registration_history' %}" class="btn btn-primary" style="margin-top: -4px; margin-left: -16px;">
                                 <i class="fas fa-history"></i> Quay lại lịch sử đăng ký
                             </a>
                         {% endif %}
@@ -259,12 +282,12 @@
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row no-gutters">
                         <!-- Phần thông tin chi tiết đội (bên trái) dưới dạng card grid -->
-                        <div class="col-md-3 mb-4">
+                        <div class="col-md-3 p-1" style="margin-left: -16px;">
                             <div class="card fixed-card-height">
                                 <div class="card-body">
-                                    <h5 class="card-title text-center">Thông tin đội</h5>
+                                    <h5 class="card-title text-center" style="margin-top: -18px;">Thông tin đội</h5>
                                     <ul class="list-unstyled">
                                         <li><strong>Số báo danh:</strong> {{ team_info.sbd }}</li>
                                         <li><strong>Khu vực đăng ký:</strong> {{ registrations.0.region }}</li>
@@ -281,13 +304,13 @@
 
                         <!-- Phần thông tin chi tiết từng thí sinh (bên phải) dưới dạng card grid -->
                         <div class="col-md-9">
-                            <div class="row">
+                            <div class="row no-gutters">
                                 {% for registration in registrations %}
-                                    <div class="col-md-4 mb-4">
+                                    <div class="col-md-4 p-1">
                                         <div class="card fixed-card-height">
                                             <div class="card-body">
-                                                <div class="text-center">
-                                                    <img src="{{ registration.student_photo.url }}" class="rounded-circle mb-3" alt="Học sinh {{ registration.student_name }}" style="width: 120px; height: 120px;">
+                                                <div class="text-center" style="margin-top: -17px;">
+                                                    <img src="{{ registration.student_photo.url }}" class="rounded-circle mb-2" alt="Học sinh {{ registration.student_name }}" style="width: 150px; height: 150px;">
                                                     <h5 class="card-title">{{ registration.student_name }}</h5>
                                                 </div>
                                                 <h5 class="card-title text-center">Thông tin học sinh</h5>

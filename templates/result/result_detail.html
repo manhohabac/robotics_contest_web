@@ -234,10 +234,12 @@
                         <h1 class="h2">Kết quả cụ thể của cuộc thi {{ competition.name }}</h1>
                     </div>
                     
-                    <!-- Nút Xuất Excel ở vị trí bên phải -->
-                    <a class="btn btn-success" href="{% url 'export_results_to_excel' competition.id %}">
-                        <i class="fas fa-file-excel"></i> Xuất Excel
-                    </a>
+                    <!-- Chỉ hiển thị nút Xuất Excel cho admin -->
+                    {% if request.user.is_superuser %}
+                        <a class="btn btn-success" href="{% url 'export_results_to_excel' competition.id %}">
+                            <i class="fas fa-file-excel"></i> Xuất Excel
+                        </a>
+                    {% endif %}
                 </div>
              
                 <div class="row">
@@ -297,7 +299,7 @@
                                                             </tr>
                                                         {% empty %}
                                                             <tr>
-                                                                <td colspan="8" class="text-center">Không có kết quả nào.</td>
+                                                                <td colspan="8" class="text-center">Chưa có kết quả.</td>
                                                             </tr>
                                                         {% endfor %}
                                                     </tbody>

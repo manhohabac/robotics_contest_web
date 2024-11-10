@@ -23,3 +23,11 @@ def trim(value):
 @register.filter
 def format_vnd(value):
     return intcomma(value).replace(",", ".")
+
+
+@register.filter
+def get_item(value, index):
+    try:
+        return value[int(index)]
+    except (IndexError, ValueError):
+        return None  # Nếu không tìm thấy hoặc có lỗi, trả về None

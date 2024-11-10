@@ -1,3 +1,5 @@
+import mimetypes
+import re
 from datetime import date, datetime
 from io import BytesIO
 
@@ -6,11 +8,11 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from openpyxl.drawing.image import Image as OpenPyXLImage
 import os
-from django.core.paginator import Paginator
-from django.http import JsonResponse, HttpResponse, FileResponse
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.http import JsonResponse, HttpResponse, FileResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
-from django.utils.timezone import make_naive
+from django.utils.timezone import make_naive, localtime
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from PIL import Image
@@ -61,7 +63,7 @@ def register(request):
                     notification_type='admin'
                 )
 
-            return redirect('login')  # Thay 'home' bằng tên URL mà bạn muốn chuyển hướng sau khi đăng ký
+            return redirect('home')  # Thay 'home' bằng tên URL mà bạn muốn chuyển hướng sau khi đăng ký
     else:
         form = UserRegistrationForm()
 
@@ -468,10 +470,22 @@ def registration_list(request, competition_id):
             'parent_email': registration.guardian_email
         })
 
+    # Thực hiện phân trang
+    page = request.GET.get('page', 1)  # Lấy số trang từ query parameter, mặc định là trang 1
+    paginator = Paginator(registration_data, 7)  # Giới hạn mỗi trang 10 mục
+
+    try:
+        registration_data_paginated = paginator.page(page)  # Lấy trang cụ thể
+    except PageNotAnInteger:
+        registration_data_paginated = paginator.page(1)  # Nếu số trang không phải là số nguyên, hiển thị trang 1
+    except EmptyPage:
+        registration_data_paginated = paginator.page(paginator.num_pages)  # Nếu số trang quá lớn, hiển thị trang cuối cùng
+
     context = {
         'competition': competition,
-        'registration_data': registration_data,
+        'registration_data': registration_data_paginated,  # Truyền dữ liệu đã phân trang
     }
+
     return render(request, 'competition/registration_list.html', context)
 
 
@@ -672,10 +686,6 @@ def edit_competition(request, competition_id):
             competition.groups = [{"group_name": name} for name in group_names]
             # Lưu thông tin vòng thi dưới dạng JSON
             competition.rounds = rounds
-
-            # Log để kiểm tra dữ liệu
-            print("Groups:", competition.groups)
-            print("Rounds:", competition.rounds)
 
             competition.save()
 
@@ -1253,58 +1263,102 @@ def toggle_viewed_status(request, feedback_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
+def sanitize_filename(filename):
+    # Bước 1: Loại bỏ các từ không cần thiết như "Cuộc thi"
+    filename = filename.replace("Cuộc thi", "").strip()  # Loại bỏ "Cuộc thi" và trim khoảng trắng
+
+    # Bước 2: Thay thế các ký tự không hợp lệ trong tên file (chỉ giữ lại các ký tự an toàn)
+    filename = re.sub(r'[<>:"/\\|?*]', '_', filename)  # Thay thế các ký tự không hợp lệ bằng dấu gạch dưới
+    filename = filename.replace(' ', '_')  # Thay thế dấu cách bằng dấu gạch dưới
+
+    # Bước 3: Trả về tên file đã xử lý
+    return filename
+
+
 @login_required
 def export_registrations_to_excel(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
-    registrations = Registration.objects.filter(competition=competition, is_cancelled=False)
 
-    # Tạo workbook và worksheet
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = f'Danh sách đăng ký {competition.name}'[:31]  # Giới hạn 31 ký tự
+    # Lấy danh sách các bảng thi từ cuộc thi
+    competition_groups = Registration.objects.filter(competition=competition).values_list('competition_group', flat=True).distinct()
 
-    # Thêm tiêu đề cột với bôi đậm
-    columns = ['STT', 'Họ và tên', 'Ngày sinh', 'Tên trường', 'Ngày đăng ký']
-    ws.append(columns)
+    # Tạo workbook
+    wb = Workbook()
+    wb.remove(wb.active)  # Xóa sheet mặc định
 
-    # Bôi đậm tiêu đề
-    for cell in ws[1]:  # Dòng đầu tiên chứa tiêu đề
-        cell.font = Font(bold=True, size=14)
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+    # Kiểm tra nếu không có bảng thi nào, tạo một sheet mặc định
+    if not competition_groups:
+        ws = wb.create_sheet(title="Không có dữ liệu")
+        ws.append(['Không có dữ liệu đăng ký'])
 
-    # Thêm dữ liệu vào file Excel
-    for idx, registration in enumerate(registrations, start=1):
-        row = [
-            idx,
-            registration.user.full_name,
-            registration.user.date_of_birth.strftime('%d/%m/%Y'),
-            registration.user.school_name,
-            registration.registration_date.strftime('%d/%m/%Y')
-        ]
-        ws.append(row)
+    # Duyệt qua các bảng thi (competition_group) và tạo các sheet riêng
+    for group in competition_groups:
+        group_name = group if group else 'Chưa phân bảng'
+        sheet_title = f'{group_name}'[:31]  # Giới hạn tên sheet tối đa 31 ký tự
+        ws = wb.create_sheet(title=sheet_title)
 
-        # Căn giữa cho từng ô trong hàng
-        for cell in ws[idx + 1]:  # idx + 1 vì hàng đầu tiên là tiêu đề
+        # Thêm tiêu đề cột vào sheet
+        columns = ['STT', 'Tên đội', 'Số báo danh', 'Huấn luyện viên', 'Thí sinh', 'Thời gian đăng ký']
+        ws.append(columns)
+
+        # Bôi đậm và căn giữa tiêu đề cột
+        for cell in ws[1]:
+            cell.font = Font(bold=True, size=12)
             cell.alignment = Alignment(horizontal='center', vertical='center')
 
-    # Điều chỉnh độ rộng của cột theo nội dung
-    for column_cells in ws.columns:
-        length = max(len(str(cell.value)) for cell in column_cells)
-        ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+        # Lọc các đăng ký cho bảng thi hiện tại
+        group_registrations = Registration.objects.filter(competition=competition, competition_group=group)
 
-    # Điều chỉnh chiều cao của hàng
-    for row in ws.iter_rows():
-        ws.row_dimensions[row[0].row].height = 20  # Thiết lập chiều cao hàng là 20 (tùy chỉnh)
+        # Duyệt qua các đội thi và thêm dữ liệu vào sheet
+        seen_teams = set()  # Sử dụng set để đảm bảo mỗi đội chỉ xuất hiện một lần
+        for idx, registration in enumerate(group_registrations, start=1):
+            team = registration.team
+            if team not in seen_teams:
+                # Đánh dấu đội đã được xử lý
+                seen_teams.add(team)
 
-    # Lưu workbook vào một đối tượng file ảo
+                # Tạo danh sách thí sinh cho đội (gộp các thành viên nếu có)
+                team_members = ", ".join([reg.student_name for reg in group_registrations if reg.team == team])
+
+                # Chuyển thời gian đăng ký sang múi giờ địa phương
+                local_registration_time = localtime(registration.registration_date).strftime('%H:%M, %d/%m/%Y')
+
+                # Thêm hàng dữ liệu cho đội
+                row = [
+                    idx,
+                    team.name if team.name else 'Chưa có tên đội',
+                    team.sbd if team.sbd else 'Chưa có SBD',
+                    registration.coach_name if registration.coach_name else 'Chưa có huấn luyện viên',
+                    team_members,  # Thí sinh
+                    local_registration_time  # Thời gian đăng ký
+                ]
+                ws.append(row)
+
+        # Căn giữa nội dung các ô
+        for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+            for cell in row:
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        # Điều chỉnh độ rộng của cột cho từng sheet
+        for column_cells in ws.columns:
+            length = max(len(str(cell.value)) for cell in column_cells if cell.value)
+            ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+
+    # Lưu workbook vào file ảo
     file_stream = io.BytesIO()
     wb.save(file_stream)
-    file_stream.seek(0)  # Đặt con trỏ đọc file về đầu
+    file_stream.seek(0)
+
+    # Xử lý tên file
+    safe_filename = sanitize_filename(competition.name)
+
+    # Tạo tên file hoàn chỉnh
+    filename = f'Danh_sach_dang_ky_{safe_filename}.xlsx'
 
     # Thiết lập response để tải về file Excel
     response = HttpResponse(file_stream,
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename=Danh_sach_dang_ky_{competition.name}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename={filename}'
 
     return response
 
@@ -1382,9 +1436,10 @@ def export_results_to_excel(request, competition_id):
     file_stream.seek(0)
 
     # Thiết lập response để tải về file Excel
+    safe_filename = sanitize_filename(competition.name)  # Bạn có thể viết hàm sanitize_filename nếu cần
     response = HttpResponse(file_stream,
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename=Ket_qua_{competition.name}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename=Ket_qua_{safe_filename}.xlsx'
 
     return response
 
@@ -1411,6 +1466,17 @@ def competition_guide(request, competition_id):
 
     # Lấy danh sách tài liệu đã được xác nhận
     guide_files = competition.guide_files.filter(is_confirmed=True).order_by('-uploaded_at')
+
+    # Thêm thông tin về xem trước vào context
+    for guide_file in guide_files:
+        # Lấy loại MIME của tệp tin
+        mime_type, encoding = mimetypes.guess_type(guide_file.file.name)
+
+        # Nếu là ảnh hoặc PDF, thêm thông tin vào file
+        guide_file.is_previewable = False
+        if mime_type:
+            if mime_type.startswith('image/') or mime_type == 'application/pdf':
+                guide_file.is_previewable = True
 
     return render(request, 'competition/competition_guide.html', {
         'competition': competition,
@@ -1474,3 +1540,39 @@ def download_guide_file(request, guide_file_id):
     response = FileResponse(guide_file.file.open('rb'), as_attachment=True)
     response['Content-Disposition'] = f'attachment; filename="{guide_file.original_file_name}"'
     return response
+
+
+User = get_user_model()
+
+
+@login_required
+def manage_users(request):
+    # Kiểm tra xem người dùng có phải admin không
+    if request.user.role != 'admin':
+        return HttpResponseForbidden("Bạn không có quyền truy cập vào trang này.")
+
+    # Lấy tất cả người dùng
+    users = User.objects.all()
+
+    # Phân trang: mỗi trang sẽ hiển thị 10 người dùng
+    paginator = Paginator(users, 6)  # 10 là số người dùng mỗi trang
+    page_number = request.GET.get('page')  # Lấy số trang từ query string
+
+    # Kiểm tra xem page_number có hợp lệ không
+    try:
+        page_obj = paginator.get_page(page_number)
+    except ValueError:
+        page_obj = paginator.get_page(1)  # Nếu có lỗi, dùng trang 1
+
+    # Xử lý việc thay đổi vai trò người dùng nếu có
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        role = request.POST.get('role')
+        user = get_object_or_404(User, username=username)
+        user.role = role
+        user.save()
+
+    # Trả lại template với đối tượng phân trang
+    return render(request, 'manage_users.html', {'page_obj': page_obj})
+
+

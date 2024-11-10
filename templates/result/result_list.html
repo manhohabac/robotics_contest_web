@@ -49,7 +49,7 @@
     
     <style>
         .competition-image {
-            height: 190px; /* Thay đổi giá trị theo nhu cầu */
+            height: auto; /* Thay đổi giá trị theo nhu cầu */
             width: 100%; /* Giữ tỉ lệ hình ảnh, không vượt quá chiều rộng của card */
             object-fit: cover; /* Giúp hình ảnh được cắt và hiển thị đồng nhất */
         }
@@ -239,7 +239,7 @@
                 {% load static %}
                 <div class="row">
                     {% for competition in competitions %}
-                    <div class="col-md-3">
+                    <div class="col-md-6">
                         <div class="card mb-4 shadow-sm">
                             <a href="{% url 'result_detail' competition.id %}">
                                 {% if competition.image %}
@@ -247,8 +247,8 @@
                                 {% else %}
                                     <img src="{% static 'images/robot3.jpg' %}" class="card-img-top competition-image" alt="{{ competition.name }}">
                                 {% endif %}
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">{{ competition.name }}</h5>
+                                <div class="card-body text-center" style="padding: 10px;">
+                                    <h5 class="card-title" style="font-size: 1.1rem; margin-bottom: 0;">{{ competition.name }}</h5>
                                 </div>
                             </a>
                         </div>

@@ -276,10 +276,10 @@
                 
                 <div class="row">
                     {% for kit in kits %}
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="card mb-4 shadow-sm">
                                 {% if kit.image %}
-                                    <img src="{{ kit.image.url }}" class="card-img-top" style="max-height: 350px" alt="{{ kit.name }}">
+                                    <img src="{{ kit.image.url }}" class="card-img-top" style="max-height: 490px" alt="{{ kit.name }}">
                                 {% endif %}
                                 <div class="card-body d-flex flex-column" style="height: 100%;">
                                     <div class="flex-grow-1" style="overflow-y: auto; max-height: 200px">

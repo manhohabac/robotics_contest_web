@@ -77,7 +77,7 @@
         .file-input {
             border: none;
             box-shadow: none;
-            width: 250px;
+            width: 350px;
         }
         
         .top-bar {
@@ -289,7 +289,9 @@
                             <tr>
                                 <th style="width: 3%;">STT</th>
                                 <th style="width: 20%;">Tên tài liệu</th>
-                                <th style="width: 20%;">Tên tệp tin</th>
+                                {% if request.user.is_superuser or request.user.is_staff %}
+                                    <th style="width: 20%;">Tên tệp tin</th>
+                                {% endif %}
                                 <th style="width: 38%;">Ghi chú</th>
                                 <th style="width: 19%;">Hành động</th>
                             </tr>
@@ -299,14 +301,16 @@
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
                                     <td>{{ guide_file.document_name }}</td>
-                                    <td>{{ guide_file.original_file_name  }}</td>
+                                    {% if request.user.is_superuser or request.user.is_staff %}
+                                        <td>{{ guide_file.original_file_name }}</td>
+                                    {% endif %}
                                     <td>{{ guide_file.note|default:"" }}</td>
                                     <td>
                                         {% if request.user.is_superuser or request.user.is_staff %}
                                             <a href="{% url 'edit_guide_file' guide_file.id %}" class="btn btn-warning btn-sm">
                                                 <i class="fa fa-edit"></i> Chỉnh sửa
                                             </a>
-                                            <a href="{% url 'delete_guide_file' guide_file.id %}" class="btn btn-danger btn-sm" 
+                                            <a href="{% url 'delete_guide_file' guide_file.id %}" class="btn btn-danger btn-sm"
                                                onclick="return confirm('Bạn có chắc chắn muốn xoá tài liệu này không?');">
                                                 <i class="fa fa-trash"></i> Xoá
                                             </a>
@@ -314,11 +318,19 @@
                                         <a href="{% url 'download_guide_file' guide_file.id %}" class="btn btn-primary btn-sm">
                                             <i class="fa fa-download"></i> Tải xuống
                                         </a>
+                                        {% if guide_file.is_previewable %}
+                                            <!-- Nút Xem Trước -->
+                                            <a href="{{ guide_file.file.url }}" class="btn btn-info btn-sm" target="_blank">
+                                                <i class="fa fa-eye"></i> Xem trước
+                                            </a>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center">Chưa có tài liệu hướng dẫn nào.</td>
+                                    <td colspan="{% if request.user.is_superuser or request.user.is_staff %}5{% else %}4{% endif %}" class="text-center">
+                                        Chưa có tài liệu hướng dẫn nào.
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>

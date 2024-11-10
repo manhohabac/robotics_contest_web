@@ -53,7 +53,7 @@
     <style>
         .form-row {
             display: flex;
-            gap: 100px; /* Khoảng cách giữa các trường */
+            gap: 35px; /* Khoảng cách giữa các trường */
         }
         .form-group {
             flex: 1; /* Đảm bảo các phần tử form-group chiếm không gian đồng đều */
@@ -61,8 +61,6 @@
         .form-control {
             width: 100%; /* Đảm bảo trường input chiếm toàn bộ chiều rộng của form-group */
         }
-
-
     </style>
     
     <style>
@@ -416,21 +414,23 @@
                         </div>
 
                         <!-- Prize Points -->
-                        <div class="form-group">
-                            <label for="id_first_prize_points">Điểm thưởng giải Nhất</label>
-                            {{ form.first_prize_points|add_class:"form-control" }}
-                        </div>
-                        <div class="form-group">
-                            <label for="id_second_prize_points">Điểm thưởng giải Nhì</label>
-                            {{ form.second_prize_points|add_class:"form-control" }}
-                        </div>
-                        <div class="form-group">
-                            <label for="id_third_prize_points">Điểm thưởng giải Ba</label>
-                            {{ form.third_prize_points|add_class:"form-control" }}
-                        </div>
-                        <div class="form-group">
-                            <label for="id_potential_points">Điểm thưởng giải Tiềm năng</label>
-                            {{ form.potential_points|add_class:"form-control" }}
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="id_first_prize_points">Điểm thưởng giải Nhất</label>
+                                {{ form.first_prize_points|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="id_second_prize_points">Điểm thưởng giải Nhì</label>
+                                {{ form.second_prize_points|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="id_third_prize_points">Điểm thưởng giải Ba</label>
+                                {{ form.third_prize_points|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="id_potential_points">Điểm thưởng giải Tiềm năng</label>
+                                {{ form.potential_points|add_class:"form-control" }}
+                            </div>
                         </div>
 
                         <!-- Image Field -->

@@ -259,24 +259,24 @@
                             <table class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
-                                        <th style="width: 5%; text-align: center">STT</th>
-                                        <th style="width: 15%; text-align: center">Tên đội</th>
-                                        <th style="width: 10%; text-align: center">Bảng thi</th>
+                                        <th style="width: 2%; text-align: center">STT</th>
                                         <th style="width: 10%; text-align: center">Số báo danh</th>
+                                        <th style="width: 10%; text-align: center">Bảng thi</th>
+                                        <th style="width: 15%; text-align: center">Tên đội</th>
                                         <th style="width: 15%; text-align: center">Huấn luyện viên</th>
                                         <th style="width: 20%; text-align: center">Thí sinh</th>
-                                        <th style="width: 15%; text-align: center">Thời gian đăng ký</th>
+                                        <th style="width: 10%; text-align: center">Thời gian đăng ký</th>
                                         <th style="width: 10%; text-align: center">Trạng thái</th>
-                                        <th style="width: 10%; text-align: center">Chi tiết</th>
+                                        <th style="width: 13%; text-align: center">Chi tiết</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for entry in registration_data %}
                                     <tr>
                                         <td class="text-center">{{ forloop.counter }}</td>
-                                        <td class="text-center">{{ entry.team_name }}</td>
-                                        <td class="text-center">{{ entry.competition_group }}</td>
                                         <td class="text-center">{{ entry.team_sbd }}</td>
+                                        <td class="text-center">{{ entry.competition_group }}</td>
+                                        <td class="text-center">{{ entry.team_name }}</td>
                                         <td class="text-center">{{ entry.coach_name }}</td>
                                         <td>
                                             <ul style="list-style: none; padding: 0; margin: 0;">
@@ -296,6 +296,42 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
+                
+                            <!-- Phân trang -->
+                            <nav>
+                                <ul class="pagination justify-content-center">
+                                    {% if registration_data.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1" aria-label="First">
+                                                <span aria-hidden="true">&laquo;&laquo;</span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ registration_data.previous_page_number }}" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Trang {{ registration_data.number }} / {{ registration_data.paginator.num_pages }}</span>
+                                    </li>
+                                    
+                                    {% if registration_data.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ registration_data.next_page_number }}" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ registration_data.paginator.num_pages }}" aria-label="Last">
+                                                <span aria-hidden="true">&raquo;&raquo;</span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                
                         {% else %}
                             <p>Chưa có đội thi nào đăng ký.</p>
                         {% endif %}

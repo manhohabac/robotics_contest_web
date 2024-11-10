@@ -142,6 +142,162 @@
             font-size: 1.2rem;
             animation: ring 1.5s ease infinite; /* Lặp lại hiệu ứng */
         }
+
+        /* Tăng kích thước checkbox */
+        #confirm_info {
+            width: 1em;
+            height: 1em;
+            transform: scale(1.5); /* Phóng to checkbox */
+            margin-right: 0.5em; /* Khoảng cách giữa checkbox và nhãn */
+        }
+
+        #agree_rules {
+            width: 1em;
+            height: 1em;
+            transform: scale(1.5); /* Phóng to checkbox */
+            margin-right: 0.5em; /* Khoảng cách giữa checkbox và nhãn */
+        }
+    </style>
+
+    <style>
+        .custom-width-region {
+            width: 20%; /* Độ rộng mong muốn cho "Khu vực đăng ký" */
+        }
+
+        .custom-width-city {
+            width: 20%; /* Độ rộng mong muốn cho "Tỉnh/Thành phố" */
+        }
+
+        .custom-width-competition {
+            width: 15%; /* Độ rộng mong muốn cho "Bảng thi" */
+        }
+
+        .custom-width-member {
+            width: 15%; /* Độ rộng mong muốn cho "Số lượng thí sinh" */
+        }
+
+        .custom-width-team-name {
+            width: 20%;
+        }
+
+        .custom-width-team-email {
+            width: 16%;
+        }
+
+        .custom-width-coach-name {
+            width: 20%;
+        }
+
+        .custom-width-coach-unit {
+            width: 30%;
+        }
+
+        .custom-width-coach-phone {
+            width: 20%;
+        }
+
+        .custom-width-region,
+        .custom-width-city,
+        .custom-width-competition,
+        .custom-width-member,
+        .custom-width-team-name,
+        .custom-width-team-email,
+        .custom-width-coach-name,
+        .custom-width-coach-unit,
+        .custom-width-coach-phone
+        {
+            margin-right: 10px; /* Khoảng cách mong muốn giữa các trường */
+        }
+    </style>
+
+    <style>
+        .custom-width-student-name
+        {
+            width: 270px;
+        }
+
+        .custom-width-student-phone
+        {
+            width: 180px;
+        }
+
+        .custom-width-student-email
+        {
+            width: 250px;
+        }
+
+        .custom-width-student-class
+        {
+            width: 350px;
+        }
+
+        .custom-width-birth-year
+        {
+            width: 170px;
+        }
+
+        .custom-width-gender
+        {
+            width: 170px;
+        }
+
+        .custom-width-ethnicity
+        {
+            width: 170px;
+        }
+
+        .custom-width-address
+        {
+            width: 720px;
+        }
+
+        .custom-width-student-photo
+        {
+            width: 340px;
+        }
+
+        .custom-width-student-name,
+        .custom-width-student-phone,
+        .custom-width-student-email,
+        .custom-width-student-class,
+        .custom-width-birth-year,
+        .custom-width-gender,
+        .custom-width-ethnicity,
+        .custom-width-address,
+        .custom-width-student-photo
+        {
+            margin-right: 10px;
+        }
+    </style>
+
+    <style>
+        .custom-width-guardian-name
+        {
+            width: 370px;
+        }
+
+        .custom-width-relationship
+        {
+            width: 250px;
+        }
+
+        .custom-width-guardian-phone
+        {
+            width: 250px;
+        }
+
+        .custom-width-guardian-email
+        {
+            width: 400px;
+        }
+
+        .custom-width-guardian-name,
+        .custom-width-relationship,
+        .custom-width-guardian-phone,
+        .custom-width-guardian-email
+        {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -226,8 +382,10 @@
                     </div>
                 </div>
 
-                <div class="container mt-5">
-                    <h2>Đăng ký đội cho cuộc thi {{ competition.name }}</h2>
+                <div class="container mt-1" style="max-width: 1650px;">
+                    <!-- Căn giữa tiêu đề -->
+                    <h2 class="text-center">Đăng ký đội cho cuộc thi {{ competition.name }}</h2>
+
                     <form method="post" action="{% url 'register_competition' competition.id %}" enctype="multipart/form-data">
                         {% csrf_token %}
 
@@ -237,61 +395,60 @@
                             </div>
                         {% endif %}
 
-                        <div class="form-group">
-                            <label for="region">Khu vực đăng ký:</label>
-                            <input type="text" name="region" id="region" class="form-control" required value="{{ form.region.value }}">
+                        <!-- Khu vực đăng ký, Tỉnh/Thành phố, Bảng thi, Số lượng thí sinh trên cùng một hàng -->
+                        <div class="form-row mt-4">
+                            <div class="form-group custom-width-region">
+                                <label for="region">Khu vực đăng ký:</label>
+                                <input type="text" name="region" id="region" class="form-control" required value="{{ form.region.value }}">
+                            </div>
+                            <div class="form-group custom-width-city">
+                                <label for="city">Tỉnh/Thành phố:</label>
+                                <input type="text" name="city" id="city" class="form-control" required value="{{ form.city.value }}">
+                            </div>
+                            <div class="form-group custom-width-competition">
+                                <label for="competition_group">Bảng thi:</label>
+                                <select name="competition_group" id="competition_group" class="form-control" required>
+                                    <option value="">Chọn bảng thi</option>
+                                    {% for group in competition.groups %}
+                                        <option value="{{ group.group_name }}" {% if group.group_name == form.competition_group.value %}selected{% endif %}>{{ group.group_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group custom-width-member">
+                                <label for="member_count">Số lượng thí sinh:</label>
+                                <input type="number" name="member_count" id="member_count" class="form-control" min="1" required value="{{ form.member_count.value|default_if_none:'' }}">
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="city">Tỉnh/Thành phố:</label>
-                            <input type="text" name="city" id="city" class="form-control" required value="{{ form.city.value }}">
+                        <!-- Tên đội thi, Email đội thi trên cùng một hàng -->
+                        <div class="form-row">
+                            <div class="form-group custom-width-team-name">
+                                <label for="team_name">Tên đội thi:</label>
+                                <input type="text" name="team_name" id="team_name" class="form-control" required value="{{ form.team_name.value }}">
+                            </div>
+                            <div class="form-group custom-width-team-email">
+                                <label for="team_email">Email đội thi:</label>
+                                <input type="email" name="team_email" id="team_email" class="form-control" required value="{{ form.team_email.value }}">
+                            </div>
+                            <div class="form-group custom-width-coach-name">
+                                <label for="coach_name">Họ tên HLV:</label>
+                                <input type="text" name="coach_name" id="coach_name" class="form-control" required value="{{ form.coach_name.value }}">
+                            </div>
+                            <div class="form-group custom-width-coach-unit">
+                                <label for="coach_unit">Đơn vị công tác của HLV:</label>
+                                <input type="text" name="coach_unit" id="coach_unit" class="form-control" required value="{{ form.coach_unit.value }}">
+                            </div>
+                            <div class="form-group custom-width-coach-phone">
+                                <label for="coach_phone">Số điện thoại của HLV:</label>
+                                <input type="tel" name="coach_phone" id="coach_phone" class="form-control" required value="{{ form.coach_phone.value }}">
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="competition_group">Bảng thi:</label>
-                            <select name="competition_group" id="competition_group" class="form-control" required>
-                                <option value="">Chọn bảng thi</option>
-                                {% for group in competition.groups %}
-                                    <option value="{{ group.group_name }}" {% if group.group_name == form.competition_group.value %}selected{% endif %}>{{ group.group_name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        <h3>Thông tin phụ huynh/Người giám hộ</h3>
+                        <div id="guardian-fields"></div>
 
-                        <div class="form-group">
-                            <label for="member_count">Số lượng thí sinh:</label>
-                            <input type="number" name="member_count" id="member_count" class="form-control" min="1" required value="{{ form.member_count.value|default_if_none:'' }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="team_name">Tên đội thi:</label>
-                            <input type="text" name="team_name" id="team_name" class="form-control" required value="{{ form.team_name.value }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="team_email">Email đội thi:</label>
-                            <input type="email" name="team_email" id="team_email" class="form-control" required value="{{ form.team_email.value }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="coach_name">Họ tên HLV:</label>
-                            <input type="text" name="coach_name" id="coach_name" class="form-control" required value="{{ form.coach_name.value }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="coach_unit">Đơn vị công tác của HLV:</label>
-                            <input type="text" name="coach_unit" id="coach_unit" class="form-control" required value="{{ form.coach_unit.value }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="coach_phone">Số điện thoại của HLV:</label>
-                            <input type="tel" name="coach_phone" id="coach_phone" class="form-control" required value="{{ form.coach_phone.value }}">
-                        </div>
-
-                        <h5>Thông tin phụ huynh/Người giám hộ</h5>
-                        <div id="guardian-fields"></div> <!-- Container cho thông tin phụ huynh -->
-
-                        <h5>Thông tin thí sinh</h5>
-                        <div id="participants-fields"></div> <!-- Container cho thông tin thí sinh -->
+                        <h3>Thông tin thí sinh</h3>
+                        <div id="participants-fields"></div>
 
                         <!-- Điều khoản -->
                         <div class="form-group">
@@ -332,8 +489,14 @@
                             </div>
                         {% endif %}
 
-                        <button type="submit" class="btn btn-primary mt-3">Đăng ký đội</button>
-                        <a href="{% url 'competition_detail' competition.id %}" class="btn btn-info mt-3">Quay lại</a>
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-users"></i> Đăng ký đội
+                            </button>
+                            <a href="{% url 'competition_detail' competition.id %}" class="btn btn-info">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                        </div>
                     </form>
                 </div>
             </main>
@@ -355,49 +518,54 @@
             // Tạo thông tin cho từng thí sinh
             for (let i = 1; i <= count; i++) {
                 let participantDiv = document.createElement('div');
-                participantDiv.className = 'participant-info mb-3';
+                participantDiv.className = 'participant-info mb-4';
                 participantDiv.innerHTML = `
-                    <h6>Thông tin thí sinh ${i}</h6>
-                    <div class="form-group">
-                        <label for="student_name_${i}">Họ và tên thí sinh:</label>
-                        <input type="text" name="student_name[${i}]" id="student_name_${i}" class="form-control" required>
+                    <h4 class="text-center">Thông tin thí sinh ${i}</h4>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="student_name_${i}">Họ và tên thí sinh:</label>
+                            <input type="text" name="student_name[${i}]" id="student_name_${i}" class="form-control custom-width-student-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="student_phone_${i}">Số điện thoại thí sinh:</label>
+                            <input type="tel" name="student_phone[${i}]" id="student_phone_${i}" class="form-control custom-width-student-phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="student_email_${i}">Email thí sinh:</label>
+                            <input type="email" name="student_email[${i}]" id="student_email_${i}" class="form-control custom-width-student-email">
+                        </div>
+                        <div class="form-group">
+                            <label for="student_class_${i}">Lớp/Trường:</label>
+                            <input type="text" name="student_class[${i}]" id="student_class_${i}" class="form-control custom-width-student-class" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="birth_year_${i}">Năm sinh:</label>
+                            <input type="number" name="birth_year[${i}]" id="birth_year_${i}" class="form-control custom-width-birth-year" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender_${i}">Giới tính:</label>
+                            <select name="gender[${i}]" id="gender_${i}" class="form-control custom-width-gender" required>
+                                <option value="">Chọn giới tính</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ethnicity_${i}">Dân tộc:</label>
+                            <input type="text" name="ethnicity[${i}]" id="ethnicity_${i}" class="form-control custom-width-ethnicity" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="student_phone_${i}">Số điện thoại thí sinh:</label>
-                        <input type="tel" name="student_phone[${i}]" id="student_phone_${i}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="student_email_${i}">Email thí sinh:</label>
-                        <input type="email" name="student_email[${i}]" id="student_email_${i}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="student_class_${i}">Lớp/Trường:</label>
-                        <input type="text" name="student_class[${i}]" id="student_class_${i}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="birth_year_${i}">Năm sinh:</label>
-                        <input type="number" name="birth_year[${i}]" id="birth_year_${i}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="gender_${i}">Giới tính:</label>
-                        <select name="gender[${i}]" id="gender_${i}" class="form-control" required>
-                            <option value="">Chọn giới tính</option>
-                            <option value="Nam">Nam</option>
-                            <option value="Nữ">Nữ</option>
-                            <!-- <option value="Khác">Khác</option> -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="ethnicity_${i}">Dân tộc:</label>
-                        <input type="text" name="ethnicity[${i}]" id="ethnicity_${i}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="address_${i}">Địa chỉ thường trú:</label>
-                        <input type="text" name="address[${i}]" id="address_${i}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="student_photo_${i}">Ảnh chân dung thí sinh:</label>
-                        <input type="file" name="student_photo[${i}]" id="student_photo_${i}" class="form-control" accept="image/*" required>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="address_${i}">Địa chỉ thường trú:</label>
+                            <input type="text" name="address[${i}]" id="address_${i}" class="form-control custom-width-address" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="student_photo_${i}">Ảnh chân dung thí sinh:</label>
+                            <input type="file" name="student_photo[${i}]" id="student_photo_${i}" class="form-control custom-width-student-photo" accept="image/*" required>
+                        </div>
                     </div>
                 `;
                 participantContainer.appendChild(participantDiv);
@@ -408,22 +576,24 @@
                 let guardianDiv = document.createElement('div');
                 guardianDiv.className = 'guardian-info mb-3';
                 guardianDiv.innerHTML = `
-                    <h6>Thông tin phụ huynh cho thí sinh ${j}</h6>
-                    <div class="form-group">
-                        <label for="guardian_name_${j}">Họ và tên phụ huynh:</label>
-                        <input type="text" name="guardian_name[${j}]" id="guardian_name_${j}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="relationship_${j}">Quan hệ với thí sinh:</label>
-                        <input type="text" name="relationship[${j}]" id="relationship_${j}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="guardian_phone_${j}">Số điện thoại phụ huynh:</label>
-                        <input type="tel" name="guardian_phone[${j}]" id="guardian_phone_${j}" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="guardian_email_${j}">Email phụ huynh:</label>
-                        <input type="email" name="guardian_email[${j}]" id="guardian_email_${j}" class="form-control" required>
+                    <h4 class="text-center">Thông tin phụ huynh cho thí sinh ${j}</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guardian_name_${j}">Họ và tên phụ huynh:</label>
+                            <input type="text" name="guardian_name[${j}]" id="guardian_name_${j}" class="form-control custom-width-guardian-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="relationship_${j}">Quan hệ với thí sinh:</label>
+                            <input type="text" name="relationship[${j}]" id="relationship_${j}" class="form-control custom-width-relationship" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardian_phone_${j}">Số điện thoại phụ huynh:</label>
+                            <input type="tel" name="guardian_phone[${j}]" id="guardian_phone_${j}" class="form-control custom-width-guardian-phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardian_email_${j}">Email phụ huynh:</label>
+                            <input type="email" name="guardian_email[${j}]" id="guardian_email_${j}" class="form-control custom-width-guardian-email" required>
+                        </div>
                     </div>
                 `;
                 guardianContainer.appendChild(guardianDiv);
