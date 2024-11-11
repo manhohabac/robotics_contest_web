@@ -114,12 +114,6 @@ class Team(models.Model):
         return self.name
 
 
-@receiver(post_save, sender=Team)
-def handle_team_save(sender, instance, created, **kwargs):
-    if created:  # Chỉ thực hiện chuẩn hóa SBD khi đội được tạo mới
-        instance.standardize_sbd()
-
-
 class Registration(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                              related_name='registrations')  # Thêm trường liên kết với người dùng
