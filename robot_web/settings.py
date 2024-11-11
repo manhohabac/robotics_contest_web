@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-8=qk!pw)iy4=#9dy26hym^*938u=is(v_1%+t!cs!tcm#w$%=g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['10.221.156.99', 'localhost', '127.0.0.1', 'robotarena.onrender.com']
 
