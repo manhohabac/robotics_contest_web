@@ -509,94 +509,88 @@
         document.getElementById('member_count').addEventListener('change', function() {
             let count = parseInt(this.value);
             let participantContainer = document.getElementById('participants-fields');
-            let guardianContainer = document.getElementById('guardian-fields');
 
             // Xóa nội dung cũ
             participantContainer.innerHTML = '';
-            guardianContainer.innerHTML = '';
 
             // Tạo thông tin cho từng thí sinh
             for (let i = 1; i <= count; i++) {
+                // Tạo phần cho một thí sinh gồm cả phụ huynh và học sinh
                 let participantDiv = document.createElement('div');
                 participantDiv.className = 'participant-info mb-4';
                 participantDiv.innerHTML = `
-                    <h4 class="text-center">Thông tin thí sinh ${i}</h4>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="student_name_${i}">Họ và tên thí sinh:</label>
-                            <input type="text" name="student_name[${i}]" id="student_name_${i}" class="form-control custom-width-student-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="student_phone_${i}">Số điện thoại thí sinh:</label>
-                            <input type="tel" name="student_phone[${i}]" id="student_phone_${i}" class="form-control custom-width-student-phone">
-                        </div>
-                        <div class="form-group">
-                            <label for="student_email_${i}">Email thí sinh:</label>
-                            <input type="email" name="student_email[${i}]" id="student_email_${i}" class="form-control custom-width-student-email">
-                        </div>
-                        <div class="form-group">
-                            <label for="student_class_${i}">Lớp/Trường:</label>
-                            <input type="text" name="student_class[${i}]" id="student_class_${i}" class="form-control custom-width-student-class" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="birth_year_${i}">Năm sinh:</label>
-                            <input type="number" name="birth_year[${i}]" id="birth_year_${i}" class="form-control custom-width-birth-year" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="gender_${i}">Giới tính:</label>
-                            <select name="gender[${i}]" id="gender_${i}" class="form-control custom-width-gender" required>
-                                <option value="">Chọn giới tính</option>
-                                <option value="Nam">Nam</option>
-                                <option value="Nữ">Nữ</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="ethnicity_${i}">Dân tộc:</label>
-                            <input type="text" name="ethnicity[${i}]" id="ethnicity_${i}" class="form-control custom-width-ethnicity" required>
+                    <div class="info-wrapper mb-4" style="border: 1px solid #ccc; padding: 15px;">
+                        <h4 class="text-center">Thông tin phụ huynh của thí sinh ${i}</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="guardian_name_${i}">Họ và tên phụ huynh:</label>
+                                <input type="text" name="guardian_name[${i}]" id="guardian_name_${i}" class="form-control custom-width-guardian-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="relationship_${i}">Quan hệ với thí sinh:</label>
+                                <input type="text" name="relationship[${i}]" id="relationship_${i}" class="form-control custom-width-relationship" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="guardian_phone_${i}">Số điện thoại phụ huynh:</label>
+                                <input type="tel" name="guardian_phone[${i}]" id="guardian_phone_${i}" class="form-control custom-width-guardian-phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="guardian_email_${i}">Email phụ huynh:</label>
+                                <input type="email" name="guardian_email[${i}]" id="guardian_email_${i}" class="form-control custom-width-guardian-email" required>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="address_${i}">Địa chỉ thường trú:</label>
-                            <input type="text" name="address[${i}]" id="address_${i}" class="form-control custom-width-address" required>
+                    <div class="info-wrapper mb-4" style="border: 1px solid #ccc; padding: 15px;">
+                        <h4 class="text-center">Thông tin thí sinh ${i}</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="student_name_${i}">Họ và tên thí sinh:</label>
+                                <input type="text" name="student_name[${i}]" id="student_name_${i}" class="form-control custom-width-student-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="student_phone_${i}">Số điện thoại thí sinh:</label>
+                                <input type="tel" name="student_phone[${i}]" id="student_phone_${i}" class="form-control custom-width-student-phone">
+                            </div>
+                            <div class="form-group">
+                                <label for="student_email_${i}">Email thí sinh:</label>
+                                <input type="email" name="student_email[${i}]" id="student_email_${i}" class="form-control custom-width-student-email">
+                            </div>
+                            <div class="form-group">
+                                <label for="student_class_${i}">Lớp/Trường:</label>
+                                <input type="text" name="student_class[${i}]" id="student_class_${i}" class="form-control custom-width-student-class" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="birth_year_${i}">Năm sinh:</label>
+                                <input type="number" name="birth_year[${i}]" id="birth_year_${i}" class="form-control custom-width-birth-year" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="gender_${i}">Giới tính:</label>
+                                <select name="gender[${i}]" id="gender_${i}" class="form-control custom-width-gender" required>
+                                    <option value="">Chọn giới tính</option>
+                                    <option value="Nam">Nam</option>
+                                    <option value="Nữ">Nữ</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ethnicity_${i}">Dân tộc:</label>
+                                <input type="text" name="ethnicity[${i}]" id="ethnicity_${i}" class="form-control custom-width-ethnicity" required>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="student_photo_${i}">Ảnh chân dung thí sinh:</label>
-                            <input type="file" name="student_photo[${i}]" id="student_photo_${i}" class="form-control custom-width-student-photo" accept="image/*" required>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="address_${i}">Địa chỉ thường trú:</label>
+                                <input type="text" name="address[${i}]" id="address_${i}" class="form-control custom-width-address" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="student_photo_${i}">Ảnh chân dung thí sinh:</label>
+                                <input type="file" name="student_photo[${i}]" id="student_photo_${i}" class="form-control custom-width-student-photo" accept="image/*" required>
+                            </div>
                         </div>
                     </div>
                 `;
                 participantContainer.appendChild(participantDiv);
-            }
-
-            // Tạo thông tin phụ huynh cho mỗi thí sinh
-            for (let j = 1; j <= count; j++) {
-                let guardianDiv = document.createElement('div');
-                guardianDiv.className = 'guardian-info mb-3';
-                guardianDiv.innerHTML = `
-                    <h4 class="text-center">Thông tin phụ huynh cho thí sinh ${j}</h4>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="guardian_name_${j}">Họ và tên phụ huynh:</label>
-                            <input type="text" name="guardian_name[${j}]" id="guardian_name_${j}" class="form-control custom-width-guardian-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="relationship_${j}">Quan hệ với thí sinh:</label>
-                            <input type="text" name="relationship[${j}]" id="relationship_${j}" class="form-control custom-width-relationship" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="guardian_phone_${j}">Số điện thoại phụ huynh:</label>
-                            <input type="tel" name="guardian_phone[${j}]" id="guardian_phone_${j}" class="form-control custom-width-guardian-phone" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="guardian_email_${j}">Email phụ huynh:</label>
-                            <input type="email" name="guardian_email[${j}]" id="guardian_email_${j}" class="form-control custom-width-guardian-email" required>
-                        </div>
-                    </div>
-                `;
-                guardianContainer.appendChild(guardianDiv);
             }
         });
     </script>

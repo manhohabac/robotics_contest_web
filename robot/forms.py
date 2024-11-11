@@ -192,6 +192,65 @@ class RegistrationForm(forms.ModelForm):
         return cleaned_data
 
 
+class EditRegistrationForm(forms.ModelForm):
+    class Meta:
+        model = Registration
+        fields = [
+            'region', 'city', 'competition_group', 'team_name', 'team_email',
+            'coach_name', 'coach_unit', 'coach_phone',
+            'guardian_name', 'relationship', 'guardian_phone', 'guardian_email',
+            'student_name', 'student_phone', 'student_email', 'student_class',
+            'birth_year', 'gender', 'ethnicity', 'address', 'student_photo', 'member_count'
+        ]
+        labels = {
+            'region': 'Khu vực đăng ký',
+            'city': 'Tỉnh/Thành phố',
+            'competition_group': 'Bảng thi',
+            'team_name': 'Tên đội thi',
+            'team_email': 'Email đội thi',
+            'coach_name': 'Họ tên HLV',
+            'coach_unit': 'Đơn vị công tác',
+            'coach_phone': 'Số điện thoại HLV',
+            'member_count': 'Số lượng thí sinh',
+            'guardian_name': 'Họ và tên phụ huynh',
+            'relationship': 'Quan hệ với thí sinh',
+            'guardian_phone': 'Số điện thoại phụ huynh',
+            'guardian_email': 'Email phụ huynh',
+            'student_name': 'Họ và tên thí sinh',
+            'student_phone': 'Số điện thoại thí sinh',
+            'student_email': 'Email thí sinh',
+            'student_class': 'Lớp, trường',
+            'birth_year': 'Năm sinh',
+            'gender': 'Giới tính',
+            'ethnicity': 'Dân tộc',
+            'address': 'Địa chỉ thường trú',
+            'student_photo': 'Ảnh chân dung thí sinh',
+        }
+        widgets = {
+            'address': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    # Đảm bảo các trường không bắt buộc nếu cần
+    student_phone = forms.CharField(required=False)
+    student_email = forms.EmailField(required=False)
+
+    def clean(self):
+        # Có thể thêm các bước kiểm tra và xác thực cần thiết
+        cleaned_data = super().clean()
+        # Ví dụ: kiểm tra số lượng thí sinh hợp lệ
+        member_count = cleaned_data.get("member_count")
+        if member_count is not None and member_count <= 0:
+            raise ValidationError("Số lượng thí sinh phải lớn hơn 0.")
+
+        return cleaned_data
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Làm cho các trường "competition_group" và "member_count" chỉ có thể đọc được
+        self.fields['competition_group'].widget.attrs['readonly'] = True
+        self.fields['member_count'].widget.attrs['readonly'] = True
+
+
 class EditProfileForm(forms.ModelForm):
     date_of_birth = forms.DateField(
         widget=forms.DateInput(

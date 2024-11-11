@@ -21,7 +21,7 @@ import io, json
 from openpyxl.workbook import Workbook
 
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
-    KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm, RegistrationForm
+    KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm, RegistrationForm, EditRegistrationForm
 
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
@@ -430,6 +430,62 @@ def register_competition(request, competition_id):
     }
 
     return render(request, 'competition/register_team.html', context)  # Render template
+
+
+@login_required
+def edit_registration(request, competition_id, team_id):
+    # Lấy thông tin cuộc thi và đội
+    competition = get_object_or_404(Competition, id=competition_id)
+    team = get_object_or_404(Team, id=team_id, competition=competition)
+    user = request.user
+
+    # Kiểm tra xem người dùng có quyền chỉnh sửa đăng ký của đội không
+    registration = Registration.objects.filter(team=team, user=user).first()
+    if not registration:
+        messages.error(request, 'Bạn không có quyền chỉnh sửa đăng ký này.')
+        return redirect('competition_detail', competition_id=competition_id)
+
+    if request.method == 'POST':
+        form = EditRegistrationForm(request.POST, request.FILES, instance=registration)
+
+        if form.is_valid():
+            # In giá trị team_name trước khi lưu
+            print(f'Trước khi lưu: Tên đội thi cũ: {team.name}')
+
+            # Lưu form và cập nhật thời gian chỉnh sửa
+            registration = form.save(commit=False)
+            registration.status = "Updated"
+            registration.registration_date = timezone.now()  # Cập nhật thời gian chỉnh sửa
+
+            # Lấy giá trị tên đội từ form
+            new_team_name = form.cleaned_data.get('team_name')
+            if new_team_name and new_team_name != team.name:
+                print(f'Chỉnh sửa tên đội: {team.name} -> {new_team_name}')
+                # Cập nhật tên đội trong bảng Team
+                team.name = new_team_name
+                team.save()  # Lưu vào bảng Team
+
+            # Lưu vào bảng Registration
+            registration.save()
+
+            # In giá trị team_name sau khi lưu
+            print(f'Sau khi lưu: Tên đội thi mới: {team.name}')
+
+            messages.success(request, f'Đăng ký cho đội {team.name} đã được cập nhật.')
+            return redirect('competition_detail', competition_id=competition_id)
+        else:
+            messages.error(request, 'Vui lòng kiểm tra và sửa các lỗi bên dưới.')
+
+    else:
+        # Khởi tạo form với dữ liệu hiện tại của bản ghi đăng ký
+        form = EditRegistrationForm(instance=registration)
+
+    # Render template cùng với form và dữ liệu
+    return render(request, 'competition/edit_registration.html', {
+        'competition': competition,
+        'team': team,
+        'form': form,
+    })
 
 
 @login_required

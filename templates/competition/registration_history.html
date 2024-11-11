@@ -248,7 +248,7 @@
                                         <th style="width: 15%; text-align: center">Thí sinh</th>
                                         <th style="width: 11%; text-align: center">Thời gian đăng ký</th>
                                         <th style="width: 10%; text-align: center">Trạng thái</th>
-                                        <th style="width: 20%; text-align: center">Chi tiết</th>
+                                        <th style="width: 20%; text-align: center">Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -272,6 +272,7 @@
                                         </td>
                                         <td class="text-center">
                                             <a href="{% url 'registration_info_detail' competition_id=entry.competition.id team_id=entry.team.id %}" class="btn btn-info btn-sm">Xem chi tiết</a>
+                                            <a href="{% url 'edit_registration' competition_id=entry.competition.id team_id=entry.team.id %}" class="btn btn-warning btn-sm">Chỉnh sửa</a>
                                         </td>
                                     </tr>
                                     {% empty %}
