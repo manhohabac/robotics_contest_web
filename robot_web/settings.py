@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'robot_web.wsgi.application'
 # }
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('postgresql://robotics_contest_user:nt9znMQCpRuScrrunWREn1xjjkdYPxUD@dpg-csobq7hu0jms7395f80g-a/robotics_contest'))
+    'default': dj_database_url.config(default=os.getenv('postgresql://robotics_contest_user:nt9znMQCpRuScrrunWREn1xjjkdYPxUD@dpg-csobq7hu0jms7395f80g-a:5432/robotics_contest'))
 }
 
 # Password validation
