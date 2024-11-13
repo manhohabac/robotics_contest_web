@@ -2,14 +2,9 @@ import os
 import ssl
 from pathlib import Path
 import dj_database_url
-import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Định nghĩa biến env
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))  # Đảm bảo đường dẫn đến .env là chính xác
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -82,7 +77,11 @@ WSGI_APPLICATION = 'robot_web.wsgi.application'
 # }
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('postgresql://robotics_contest_user:nt9znMQCpRuScrrunWREn1xjjkdYPxUD@dpg-csobq7hu0jms7395f80g-a:5432/robotics_contest'))
+    'default': dj_database_url.config(
+        # Replace this value with your local database's connection string.
+        default='postgresql://robotics_contest_user:nt9znMQCpRuScrrunWREn1xjjkdYPxUD@dpg-csobq7hu0jms7395f80g-a:5432/robotics_contest',
+        conn_max_age=600
+    )
 }
 
 # Password validation
@@ -118,30 +117,20 @@ USE_TZ = True
 # Đường dẫn tĩnh URL
 STATIC_URL = '/static/'
 
-# Thư mục để chứa các tệp tĩnh được thu thập
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+if not DEBUG:
+    # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
+    # and renames the files with unique names for each version to support long-term caching
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 LOGIN_URL = 'login'
 
 MEDIA_URL = '/media/'  # Đường dẫn URL để truy cập file media
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Thư mục lưu trữ file upload
-
-EMAIL_SSL_CONTEXT = ssl._create_unverified_context()
-
-# Cấu hình email backend
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Cấu hình máy chủ
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')  # Lấy từ biến môi trường
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')  # Lấy từ biến môi trường
-
-print(env('EMAIL_HOST_USER'))
-
 
     
