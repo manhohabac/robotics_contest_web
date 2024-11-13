@@ -15,7 +15,12 @@ SECRET_KEY = 'django-insecure-8=qk!pw)iy4=#9dy26hym^*938u=is(v_1%+t!cs!tcm#w$%=g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['10.221.156.99', 'localhost', '127.0.0.1', 'roboconbg.onrender.com']
+# https://docs.djangoproject.com/en/3.0/ref/settings/#allowed-hosts
+ALLOWED_HOSTS = []
+
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 AUTH_USER_MODEL = 'robot.CustomUser'
 
