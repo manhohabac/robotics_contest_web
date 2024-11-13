@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'robot_web.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        default='postgresql://robotics_contest_user:nt9znMQCpRuScrrunWREn1xjjkdYPxUD@dpg-csobq7hu0jms7395f80g-a:5432/robotics_contest',
+        default='postgresql://roboconbg_user:0Fkdig7rsQkpSKPVx4W9YYbDNU5Vm3mR@dpg-csqb172j1k6c738fpae0-a:5432/roboconbg',
         conn_max_age=600
     )
 }
