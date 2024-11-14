@@ -272,7 +272,7 @@
                                         </td>
                                         <td class="text-center">
                                             <a href="{% url 'registration_info_detail' competition_id=entry.competition.id team_id=entry.team.id %}" class="btn btn-info btn-sm">Xem chi tiết</a>
-{#                                            <a href="{% url 'edit_registration' competition_id=entry.competition.id team_id=entry.team.id %}" class="btn btn-warning btn-sm">Chỉnh sửa</a>#}
+                                            <a href="{% url 'edit_registration' registration_id=entry.registration_id %}" class="btn btn-warning btn-sm">Chỉnh sửa</a>
                                         </td>
                                     </tr>
                                     {% empty %}

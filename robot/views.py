@@ -16,8 +16,7 @@ from django.utils.timezone import make_naive, localtime
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from PIL import Image
-import io, json
-
+from django.db.models import Q
 from openpyxl.workbook import Workbook
 
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
@@ -433,62 +432,6 @@ def register_competition(request, competition_id):
 
 
 @login_required
-def edit_registration(request, competition_id, team_id):
-    # Lấy thông tin cuộc thi và đội
-    competition = get_object_or_404(Competition, id=competition_id)
-    team = get_object_or_404(Team, id=team_id, competition=competition)
-    user = request.user
-
-    # Kiểm tra xem người dùng có quyền chỉnh sửa đăng ký của đội không
-    registration = Registration.objects.filter(team=team, user=user).first()
-    if not registration:
-        messages.error(request, 'Bạn không có quyền chỉnh sửa đăng ký này.')
-        return redirect('competition_detail', competition_id=competition_id)
-
-    if request.method == 'POST':
-        form = EditRegistrationForm(request.POST, request.FILES, instance=registration)
-
-        if form.is_valid():
-            # In giá trị team_name trước khi lưu
-            print(f'Trước khi lưu: Tên đội thi cũ: {team.name}')
-
-            # Lưu form và cập nhật thời gian chỉnh sửa
-            registration = form.save(commit=False)
-            registration.status = "Updated"
-            registration.registration_date = timezone.now()  # Cập nhật thời gian chỉnh sửa
-
-            # Lấy giá trị tên đội từ form
-            new_team_name = form.cleaned_data.get('team_name')
-            if new_team_name and new_team_name != team.name:
-                print(f'Chỉnh sửa tên đội: {team.name} -> {new_team_name}')
-                # Cập nhật tên đội trong bảng Team
-                team.name = new_team_name
-                team.save()  # Lưu vào bảng Team
-
-            # Lưu vào bảng Registration
-            registration.save()
-
-            # In giá trị team_name sau khi lưu
-            print(f'Sau khi lưu: Tên đội thi mới: {team.name}')
-
-            messages.success(request, f'Đăng ký cho đội {team.name} đã được cập nhật.')
-            return redirect('competition_detail', competition_id=competition_id)
-        else:
-            messages.error(request, 'Vui lòng kiểm tra và sửa các lỗi bên dưới.')
-
-    else:
-        # Khởi tạo form với dữ liệu hiện tại của bản ghi đăng ký
-        form = EditRegistrationForm(instance=registration)
-
-    # Render template cùng với form và dữ liệu
-    return render(request, 'competition/edit_registration.html', {
-        'competition': competition,
-        'team': team,
-        'form': form,
-    })
-
-
-@login_required
 def registration_list(request, competition_id):
     # Lấy thông tin của cuộc thi cụ thể
     competition = get_object_or_404(Competition, id=competition_id)
@@ -548,7 +491,6 @@ def registration_list(request, competition_id):
 @login_required
 def registration_history(request):
     user = request.user
-
     # Lấy tất cả các đăng ký của người dùng
     registrations = Registration.objects.filter(user=user, is_cancelled=False)
 
@@ -561,6 +503,7 @@ def registration_history(request):
         if not team_entry:
             team_entry = {
                 'registration': registration,
+                'registration_id': registration.id,  # Thêm registration_id
                 'team_name': registration.team.name if registration.team else 'Chưa có tên đội',
                 'team_sbd': registration.team.sbd if registration.team else 'Chưa có SBD',
                 'competition_group': registration.competition_group,
@@ -1607,11 +1550,25 @@ def manage_users(request):
     if request.user.role != 'admin':
         return HttpResponseForbidden("Bạn không có quyền truy cập vào trang này.")
 
-    # Lấy tất cả người dùng
-    users = User.objects.all()
+    # Lấy dữ liệu tìm kiếm từ form
+    search_query = request.GET.get('search', '')
 
-    # Phân trang: mỗi trang sẽ hiển thị 10 người dùng
-    paginator = Paginator(users, 6)  # 10 là số người dùng mỗi trang
+    # Tạo truy vấn tìm kiếm
+    if search_query:
+        users = User.objects.filter(
+            Q(username__icontains=search_query) |
+            Q(full_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(role__icontains=search_query)
+        )
+    else:
+        users = User.objects.all()
+
+    # Sắp xếp dữ liệu
+    users = users.order_by('username')
+
+    # Phân trang: mỗi trang sẽ hiển thị 8 người dùng
+    paginator = Paginator(users, 8)  # 8 là số người dùng mỗi trang
     page_number = request.GET.get('page')  # Lấy số trang từ query string
 
     # Kiểm tra xem page_number có hợp lệ không
@@ -1629,6 +1586,85 @@ def manage_users(request):
         user.save()
 
     # Trả lại template với đối tượng phân trang
-    return render(request, 'manage_users.html', {'page_obj': page_obj})
+    return render(request, 'manage_users.html', {
+        'page_obj': page_obj,
+        'search_query': search_query
+    })
+
+
+@login_required
+def edit_registration(request, registration_id):
+    # Lấy bản đăng ký học sinh cần chỉnh sửa theo registration_id
+    registration = get_object_or_404(Registration, id=registration_id)
+
+    # Kiểm tra quyền truy cập
+    if registration.user != request.user:
+        messages.error(request, 'Bạn không có quyền chỉnh sửa thông tin này.')
+        return redirect('competition_detail')
+
+    # Lấy tất cả các bản ghi của đội thi này theo `team_id`
+    registrations = Registration.objects.filter(
+        competition_id=registration.competition.id,
+        team_id=registration.team.id,
+        user_id=request.user.id
+    )
+
+    if request.method == 'POST':
+        # Cập nhật các thông tin chung của đội thi (áp dụng cho toàn bộ bản ghi của đội)
+        region = request.POST.get('region', registration.region)
+        city = request.POST.get('city', registration.city)
+        team_name = request.POST.get('team_name', registration.team_name)
+        team_email = request.POST.get('team_email', registration.team_email)
+        competition_group = request.POST.get('competition_group', registration.competition_group)
+        coach_name = request.POST.get('coach_name', registration.coach_name)
+        coach_unit = request.POST.get('coach_unit', registration.coach_unit)
+        coach_phone = request.POST.get('coach_phone', registration.coach_phone)
+
+        # Lặp qua tất cả các bản ghi của đội và cập nhật thông tin chung
+        for reg in registrations:
+            reg.region = region
+            reg.city = city
+            reg.team_name = team_name
+            reg.team_email = team_email
+            reg.competition_group = competition_group
+            reg.coach_name = coach_name
+            reg.coach_unit = coach_unit
+            reg.coach_phone = coach_phone
+            reg.save()  # Lưu cập nhật chung cho mỗi bản ghi của đội
+
+        # Cập nhật thông tin học sinh và phụ huynh riêng biệt cho từng `registration`
+        for i, reg in enumerate(registrations, start=1):
+            reg.guardian_name = request.POST.get(f'guardian_name_{i}', reg.guardian_name)
+            reg.relationship = request.POST.get(f'relationship_{i}', reg.relationship)
+            reg.guardian_phone = request.POST.get(f'guardian_phone_{i}', reg.guardian_phone)
+            reg.guardian_email = request.POST.get(f'guardian_email_{i}', reg.guardian_email)
+
+            reg.student_name = request.POST.get(f'student_name_{i}', reg.student_name)
+            reg.student_phone = request.POST.get(f'student_phone_{i}', reg.student_phone)
+            reg.student_email = request.POST.get(f'student_email_{i}', reg.student_email)
+            reg.student_class = request.POST.get(f'student_class_{i}', reg.student_class)
+            reg.birth_year = int(request.POST.get(f'birth_year_{i}', reg.birth_year))
+            reg.gender = request.POST.get(f'gender_{i}', reg.gender)
+            reg.ethnicity = request.POST.get(f'ethnicity_{i}', reg.ethnicity)
+            reg.address = request.POST.get(f'address_{i}', reg.address)
+
+            # Cập nhật ảnh nếu có ảnh mới được tải lên
+            student_photo = request.FILES.get(f'student_photo_{i}', None)
+            if student_photo:
+                reg.student_photo = student_photo
+
+            reg.save()  # Lưu từng bản ghi học sinh sau khi cập nhật thông tin
+
+        messages.success(request, 'Thông tin đội thi đã được cập nhật thành công.')
+        return redirect('registration_history')
+
+    else:
+        # Trả về template với thông tin đã lọc
+        context = {
+            'registration': registration,
+            'range_list': range(1, registration.member_count + 1),
+            'registrations': registrations,
+        }
+        return render(request, 'competition/edit_registration.html', context)
 
 

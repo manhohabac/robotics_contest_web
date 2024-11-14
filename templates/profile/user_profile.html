@@ -253,7 +253,11 @@
                                     <!-- Phần khung ảnh đại diện -->
                                     <div class="col-md-2">
                                         <div class="text-center">
-                                            <img src="{% static 'images/default.jpg' %}" alt="Ảnh đại diện" class="img-fluid" style="width: 220px; height: 220px; object-fit: cover;">
+                                            {% if profile.user.profile_picture %}
+                                                <img src="{{ profile.user.profile_picture.url }}" alt="Ảnh đại diện" class="img-fluid" style="width: 220px; height: 220px; object-fit: cover;">
+                                            {% else %}
+                                                <img src="{% static 'images/default.jpg' %}" alt="Ảnh đại diện" class="img-fluid" style="width: 220px; height: 220px; object-fit: cover;">
+                                            {% endif %}
                                         </div>
                                     </div>
                 
