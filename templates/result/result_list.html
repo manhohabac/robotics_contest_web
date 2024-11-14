@@ -242,11 +242,11 @@
                     <div class="col-md-6">
                         <div class="card mb-4 shadow-sm">
                             <a href="{% url 'result_detail' competition.id %}">
-                                {% if competition.image %}
-                                    <img src="{{ competition.image.url }}" class="card-img-top competition-image" alt="{{ competition.name }}">
-                                {% else %}
-                                    <img src="{% static 'images/rbc3.jpg' %}" class="card-img-top competition-image" alt="{{ competition.name }}">
-                                {% endif %}
+{#                                {% if competition.image %}#}
+{#                                    <img src="{{ competition.image.url }}" class="card-img-top competition-image" alt="{{ competition.name }}">#}
+{#                                {% else %}#}
+                                <img src="{% static 'images/rbc3.jpg' %}" class="card-img-top competition-image" alt="{{ competition.name }}">
+{#                                {% endif %}#}
                                 
                                 <div class="card-body text-center" style="padding: 10px;">
                                     <h5 class="card-title" style="font-size: 1.1rem; margin-bottom: 0;">{{ competition.name }}</h5>
