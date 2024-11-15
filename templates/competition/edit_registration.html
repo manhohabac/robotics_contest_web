@@ -411,134 +411,114 @@
                 <div class="container mt-2" style="max-width: 1100px;">
                     <!-- Tiêu đề -->
                     <h2 class="text-center mt-1">Chỉnh sửa thông tin đăng kí</h2>
-
+                
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-
-                        <!-- Thông tin đội -->
+                
+                        <!-- Thông tin đội thi -->
+                        <h3 class="mb-1 text-center">Thông tin đội thi</h3>
                         <div class="row">
-                            <div class="col-12 col-md-4" style="margin-left: -200px;">  <!-- Cột bên trái cho Thông tin đội thi -->
-                                <h3 class="mb-1 text-center">Thông tin đội thi</h3>
-                                <div class="mb-3">
-                                    <label for="region" class="form-label">Khu vực:</label>
-                                    <input type="text" class="form-control" name="region" value="{{ registration.region }}">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="city" class="form-label">Tỉnh:</label>
-                                    <input type="text" class="form-control" name="city" value="{{ registration.city }}">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="team_name" class="form-label">Tên đội:</label>
-                                    <input type="text" class="form-control" name="team_name" value="{{ registration.team_name }}">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="team_email" class="form-label">Email đội:</label>
-                                    <input type="email" class="form-control" name="team_email" value="{{ registration.team_email }}">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="coach_name" class="form-label">Tên huấn luyện viên:</label>
-                                    <input type="text" class="form-control" name="coach_name" value="{{ registration.coach_name }}">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="coach_unit" class="form-label">Đơn vị huấn luyện viên:</label>
-                                    <input type="text" class="form-control" name="coach_unit" value="{{ registration.coach_unit }}">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="coach_phone" class="form-label">Số điện thoại huấn luyện viên:</label>
-                                    <input type="text" class="form-control" name="coach_phone" value="{{ registration.coach_phone }}">
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="region" class="form-label">Khu vực:</label>
+                                <input type="text" class="form-control" name="region" value="{{ registration.region }}">
                             </div>
-
-                            <!-- Cột cho Thông tin học sinh -->
-                            <div class="col-12 col-md-8"> <!-- Cột bên phải cho Thông tin học sinh -->
-                                <h3 class="mb-1 text-center">Thông tin học sinh</h3>
-
-                                <!-- Grid động cho học sinh -->
-                                <div class="row">
-                                    {% for reg in registrations %}
-                                        <div class="col-12 col-sm-6 col-md-6 mb-3">
-                                            <h4>Học sinh {{ forloop.counter }}</h4>
-
-                                            <div class="mb-3">
-                                                <label for="student_name_{{ forloop.counter }}" class="form-label">Tên học sinh:</label>
-                                                <input type="text" class="form-control" name="student_name_{{ forloop.counter }}" value="{{ reg.student_name }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="student_phone_{{ forloop.counter }}" class="form-label">Số điện thoại học sinh:</label>
-                                                <input type="text" class="form-control" name="student_phone_{{ forloop.counter }}" value="{{ reg.student_phone }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="student_email_{{ forloop.counter }}" class="form-label">Email học sinh:</label>
-                                                <input type="email" class="form-control" name="student_email_{{ forloop.counter }}" value="{{ reg.student_email }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="student_class_{{ forloop.counter }}" class="form-label">Lớp, trường:</label>
-                                                <input type="text" class="form-control" name="student_class_{{ forloop.counter }}" value="{{ reg.student_class }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="birth_year_{{ forloop.counter }}" class="form-label">Năm sinh:</label>
-                                                <input type="text" class="form-control" name="birth_year_{{ forloop.counter }}" value="{{ reg.birth_year }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="gender_{{ forloop.counter }}" class="form-label">Giới tính:</label>
-                                                <input type="text" class="form-control" name="gender_{{ forloop.counter }}" value="{{ reg.gender }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="ethnicity_{{ forloop.counter }}" class="form-label">Dân tộc:</label>
-                                                <input type="text" class="form-control" name="ethnicity_{{ forloop.counter }}" value="{{ reg.ethnicity }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="address_{{ forloop.counter }}" class="form-label">Địa chỉ:</label>
-                                                <input type="text" class="form-control" name="address_{{ forloop.counter }}" value="{{ reg.address }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="guardian_name_{{ forloop.counter }}" class="form-label">Tên phụ huynh:</label>
-                                                <input type="text" class="form-control" name="guardian_name_{{ forloop.counter }}" value="{{ reg.guardian_name }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="relationship_{{ forloop.counter }}" class="form-label">Quan hệ với học sinh:</label>
-                                                <input type="text" class="form-control" name="relationship_{{ forloop.counter }}" value="{{ reg.relationship }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="guardian_phone_{{ forloop.counter }}" class="form-label">Số điện thoại phụ huynh:</label>
-                                                <input type="text" class="form-control" name="guardian_phone_{{ forloop.counter }}" value="{{ reg.guardian_phone }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="guardian_email_{{ forloop.counter }}" class="form-label">Email phụ huynh:</label>
-                                                <input type="email" class="form-control" name="guardian_email_{{ forloop.counter }}" value="{{ reg.guardian_email }}">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="student_photo_{{ forloop.counter }}" class="form-label">Ảnh học sinh:</label>
-                                                <input type="file" class="form-control" name="student_photo_{{ forloop.counter }}">
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="city" class="form-label">Tỉnh:</label>
+                                <input type="text" class="form-control" name="city" value="{{ registration.city }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="team_name" class="form-label">Tên đội:</label>
+                                <input type="text" class="form-control" name="team_name" value="{{ registration.team_name }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="team_email" class="form-label">Email đội:</label>
+                                <input type="email" class="form-control" name="team_email" value="{{ registration.team_email }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="coach_name" class="form-label">Tên huấn luyện viên:</label>
+                                <input type="text" class="form-control" name="coach_name" value="{{ registration.coach_name }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="coach_unit" class="form-label">Đơn vị huấn luyện viên:</label>
+                                <input type="text" class="form-control" name="coach_unit" value="{{ registration.coach_unit }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="coach_phone" class="form-label">Số điện thoại huấn luyện viên:</label>
+                                <input type="text" class="form-control" name="coach_phone" value="{{ registration.coach_phone }}">
                             </div>
                         </div>
-
-                        <div class="d-flex justify-content-center align-items-center">
-                            <button type="submit" class="btn btn-primary mt-2 mb-4 d-flex align-items-center">
+                
+                        <!-- Thông tin học sinh -->
+                        <h3 class="mb-1 text-center">Thông tin học sinh</h3>
+                        {% for reg in registrations %}
+                        <h4>Học sinh {{ forloop.counter }}</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="student_name_{{ forloop.counter }}" class="form-label">Tên học sinh:</label>
+                                <input type="text" class="form-control" name="student_name_{{ forloop.counter }}" value="{{ reg.student_name }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="student_phone_{{ forloop.counter }}" class="form-label">Số điện thoại học sinh:</label>
+                                <input type="text" class="form-control" name="student_phone_{{ forloop.counter }}" value="{{ reg.student_phone }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="student_email_{{ forloop.counter }}" class="form-label">Email học sinh:</label>
+                                <input type="email" class="form-control" name="student_email_{{ forloop.counter }}" value="{{ reg.student_email }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="student_class_{{ forloop.counter }}" class="form-label">Lớp, trường:</label>
+                                <input type="text" class="form-control" name="student_class_{{ forloop.counter }}" value="{{ reg.student_class }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="birth_year_{{ forloop.counter }}" class="form-label">Năm sinh:</label>
+                                <input type="text" class="form-control" name="birth_year_{{ forloop.counter }}" value="{{ reg.birth_year }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="gender_{{ forloop.counter }}" class="form-label">Giới tính:</label>
+                                <input type="text" class="form-control" name="gender_{{ forloop.counter }}" value="{{ reg.gender }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="ethnicity_{{ forloop.counter }}" class="form-label">Dân tộc:</label>
+                                <input type="text" class="form-control" name="ethnicity_{{ forloop.counter }}" value="{{ reg.ethnicity }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="address_{{ forloop.counter }}" class="form-label">Địa chỉ:</label>
+                                <input type="text" class="form-control" name="address_{{ forloop.counter }}" value="{{ reg.address }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guardian_name_{{ forloop.counter }}" class="form-label">Tên phụ huynh:</label>
+                                <input type="text" class="form-control" name="guardian_name_{{ forloop.counter }}" value="{{ reg.guardian_name }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="relationship_{{ forloop.counter }}" class="form-label">Quan hệ với học sinh:</label>
+                                <input type="text" class="form-control" name="relationship_{{ forloop.counter }}" value="{{ reg.relationship }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guardian_phone_{{ forloop.counter }}" class="form-label">Số điện thoại phụ huynh:</label>
+                                <input type="text" class="form-control" name="guardian_phone_{{ forloop.counter }}" value="{{ reg.guardian_phone }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guardian_email_{{ forloop.counter }}" class="form-label">Email phụ huynh:</label>
+                                <input type="email" class="form-control" name="guardian_email_{{ forloop.counter }}" value="{{ reg.guardian_email }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="student_photo_{{ forloop.counter }}" class="form-label">Ảnh học sinh:</label>
+                                <input type="file" class="form-control" name="student_photo_{{ forloop.counter }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                
+                        <!-- Nút Lưu thông tin và Huỷ -->
+                        <div class="d-flex justify-content-center align-items-center gap-3">
+                            <!-- Nút Lưu -->
+                            <button type="submit" class="btn btn-primary mt-2 mb-4 d-flex align-items-center mr-2">
                                 <i class="fas fa-save mr-2"></i> Lưu thông tin
                             </button>
+                        
+                            <!-- Nút Huỷ -->
+                            <a href="{% url 'registration_history' %}" class="btn btn-info mt-2 mb-4 d-flex align-items-center">
+                                <i class="fas fa-times mr-2"></i> Huỷ
+                            </a>
                         </div>
                     </form>
                 </div>

@@ -110,22 +110,19 @@
                     {% csrf_token %}
                     <input type="text" name="username" class="form-control" placeholder="Username" required autocomplete="off">
                     <input type="password" name="password" class="form-control" placeholder="Password" required autocomplete="current-password">
+                    <p class="text-center mt-2">
+                        <a href="{% url 'password_reset' %}" class="forgot-password-btn">Quên mật khẩu?</a>
+                    </p>
                     <button type="submit" class="btn login-btn">Đăng nhập</button>
                 </form>
-
-                <!-- Văn bản và liên kết đăng ký -->
+    
                 <p class="text-center mt-3 no-account-text">
                     Chưa có tài khoản? <a href="{% url 'register' %}" class="register-btn">Đăng ký ngay</a>
                 </p>
-
-                <!-- Thêm liên kết "Quên mật khẩu?" -->
-{#                <p class="text-center mt-2">#}
-{#                   <a href="{% url 'password_reset' %}" class="forgot-password-btn">Quên mật khẩu?</a>#}
-{#                </p>#}
             </div>
         </div>
     </div>
-
+    
     <!-- Bootstrap JS -->
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>

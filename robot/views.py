@@ -4,8 +4,14 @@ from datetime import date, datetime
 from io import BytesIO
 
 import openpyxl
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.tokens import default_token_generator
 from django.core.files.base import ContentFile
+from django.core.mail import send_mail
 from django.db import transaction
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from openpyxl.drawing.image import Image as OpenPyXLImage
 import os
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -22,7 +28,7 @@ from openpyxl.workbook import Workbook
 from .forms import UserRegistrationForm, ChangePasswordForm, EditProfileForm, EditUserProfileForm, CompetitionForm, \
     KitForm, KitImageForm, SponsorForm, FeedbackForm, GuideFileForm, RegistrationForm, EditRegistrationForm
 
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
@@ -137,13 +143,22 @@ def change_password(request):
                 update_session_auth_hash(request, user)  # Cập nhật session để tránh đăng xuất
 
                 # Change password
-                Notification.objects.create(
-                    user=user,
-                    title="Cập nhật mật khẩu thành công",
-                    content="Bạn đã cập nhật thành công mật khẩu mới cho tài khoản của bạn.",
-                    notification_type='user',
-                    created_at=timezone.now()
-                )
+                if user.is_superuser:
+                    Notification.objects.create(
+                        user=user,
+                        title="Cập nhật mật khẩu thành công",
+                        content="Bạn đã cập nhật thành công mật khẩu mới cho tài khoản của bạn.",
+                        notification_type='admin',
+                        created_at=timezone.now()
+                    )
+                else:
+                    Notification.objects.create(
+                        user=user,
+                        title="Cập nhật mật khẩu thành công",
+                        content="Bạn đã cập nhật thành công mật khẩu mới cho tài khoản của bạn.",
+                        notification_type='user',
+                        created_at=timezone.now()
+                    )
 
                 messages.success(request, 'Mật khẩu đã được thay đổi thành công.')
                 return redirect('home')
@@ -1667,4 +1682,91 @@ def edit_registration(request, registration_id):
         }
         return render(request, 'competition/edit_registration.html', context)
 
+
+def password_reset_request(request):
+    if request.method == "POST":
+        username = request.POST.get("username")  # Lấy username từ form
+        email = request.POST.get("email")  # Lấy email từ form
+
+        try:
+            user = CustomUser.objects.get(username=username)
+            print(f"DEBUG: Tìm thấy user: Username={username}, Email={user.email}")
+
+            if user.email == email:  # Kiểm tra email có khớp không
+                print(f"DEBUG: Email hợp lệ: {email}")
+                subject = "Quên mật khẩu"
+                email_template_name = "account/password_reset_email.html"
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                print(f"DEBUG: UID={uid}, Token={token}")
+
+                context = {
+                    "email": user.email,
+                    "domain": 'www.roboconbg.vn',  # Tên miền thực tế
+                    "site_name": 'RoboconBG',
+                    "uid": uid,
+                    "token": token,
+                    "protocol": 'https',  # Giao thức HTTPS
+                }
+                email_message = render_to_string(email_template_name, context)
+
+                # Gửi email với nội dung HTML
+                send_mail(
+                    subject,
+                    '',  # Không gửi nội dung văn bản thuần túy (sẽ gửi HTML thay thế)
+                    'minhtcppdev@gmail.com',  # Địa chỉ email gửi đi
+                    [user.email],
+                    html_message=email_message,  # Nội dung HTML của email
+                    fail_silently=False
+                )
+                print(f"DEBUG: Email reset mật khẩu đã được gửi đến {user.email}")
+                return redirect("password_reset_done")
+            else:
+                print("DEBUG: Email không hợp lệ!")
+                messages.error(request, "Email không hợp lệ, vui lòng nhập lại.")
+        except CustomUser.DoesNotExist:
+            print(f"DEBUG: Không tìm thấy user với Username={username}")
+            messages.error(request, "Tài khoản không tồn tại. Vui lòng kiểm tra lại username.")
+
+    return render(request, "account/password_reset_form.html")
+
+
+def password_reset_confirm(request, uidb64, token):
+    print(f"DEBUG: Nhận được UID={uidb64}, Token={token}")
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        print(f"DEBUG: UID giải mã thành công: {uid}")
+        user = CustomUser.objects.get(pk=uid)
+        print(f"DEBUG: Tìm thấy user: {user.username}")
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist) as e:
+        print(f"DEBUG: Lỗi khi tìm user hoặc giải mã UID: {e}")
+        user = None
+
+    if user and default_token_generator.check_token(user, token):
+        print(f"DEBUG: Token hợp lệ cho user: {user.username}")
+        if request.method == "POST":
+            new_password1 = request.POST.get("new_password1")
+            new_password2 = request.POST.get("new_password2")
+            if new_password1 == new_password2:
+                user.password = make_password(new_password1)
+                user.save()
+                print(f"DEBUG: Mật khẩu mới được lưu cho user: {user.username}")
+                messages.success(request, "Mật khẩu đã được đặt lại thành công!")
+                return redirect("password_reset_complete")
+            else:
+                print("DEBUG: Mật khẩu không khớp.")
+                messages.error(request, "Mật khẩu không khớp. Vui lòng thử lại.")
+        return render(request, "account/password_reset_confirm.html", {"validlink": True})
+    else:
+        print(f"DEBUG: Token không hợp lệ hoặc hết hạn: UID={uidb64}, Token={token}")
+        messages.error(request, "Liên kết đặt lại mật khẩu không hợp lệ.")
+        return render(request, "account/password_reset_confirm.html", {"validlink": False})
+
+
+def password_reset_done(request):
+    return render(request, "account/password_reset_done.html")
+
+
+def password_reset_complete(request):
+    return render(request, "account/password_reset_complete.html")
 

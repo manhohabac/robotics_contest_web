@@ -139,4 +139,12 @@ LOGIN_URL = 'login'
 MEDIA_URL = '/media/'  # Đường dẫn URL để truy cập file media
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Thư mục lưu trữ file upload
 
-    
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Sử dụng Gmail SMTP server
+EMAIL_PORT = 587  # Cổng mặc định cho giao thức TLS
+EMAIL_USE_TLS = True  # Kích hoạt TLS
+EMAIL_HOST_USER = 'minhtcppdev@gmail.com'  # Địa chỉ Gmail
+EMAIL_HOST_PASSWORD = 'njdsnxheenhlrswt'  # Mật khẩu ứng dụng
+
+
+
