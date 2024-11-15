@@ -110,9 +110,9 @@
                     {% csrf_token %}
                     <input type="text" name="username" class="form-control" placeholder="Username" required autocomplete="off">
                     <input type="password" name="password" class="form-control" placeholder="Password" required autocomplete="current-password">
-                    <p class="text-center mt-2">
-                        <a href="{% url 'password_reset' %}" class="forgot-password-btn">Quên mật khẩu?</a>
-                    </p>
+{#                    <p class="text-center mt-2">#}
+{#                        <a href="{% url 'password_reset' %}" class="forgot-password-btn">Quên mật khẩu?</a>#}
+{#                    </p>#}
                     <button type="submit" class="btn login-btn">Đăng nhập</button>
                 </form>
     
