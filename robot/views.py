@@ -2,7 +2,7 @@ import mimetypes
 import re
 from datetime import date, datetime
 from io import BytesIO
-
+import io
 import openpyxl
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.tokens import default_token_generator
@@ -36,7 +36,7 @@ from django.utils import timezone
 
 from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, Sponsor, \
     Feedback, GuideFile, Team
-
+from .utils import generate_random_code
 
 def register(request):
     if request.method == 'POST':
@@ -1687,80 +1687,74 @@ def password_reset_request(request):
     if request.method == "POST":
         username = request.POST.get("username")  # Lấy username từ form
         email = request.POST.get("email")  # Lấy email từ form
+        phone_number = request.POST.get("phone_number")  # Lấy số điện thoại từ form
 
         try:
-            user = CustomUser.objects.get(username=username)
-            print(f"DEBUG: Tìm thấy user: Username={username}, Email={user.email}")
+            # Tìm kiếm người dùng với username, email và phone_number
+            user = CustomUser.objects.get(username=username, email=email, phone_number=phone_number)
+            print(f"DEBUG: Tìm thấy user: Username={username}, Email={user.email}, Phone={user.phone_number}")
 
-            if user.email == email:  # Kiểm tra email có khớp không
-                print(f"DEBUG: Email hợp lệ: {email}")
-                subject = "Quên mật khẩu"
-                email_template_name = "account/password_reset_email.html"
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                token = default_token_generator.make_token(user)
-                print(f"DEBUG: UID={uid}, Token={token}")
+            # Tạo mã code ngẫu nhiên cho người dùng
+            code = generate_random_code()
 
-                context = {
-                    "email": user.email,
-                    "domain": 'www.roboconbg.vn',  # Tên miền thực tế
-                    "site_name": 'RoboconBG',
-                    "uid": uid,
-                    "token": token,
-                    "protocol": 'https',  # Giao thức HTTPS
-                }
-                email_message = render_to_string(email_template_name, context)
+            # Cập nhật mật khẩu tạm thời của người dùng thành mã code này
+            user.set_password(code)
+            user.save()
 
-                # Gửi email với nội dung HTML
-                send_mail(
-                    subject,
-                    '',  # Không gửi nội dung văn bản thuần túy (sẽ gửi HTML thay thế)
-                    'minhtcppdev@gmail.com',  # Địa chỉ email gửi đi
-                    [user.email],
-                    html_message=email_message,  # Nội dung HTML của email
-                    fail_silently=False
-                )
-                print(f"DEBUG: Email reset mật khẩu đã được gửi đến {user.email}")
-                return redirect("password_reset_done")
-            else:
-                print("DEBUG: Email không hợp lệ!")
-                messages.error(request, "Email không hợp lệ, vui lòng nhập lại.")
+            # Gửi email với mã code
+            subject = "Mã reset mật khẩu của bạn"
+            email_template_name = "account/password_reset_email.html"
+            context = {
+                "user": user,
+                "code": code,
+            }
+
+            email_message = render_to_string(email_template_name, context)
+
+            # Gửi email với nội dung HTML
+            send_mail(
+                subject,
+                'Forget password',
+                'minhtcppdev@gmail.com',  # Địa chỉ email gửi đi
+                [user.email],
+                html_message=email_message,
+                fail_silently=False
+            )
+            print(f"DEBUG: Email reset mật khẩu đã được gửi đến {user.email}")
+            messages.success(request, "Mã reset mật khẩu đã được gửi vào email của bạn.")
+            return redirect("password_reset_done")
         except CustomUser.DoesNotExist:
-            print(f"DEBUG: Không tìm thấy user với Username={username}")
-            messages.error(request, "Tài khoản không tồn tại. Vui lòng kiểm tra lại username.")
+            print(f"DEBUG: Không tìm thấy user với Username={username}, Email={email}, Phone={phone_number}")
+            messages.error(request, "Thông tin không chính xác. Vui lòng kiểm tra lại.")
 
     return render(request, "account/password_reset_form.html")
 
 
-def password_reset_confirm(request, uidb64, token):
-    print(f"DEBUG: Nhận được UID={uidb64}, Token={token}")
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        print(f"DEBUG: UID giải mã thành công: {uid}")
-        user = CustomUser.objects.get(pk=uid)
-        print(f"DEBUG: Tìm thấy user: {user.username}")
-    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist) as e:
-        print(f"DEBUG: Lỗi khi tìm user hoặc giải mã UID: {e}")
-        user = None
+def password_reset_confirm(request):
+    if request.method == "POST":
+        code = request.POST.get("code")
+        new_password1 = request.POST.get("new_password1")
+        new_password2 = request.POST.get("new_password2")
 
-    if user and default_token_generator.check_token(user, token):
-        print(f"DEBUG: Token hợp lệ cho user: {user.username}")
-        if request.method == "POST":
-            new_password1 = request.POST.get("new_password1")
-            new_password2 = request.POST.get("new_password2")
+        # Kiểm tra mã code hợp lệ
+        try:
+            user = CustomUser.objects.get(password=code)  # Kiểm tra xem mật khẩu tạm thời có khớp không
             if new_password1 == new_password2:
-                user.password = make_password(new_password1)
+                # Cập nhật mật khẩu người dùng
+                user.set_password(new_password1)
                 user.save()
                 print(f"DEBUG: Mật khẩu mới được lưu cho user: {user.username}")
+
+                # Đăng nhập người dùng ngay sau khi thay đổi mật khẩu
+                login(request, user)
                 messages.success(request, "Mật khẩu đã được đặt lại thành công!")
                 return redirect("password_reset_complete")
             else:
-                print("DEBUG: Mật khẩu không khớp.")
                 messages.error(request, "Mật khẩu không khớp. Vui lòng thử lại.")
-        return render(request, "account/password_reset_confirm.html", {"validlink": True})
-    else:
-        print(f"DEBUG: Token không hợp lệ hoặc hết hạn: UID={uidb64}, Token={token}")
-        messages.error(request, "Liên kết đặt lại mật khẩu không hợp lệ.")
-        return render(request, "account/password_reset_confirm.html", {"validlink": False})
+        except CustomUser.DoesNotExist:
+            messages.error(request, "Mã reset mật khẩu không hợp lệ.")
+
+    return render(request, "account/password_reset_confirm.html")
 
 
 def password_reset_done(request):

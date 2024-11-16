@@ -26,6 +26,7 @@ AUTH_USER_MODEL = 'robot.CustomUser'
 
 # Application definition
 
+# pip install 'whitenoise[brotli]'
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
