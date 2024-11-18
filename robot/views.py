@@ -161,7 +161,7 @@ def change_password(request):
                         created_at=timezone.now()
                     )
 
-                messages.success(request, 'Mật khẩu đã được thay đổi thành công.')
+                # messages.success(request, 'Mật khẩu đã được thay đổi thành công.')
                 return redirect('home')
             else:
                 form.add_error('current_password', 'Mật khẩu cũ không đúng.')
@@ -1721,11 +1721,12 @@ def password_reset_request(request):
                 html_message=email_message,
                 fail_silently=False
             )
-            print(f"DEBUG: Email reset mật khẩu đã được gửi đến {user.email}")
-            messages.success(request, "Mã reset mật khẩu đã được gửi vào email của bạn.")
+            # print(f"DEBUG: Email reset mật khẩu đã được gửi đến {user.email}")
+            # messages.success(request, "Mã reset mật khẩu đã được gửi vào email của bạn.")
             return redirect("login")
+
         except CustomUser.DoesNotExist:
-            print(f"DEBUG: Không tìm thấy user với Username={username}, Email={email}, Phone={phone_number}")
+            # print(f"DEBUG: Không tìm thấy user với Username={username}, Email={email}, Phone={phone_number}")
             messages.error(request, "Thông tin không chính xác. Vui lòng kiểm tra lại.")
 
     return render(request, "account/password_reset_form.html")
