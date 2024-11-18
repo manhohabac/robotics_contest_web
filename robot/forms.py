@@ -239,8 +239,8 @@ class EditRegistrationForm(forms.ModelForm):
         cleaned_data = super().clean()
         # Ví dụ: kiểm tra số lượng thí sinh hợp lệ
         member_count = cleaned_data.get("member_count")
-        if member_count is not None and member_count <= 0:
-            raise ValidationError("Số lượng thí sinh phải lớn hơn 0.")
+        if member_count is not None and (member_count <= 0 or member_count > 3):
+            raise ValidationError("Số lượng thí sinh phải lớn hơn 0 và tối đa 1 đội có 3 thí sinh.")
 
         return cleaned_data
 

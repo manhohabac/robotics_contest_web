@@ -31,3 +31,21 @@ def get_item(value, index):
         return value[int(index)]
     except (IndexError, ValueError):
         return None  # Nếu không tìm thấy hoặc có lỗi, trả về None
+
+
+@register.filter
+def make_range(value):
+    """Tạo một danh sách từ 1 đến value."""
+    return range(1, value)
+
+
+@register.filter
+def dict_key(d, key):
+    """Truy xuất giá trị từ dictionary bằng key."""
+    return d.get(key, None)
+
+
+@register.filter(name='get_item')
+def get_item2(dictionary, key):
+    return dictionary.get(key)
+

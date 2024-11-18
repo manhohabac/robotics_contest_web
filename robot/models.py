@@ -149,13 +149,13 @@ class Registration(models.Model):
     def save(self, *args, **kwargs):
         if not self.registration_code:
             self.registration_code = generate_unique_code()  # Hàm để tạo mã đăng ký duy nhất
+
         super().save(*args, **kwargs)
 
         # Kiểm tra nếu có sự thay đổi tên đội
         if self.team and self.team.name != self.team_name:
             self.team.name = self.team_name  # Cập nhật tên đội trong bảng Team
             self.team.save()  # Lưu lại thay đổi vào bảng Team
-        super().save(*args, **kwargs)
 
 
 class CompetitionResult(models.Model):

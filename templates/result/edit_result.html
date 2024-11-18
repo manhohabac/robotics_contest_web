@@ -308,29 +308,17 @@
                                                     {% endfor %}
                                                 </ul>
                                             </td>
+                                            {% load form_filters %}
                                             <td>
                                                 <input type="hidden" name="team_ids" value="{{ team.id }}">
-                                                <div class="d-flex" id="scores-container-{{ team.id }}">
-                                                    <script type="text/javascript">
-                                                        const matchesCount = {{ matches_count }};
-                                                        const container = document.getElementById('scores-container-{{ team.id }}');
-
-                                                        // Lấy điểm số cũ từ team_scores (là một dict trong context)
-                                                        const existingScores = {{ team_scores|default:"{}" }}[{{ team.id }}] || [];
-
-                                                        for (let i = 1; i <= matchesCount; i++) {
-                                                            const input = document.createElement('input');
-                                                            input.type = 'number';
-                                                            input.name = `score_{{ team.id }}_${i}`;
-                                                            input.className = 'form-control me-1';
-                                                            input.placeholder = `Điểm lượt ${i}`;
-
-                                                            // Gán giá trị cho input, nếu có điểm cũ thì dùng, nếu không thì mặc định là 0
-                                                            input.value = existingScores[i - 1] || 0;
-
-                                                            container.appendChild(input);
-                                                        }
-                                                    </script>
+                                                <div class="d-flex">
+                                                    {% for i in matches_count|add:"1"|make_range %}
+                                                        <input
+                                                            type="number"
+                                                            name="score_{{ team.id }}_{{ i }}"
+                                                            class="form-control me-1"
+                                                            placeholder="Điểm lượt {{ i }}">
+                                                    {% endfor %}
                                                 </div>
                                             </td>
                                         </tr>
