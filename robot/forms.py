@@ -443,3 +443,5 @@ class UserRoleForm(forms.Form):
     ]
     username = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'placeholder': 'Tên đăng nhập'}))
     role = forms.ChoiceField(choices=ROLE_CHOICES, label="Chọn vai trò")
+
+

@@ -38,6 +38,7 @@ from .models import UserProfile, Competition, Registration, Notification, Custom
     Feedback, GuideFile, Team
 from .utils import generate_random_code
 
+
 def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST, request.FILES)
