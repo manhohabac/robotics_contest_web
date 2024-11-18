@@ -1730,37 +1730,37 @@ def password_reset_request(request):
     return render(request, "account/password_reset_form.html")
 
 
-def password_reset_confirm(request):
-    if request.method == "POST":
-        code = request.POST.get("code")
-        new_password1 = request.POST.get("new_password1")
-        new_password2 = request.POST.get("new_password2")
-
-        # Kiểm tra mã code hợp lệ
-        try:
-            user = CustomUser.objects.get(password=code)  # Kiểm tra xem mật khẩu tạm thời có khớp không
-            if new_password1 == new_password2:
-                # Cập nhật mật khẩu người dùng
-                user.set_password(new_password1)
-                user.save()
-                print(f"DEBUG: Mật khẩu mới được lưu cho user: {user.username}")
-
-                # Đăng nhập người dùng ngay sau khi thay đổi mật khẩu
-                login(request, user)
-                messages.success(request, "Mật khẩu đã được đặt lại thành công!")
-                return redirect("password_reset_complete")
-            else:
-                messages.error(request, "Mật khẩu không khớp. Vui lòng thử lại.")
-        except CustomUser.DoesNotExist:
-            messages.error(request, "Mã reset mật khẩu không hợp lệ.")
-
-    return render(request, "account/password_reset_confirm.html")
-
-
-def password_reset_done(request):
-    return render(request, "account/password_reset_done.html")
+# def password_reset_confirm(request):
+#     if request.method == "POST":
+#         code = request.POST.get("code")
+#         new_password1 = request.POST.get("new_password1")
+#         new_password2 = request.POST.get("new_password2")
+#
+#         # Kiểm tra mã code hợp lệ
+#         try:
+#             user = CustomUser.objects.get(password=code)  # Kiểm tra xem mật khẩu tạm thời có khớp không
+#             if new_password1 == new_password2:
+#                 # Cập nhật mật khẩu người dùng
+#                 user.set_password(new_password1)
+#                 user.save()
+#                 print(f"DEBUG: Mật khẩu mới được lưu cho user: {user.username}")
+#
+#                 # Đăng nhập người dùng ngay sau khi thay đổi mật khẩu
+#                 login(request, user)
+#                 messages.success(request, "Mật khẩu đã được đặt lại thành công!")
+#                 return redirect("password_reset_complete")
+#             else:
+#                 messages.error(request, "Mật khẩu không khớp. Vui lòng thử lại.")
+#         except CustomUser.DoesNotExist:
+#             messages.error(request, "Mã reset mật khẩu không hợp lệ.")
+#
+#     return render(request, "account/password_reset_confirm.html")
 
 
-def password_reset_complete(request):
-    return render(request, "account/password_reset_complete.html")
+# def password_reset_done(request):
+#     return render(request, "account/password_reset_done.html")
+#
+#
+# def password_reset_complete(request):
+#     return render(request, "account/password_reset_complete.html")
 
