@@ -876,12 +876,12 @@ def result_detail(request, competition_id):
 
         for round_info in rounds:
             round_name = round_info.get('round_name')  # Lấy tên vòng đấu
-            # Truy vấn kết quả của các đội thi cho bảng và vòng hiện tại, sắp xếp theo điểm giảm dần
+            # Truy vấn kết quả của các đội thi cho bảng và vòng hiện tại, sắp xếp theo điểm xếp hạng giảm dần
             round_results = CompetitionResult.objects.filter(
                 competition=competition,
                 group_name=group_name,
                 round_name=round_name
-            ).order_by('-score')
+            ).order_by('-ranking_score')
 
             # Lưu kết quả vào cấu trúc dữ liệu
             results[group_name][round_name] = []
