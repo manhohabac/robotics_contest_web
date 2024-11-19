@@ -890,7 +890,7 @@ def result_detail(request, competition_id):
                 competition=competition,
                 group_name=group_name,
                 round_name=round_name,
-                is_active=True  # Lọc các kết quả đang hoạt động
+                # is_active=True  # Lọc các kết quả đang hoạt động
             ).order_by('-ranking_score')
 
             # Lưu kết quả vào cấu trúc dữ liệu
@@ -955,12 +955,21 @@ def edit_result(request, competition_id, result_id):
     matches_count = selected_round_data.get('matches_count', 0) if selected_round_data else 0
     scoring_method = selected_round_data.get('scoring_method', 'Tổng điểm toàn bộ các lượt thi')
 
-    # Lấy danh sách các đội trong bảng đấu
+    # Lấy danh sách các đội đang hoạt động trong bảng đấu
+    active_team_ids = CompetitionResult.objects.filter(
+        competition=competition,
+        group_name=selected_group,
+        is_active=True
+    ).values_list('team_id', flat=True)
+
+    # Lấy danh sách các đội dựa trên team_id và filter theo active_team_ids
     teams = Team.objects.filter(
         id__in=Registration.objects.filter(
             competition=competition,
             competition_group=selected_group
         ).values('team_id')
+    ).filter(
+        id__in=active_team_ids  # Lọc theo danh sách các đội đang hoạt động
     )
 
     # Chuẩn bị dữ liệu điểm số cho từng đội

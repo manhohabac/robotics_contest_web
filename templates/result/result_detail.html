@@ -291,17 +291,25 @@
                                                                     {% endfor %}
                                                                 </td>
                                                                 <td>{{ round_result.result.ranking_score|floatformat:0 }}</td>
-                                                                {% if request.user.is_superuser %}
-                                                                    <td>
+                                                                <td>
+                                                                    {% if request.user.is_superuser %}
                                                                         <button class="btn btn-sm toggle-result-status" data-id="{{ round_result.result.id }}">
                                                                             {% if round_result.result.is_active %}
-                                                                                <span class="badge badge-success">Hoạt động</span>
+                                                                                <span class="badge badge-success">Thi đấu</span>
                                                                             {% else %}
                                                                                 <span class="badge badge-danger">Bị loại</span>
                                                                             {% endif %}
                                                                         </button>
-                                                                    </td>
-                                                                {% endif %}
+                                                                    {% else %}
+                                                                        <button class="btn btn-sm toggle-result-status" data-id="{{ round_result.result.id }}">
+                                                                            {% if round_result.result.is_active %}
+                                                                                <strong class="text-success">Thi đấu</strong>
+                                                                            {% else %}
+                                                                                <strong class="text-danger">Bị loại</strong>
+                                                                            {% endif %}
+                                                                        </button>
+                                                                    {% endif %}
+                                                                </td>
                                                                 {% if request.user.is_superuser %}
                                                                     <td>
                                                                         <a href="{% url 'edit_result' competition.id round_result.result.id %}" class="btn btn-warning">
@@ -351,7 +359,7 @@
                     success: function(response) {
                         // Cập nhật giao diện sau khi yêu cầu thành công
                         if (response.is_active) {
-                            button.html("<span class='badge badge-success'>Hoạt động</span>");
+                            button.html("<span class='badge badge-success'>Thi đấu</span>");
                         } else {
                             button.html("<span class='badge badge-danger'>Bị loại</span>");
                         }
