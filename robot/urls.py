@@ -63,6 +63,7 @@ urlpatterns = [
     # path('reset/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
     # path('reset/done/', views.password_reset_complete, name='password_reset_complete'),
 
-    path('registration/<int:registration_id>/edit/', views.edit_registration, name='edit_registration')
+    path('registration/<int:registration_id>/edit/', views.edit_registration, name='edit_registration'),
+    path('toggle-team-status/<int:result_id>/', views.toggle_team_status, name='toggle_team_status'),
 ]
 

@@ -163,20 +163,19 @@ class CompetitionResult(models.Model):
                                     related_name='results', null=True, blank=True)
 
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='competition_results', null=True, blank=True)
-
     # Thêm trường lưu tên bảng đấu và tên vòng thi
     group_name = models.CharField(max_length=255, null=True, blank=True)  # Tên bảng đấu
     round_name = models.CharField(max_length=255, null=True, blank=True)  # Tên vòng thi
 
     # Điểm của đội thi trong từng lượt đấu
     score = models.JSONField(default=list)  # Lưu trữ điểm từng lượt đấu, dưới dạng danh sách
-
     # Điểm xếp hạng cuối cùng của đội trong vòng thi
     ranking_score = models.FloatField(null=True, blank=True)
-
     prize_points = models.IntegerField(default=0)  # Điểm thưởng nếu đội thi giành giải
-
     result_date = models.DateTimeField(auto_now_add=True)
+
+    # Trạng thái thi đấu của đội (mặc định là True - thi đấu)
+    is_active = models.BooleanField(default=True)  # True: Đang thi đấu, False: Bị loại
 
     def __str__(self):
         return f"{self.team.name} - {self.competition.name} - Rank {self.ranking_score}"

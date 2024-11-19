@@ -272,6 +272,7 @@
                                                             <th>Huấn luyện viên</th>
                                                             <th>Thành viên</th>
                                                             <th>Điểm xếp hạng</th>
+                                                            <th>Trạng thái</th>
                                                             {% if request.user.is_superuser %}
                                                                 <th>Hành động</th>
                                                             {% endif %}
@@ -290,6 +291,17 @@
                                                                     {% endfor %}
                                                                 </td>
                                                                 <td>{{ round_result.result.ranking_score|floatformat:0 }}</td>
+                                                                {% if request.user.is_superuser %}
+                                                                    <td>
+                                                                        <button class="btn btn-sm toggle-result-status" data-id="{{ round_result.result.id }}">
+                                                                            {% if round_result.result.is_active %}
+                                                                                <span class="badge badge-success">Hoạt động</span>
+                                                                            {% else %}
+                                                                                <span class="badge badge-danger">Bị loại</span>
+                                                                            {% endif %}
+                                                                        </button>
+                                                                    </td>
+                                                                {% endif %}
                                                                 {% if request.user.is_superuser %}
                                                                     <td>
                                                                         <a href="{% url 'edit_result' competition.id round_result.result.id %}" class="btn btn-warning">
@@ -317,8 +329,40 @@
         </div>
     </div>
 
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
     <script src="{% static 'js/popper.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.toggle-result-status').on('click', function(e) {
+                e.preventDefault(); // Ngăn chặn hành động mặc định của nút
+
+                var button = $(this);
+                var resultId = button.data('id'); // Lấy ID của kết quả
+
+                $.ajax({
+                    url: "{% url 'toggle_team_status' 0 %}".replace('0', resultId), // URL với ID động
+                    type: 'POST',
+                    data: {
+                        'csrfmiddlewaretoken': '{{ csrf_token }}', // Gửi CSRF token
+                    },
+                    success: function(response) {
+                        // Cập nhật giao diện sau khi yêu cầu thành công
+                        if (response.is_active) {
+                            button.html("<span class='badge badge-success'>Hoạt động</span>");
+                        } else {
+                            button.html("<span class='badge badge-danger'>Bị loại</span>");
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error occurred: " + error);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
 

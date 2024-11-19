@@ -773,12 +773,21 @@ def add_result(request, competition_id):
         matches_count = selected_round_data.get('matches_count', 0) if selected_round_data else 0
         scoring_method = selected_round_data.get('scoring_method', scoring_method)
 
-    # Lấy danh sách các đội trong bảng đấu
+    # Lấy danh sách các đội đang hoạt động trong bảng đấu
+    active_team_ids = CompetitionResult.objects.filter(
+        competition=competition,
+        group_name=selected_group,
+        is_active=True
+    ).values_list('team_id', flat=True)
+
+    # Lấy danh sách các đội dựa trên team_id và filter theo active_team_ids
     teams = Team.objects.filter(
         id__in=Registration.objects.filter(
             competition=competition,
             competition_group=selected_group
         ).values('team_id')
+    ).filter(
+        id__in=active_team_ids  # Lọc theo danh sách các đội đang hoạt động
     )
 
     # Lấy thông tin thành viên của các đội
@@ -880,7 +889,8 @@ def result_detail(request, competition_id):
             round_results = CompetitionResult.objects.filter(
                 competition=competition,
                 group_name=group_name,
-                round_name=round_name
+                round_name=round_name,
+                is_active=True  # Lọc các kết quả đang hoạt động
             ).order_by('-ranking_score')
 
             # Lưu kết quả vào cấu trúc dữ liệu
@@ -910,6 +920,21 @@ def result_detail(request, competition_id):
         'competition': competition,
         'results': results,
     })
+
+
+def toggle_team_status(request, result_id):
+    competition_result = get_object_or_404(CompetitionResult, id=result_id)
+
+    if request.method == 'POST':
+        # Đảo ngược giá trị của is_active
+        competition_result.is_active = not competition_result.is_active
+        competition_result.save()
+
+        # Trả về JSON với trạng thái mới
+        return JsonResponse({'is_active': competition_result.is_active})
+
+    # Nếu không phải POST, trả về lỗi không hợp lệ
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
 @login_required
