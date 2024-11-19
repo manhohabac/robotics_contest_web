@@ -758,71 +758,48 @@ def delete_competition(request, competition_id):
 
 @login_required
 def add_result(request, competition_id):
-    # Lấy đối tượng Competition theo competition_id
     competition = get_object_or_404(Competition, id=competition_id)
-    print("Competition:", competition)
+    rounds_data = competition.rounds or []
+    groups_data = competition.groups or []
 
-    # Lấy dữ liệu về vòng đấu và bảng đấu từ Competition (trường JSONField)
-    rounds_data = competition.rounds
-    groups_data = competition.groups
-    print("Rounds Data:", rounds_data)
-    print("Groups Data:", groups_data)
+    selected_round = request.GET.get('round', rounds_data[0]['round_name'] if rounds_data else None)
+    selected_group = request.GET.get('group', groups_data[0]['group_name'] if groups_data else None)
 
-    # Lấy giá trị vòng đấu và bảng đấu được chọn từ GET request
-    selected_round = request.GET.get('round')
-    selected_group = request.GET.get('group')
-    print("Selected Round:", selected_round)
-    print("Selected Group:", selected_group)
-
-    # Nếu không có vòng đấu hoặc bảng đấu được chọn, dùng giá trị mặc định
-    if not selected_round:
-        selected_round = rounds_data[0]['round_name']  # Giá trị mặc định là vòng đấu đầu tiên
-    if not selected_group:
-        selected_group = groups_data[0]['group_name']  # Giá trị mặc định là bảng đấu đầu tiên
-
-    print("Final Selected Round:", selected_round)
-    print("Final Selected Group:", selected_group)
-
-    # Khởi tạo danh sách các đội thi
-    teams = []
     matches_count = 0
-    scoring_method = None
+    scoring_method = "Tổng điểm toàn bộ các lượt thi"
 
     if selected_round and selected_group:
-        # Lọc các dữ liệu vòng đấu và bảng đấu
-        selected_group_data = next((g for g in groups_data if g['group_name'] == selected_group), None)
         selected_round_data = next((r for r in rounds_data if r['round_name'] == selected_round), None)
-        print("Selected Group Data:", selected_group_data)
-        print("Selected Round Data:", selected_round_data)
+        matches_count = selected_round_data.get('matches_count', 0) if selected_round_data else 0
+        scoring_method = selected_round_data.get('scoring_method', scoring_method)
 
-        # Lấy giá trị matches_count và scoring_method từ selected_round_data
-        if selected_round_data:
-            matches_count = selected_round_data.get('matches_count', 0)  # Đảm bảo matches_count có giá trị mặc định là 0
-            scoring_method = selected_round_data.get('scoring_method', 'Tổng điểm tất cả các lượt thi')  # Giá trị mặc định
+    # Lấy danh sách các đội trong bảng đấu
+    teams = Team.objects.filter(
+        id__in=Registration.objects.filter(
+            competition=competition,
+            competition_group=selected_group
+        ).values('team_id')
+    )
 
-        print("Matches Count:", matches_count)
-        print("Scoring Method:", scoring_method)
+    # Lấy thông tin thành viên của các đội
+    for team in teams:
+        registrations = Registration.objects.filter(team=team)
+        team.members_list = [
+            {
+                'name': reg.student_name,
+                'parent_email': reg.guardian_email
+            }
+            for reg in registrations
+        ]
+        print(f"Team {team.name} Members List:", team.members_list)
 
-        if selected_group_data and selected_round_data:
-            # Lọc các đội tham gia trong bảng đấu và vòng đấu này
-            teams = Team.objects.filter(
-                id__in=Registration.objects.filter(
-                    competition=competition,
-                    competition_group=selected_group_data['group_name']
-                ).values('team_id')
-            )
-            print("Teams in selected group and round:", teams)
-
-            for team in teams:
-                team.members_list = team.members.split(',')
-                print(f"Team {team.name} Members List:", team.members_list)
-
-    # Xử lý khi người dùng gửi form (POST request)
     if request.method == 'POST':
-        team_scores = {}
-        for team_id in request.POST.getlist('team_ids'):
-            print('Processing Team ID:', team_id)
-            print('scoring_method', scoring_method)
+        team_ids = request.POST.getlist('team_ids')
+        if not team_ids:
+            messages.error(request, "Không có đội nào được gửi để lưu kết quả.")
+            return redirect(request.path)
+
+        for team_id in team_ids:
             team_score = []
             for i in range(1, matches_count + 1):
                 score_field = f'score_{team_id}_{i}'  # Trường lưu điểm của đội
@@ -830,45 +807,41 @@ def add_result(request, competition_id):
                 print(f"Score for Team {team_id}, Match {i}:", score)
 
                 # Kiểm tra nếu score không phải là chuỗi rỗng và chuyển thành float
-                if score:
+                if score.strip():  # Nếu có giá trị hợp lệ
                     team_score.append(float(score))
-                else:
-                    team_score.append(0)  # Nếu không có điểm, gán giá trị mặc định là 0
+                else:  # Nếu chuỗi rỗng hoặc không hợp lệ
+                    team_score.append(0)
 
             print(f"Team {team_id} Scores:", team_score)
 
-            # Tính điểm ranking_score dựa trên scoring_method
-            if scoring_method == "Tổng điểm toàn bộ các lượt thi":
-                ranking_score = sum(team_score)
-            elif scoring_method == "Điểm cao nhất trong các lượt":
-                ranking_score = max(team_score) if team_score else 0
-            else:
-                ranking_score = 0  # Đặt giá trị mặc định nếu có trường hợp bất ngờ
+            ranking_score = sum(team_score) if scoring_method == "Tổng điểm toàn bộ các lượt thi" else max(team_score)
 
-            print(f"Ranking Score for Team {team_id}:", ranking_score)
+            try:
+                existing_result = CompetitionResult.objects.filter(
+                    team_id=team_id, competition=competition,
+                    round_name=selected_round, group_name=selected_group
+                ).first()
 
-            # Kiểm tra xem đội đã có kết quả cho vòng đấu và bảng đấu này chưa
-            if CompetitionResult.objects.filter(team_id=team_id, competition=competition,
-                                                round_name=selected_round, group_name=selected_group).exists():
-                messages.error(request,
-                               f"Đội {team_id} đã có kết quả cho vòng {selected_round} và bảng {selected_group}.")
+                if existing_result:
+                    existing_result.score = team_score
+                    existing_result.ranking_score = ranking_score
+                    existing_result.save()
+                else:
+                    CompetitionResult.objects.create(
+                        competition=competition,
+                        team_id=team_id,
+                        round_name=selected_round,
+                        group_name=selected_group,
+                        score=team_score,
+                        ranking_score=ranking_score
+                    )
+            except Exception as e:
+                messages.error(request, f"Lỗi khi lưu kết quả cho đội {team_id}: {e}")
                 continue
-
-            # Lưu kết quả cho đội
-            result = CompetitionResult.objects.create(
-                competition=competition,
-                team_id=team_id,
-                round_name=selected_round,
-                group_name=selected_group,
-                score=team_score,
-                ranking_score=ranking_score  # Điểm được tính theo scoring_method
-            )
-            print(f"Result Saved for Team {team_id}:", result)
 
         messages.success(request, "Kết quả đã được lưu thành công.")
         return redirect('result_detail', competition_id=competition.id)
 
-    # Trả về template với các thông tin cần thiết
     return render(request, 'result/add_result.html', {
         'competition': competition,
         'rounds_data': rounds_data,
@@ -941,88 +914,95 @@ def result_detail(request, competition_id):
 
 @login_required
 def edit_result(request, competition_id, result_id):
-    # Lấy đối tượng Competition theo competition_id
+    # Lấy đối tượng Competition và CompetitionResult
     competition = get_object_or_404(Competition, id=competition_id)
-
-    # Lấy đối tượng CompetitionResult cần chỉnh sửa
     result = get_object_or_404(CompetitionResult, id=result_id, competition=competition)
 
-    # Lấy dữ liệu về vòng đấu và bảng đấu từ Competition (trường JSONField)
-    rounds_data = competition.rounds
-    groups_data = competition.groups
+    # Dữ liệu vòng và bảng từ Competition (JSONField)
+    rounds_data = competition.rounds or []
+    groups_data = competition.groups or []
 
-    # Lấy giá trị vòng đấu và bảng đấu được chọn từ GET request
+    # Lấy vòng đấu, bảng đấu và thông tin số trận
     selected_round = result.round_name
     selected_group = result.group_name
 
-    # Khởi tạo danh sách các đội thi
-    teams = []
-    matches_count = 0
-    scoring_method = None
-
-    # Lọc các dữ liệu vòng đấu và bảng đấu
-    selected_group_data = next((g for g in groups_data if g['group_name'] == selected_group), None)
     selected_round_data = next((r for r in rounds_data if r['round_name'] == selected_round), None)
+    matches_count = selected_round_data.get('matches_count', 0) if selected_round_data else 0
+    scoring_method = selected_round_data.get('scoring_method', 'Tổng điểm toàn bộ các lượt thi')
 
-    # Lấy giá trị matches_count và scoring_method từ selected_round_data
-    if selected_round_data:
-        matches_count = selected_round_data.get('matches_count', 0)  # Đảm bảo matches_count có giá trị mặc định là 0
-        scoring_method = selected_round_data.get('scoring_method', 'Tổng điểm tất cả các lượt thi')  # Giá trị mặc định
+    # Lấy danh sách các đội trong bảng đấu
+    teams = Team.objects.filter(
+        id__in=Registration.objects.filter(
+            competition=competition,
+            competition_group=selected_group
+        ).values('team_id')
+    )
 
-    if selected_group_data and selected_round_data:
-        # Lọc các đội tham gia trong bảng đấu và vòng đấu này
-        teams = Team.objects.filter(
-            id__in=Registration.objects.filter(
-                competition=competition,
-                competition_group=selected_group_data['group_name']
-            ).values('team_id')
-        )
-
-    print(f"Result score: {result.score}")
-
-    # Truyền điểm số cũ vào context
-    team_scores = {}
-
-    # Lặp qua từng đội trong danh sách teams
+    # Chuẩn bị dữ liệu điểm số cho từng đội
     for team in teams:
-        team.members_list = team.members.split(',')
-        team_scores[team.id] = result.score
+        registrations = Registration.objects.filter(team=team)
+        team_members = []
 
-    # Kiểm tra kết quả
-    print("team_scores:", team_scores)
+        for registration in registrations:
+            team_members.append({
+                'name': registration.student_name,
+                # Nếu cần email phụ huynh, bạn có thể bỏ comment ở đây
+                # 'parent_email': registration.guardian_email
+            })
 
-    # Xử lý khi người dùng gửi form (POST request)
-    if request.method == 'POST':
-        team_score = []
-        for i in range(1, matches_count + 1):
-            score_field = f'score_{result.team_id}_{i}'  # Trường lưu điểm của đội
-            score = request.POST.get(score_field, '')
+        team.members_list = team_members  # Gán danh sách thành viên vào team
 
-            # Kiểm tra nếu score không phải là chuỗi rỗng và chuyển thành float
-            if score:
-                team_score.append(float(score))
-            else:
-                team_score.append(0)  # Nếu không có điểm, gán giá trị mặc định là 0
+        result_data = CompetitionResult.objects.filter(
+            team_id=team.id,
+            competition=competition,
+            round_name=selected_round,
+            group_name=selected_group
+        ).first()
 
-        # Tính điểm ranking_score dựa trên scoring_method
-        if scoring_method == "Tổng điểm toàn bộ các lượt thi":
-            ranking_score = sum(team_score)
-        elif scoring_method == "Điểm cao nhất trong các lượt":
-            ranking_score = max(team_score) if team_score else 0
+        # Nếu có điểm số, đảm bảo đúng chiều dài, ngược lại tạo danh sách mặc định
+        if result_data and isinstance(result_data.score, list):
+            team.scores = result_data.score + [0] * (matches_count - len(result_data.score))
         else:
-            ranking_score = 0  # Đặt giá trị mặc định nếu có trường hợp bất ngờ
+            team.scores = [0] * matches_count
 
-        # Cập nhật kết quả cho đội
-        result.score = team_score
-        result.ranking_score = ranking_score
+    # Xử lý POST request để cập nhật kết quả
+    if request.method == 'POST':
+        for team in teams:
+            team_score = []
+            for i in range(matches_count):
+                score_field = f'score_{team.id}_{i+1}'
+                score = request.POST.get(score_field, '').strip()
 
-        # Lưu kết quả đã chỉnh sửa
-        result.save()
+                # Nếu có giá trị hợp lệ, chuyển thành float, ngược lại gán 0
+                team_score.append(float(score) if score else 0)
+
+            # Tính điểm ranking_score
+            ranking_score = (
+                sum(team_score) if scoring_method == "Tổng điểm toàn bộ các lượt thi"
+                else max(team_score, default=0)
+            )
+
+            print(f"Updated Scores for Team {team.id}:", team_score)  # Debug điểm số mới
+            print(f"Updated Ranking Score for Team {team.id}:", ranking_score)  # Debug điểm ranking mới
+
+            # Cập nhật hoặc tạo mới đối tượng CompetitionResult
+            result_data, created = CompetitionResult.objects.get_or_create(
+                team_id=team.id,
+                competition=competition,
+                round_name=selected_round,
+                group_name=selected_group,
+                defaults={'score': team_score, 'ranking_score': ranking_score}
+            )
+
+            if not created:
+                result_data.score = team_score
+                result_data.ranking_score = ranking_score
+                result_data.save()
 
         messages.success(request, "Kết quả đã được cập nhật thành công.")
         return redirect('result_detail', competition_id=competition.id)
 
-    # Trả về template với các thông tin cần thiết
+    # Truyền thông tin vào template
     return render(request, 'result/edit_result.html', {
         'competition': competition,
         'rounds_data': rounds_data,
@@ -1031,8 +1011,7 @@ def edit_result(request, competition_id, result_id):
         'selected_round': selected_round,
         'selected_group': selected_group,
         'matches_count': matches_count,
-        'result': result,  # Truyền dữ liệu kết quả hiện tại vào template
-        'team_scores': team_scores,  # Truyền điểm số của các đội vào template
+        'result': result,
     })
 
 

@@ -1,6 +1,3 @@
-{% load static %}
-{% load form_filters %}
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -14,6 +11,9 @@
     
     <!-- Font Awesome từ file offline -->
     <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
+
+    {% load static %}
+    {% load form_filters %}
     
     <style>
         body {
@@ -304,20 +304,20 @@
                                             <td>
                                                 <ul style="list-style: none; padding: 0; margin: 0;">
                                                     {% for member in team.members_list %}
-                                                        <li>{{ member }}</li>
+                                                        <li>{{ member.name }}</li>
                                                     {% endfor %}
                                                 </ul>
                                             </td>
                                             {% load form_filters %}
                                             <td>
-                                                <input type="hidden" name="team_ids" value="{{ team.id }}">
                                                 <div class="d-flex">
-                                                    {% for i in matches_count|add:"1"|make_range %}
+                                                    {% for score in team.scores %}
                                                         <input
                                                             type="number"
-                                                            name="score_{{ team.id }}_{{ i }}"
+                                                            name="score_{{ team.id }}_{{ forloop.counter }}"
                                                             class="form-control me-1"
-                                                            placeholder="Điểm lượt {{ i }}">
+                                                            placeholder="Điểm lượt {{ forloop.counter }}"
+                                                            value="{{ score }}">
                                                     {% endfor %}
                                                 </div>
                                             </td>
