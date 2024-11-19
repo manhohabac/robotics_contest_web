@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    {% load form_filters %}
     <link rel="icon" href="{% static 'images/favicon.png' %}" type="image/png">
     <title>Chỉnh sửa kết quả</title>
     
@@ -11,9 +13,6 @@
     
     <!-- Font Awesome từ file offline -->
     <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.4-web/css/all.css' %}">
-
-    {% load static %}
-    {% load form_filters %}
     
     <style>
         body {
