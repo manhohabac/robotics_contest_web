@@ -234,31 +234,27 @@
                     <div class="mx-auto">
                         <h1 class="h2">Kết quả cụ thể của cuộc thi {{ competition.name }}</h1>
                     </div>
-                    
-                    <!-- Chỉ hiển thị nút Xuất Excel cho admin -->
+
                     {% if request.user.is_superuser %}
-                        <a class="btn btn-success" href="{% url 'export_results_to_excel' competition.id %}">
-                            <i class="fas fa-file-excel"></i> Xuất Excel
-                        </a>
+                        <div class="d-flex justify-content-center">
+                            <a href="{% url 'add_result' competition.id %}" class="btn btn-success mr-2">
+                                <i class="fas fa-plus"></i> Thêm kết quả
+                            </a>
+                            <a class="btn btn-success" href="{% url 'export_results_to_excel' competition.id %}">
+                                <i class="fas fa-file-excel"></i> Xuất Excel
+                            </a>
+                        </div>
                     {% endif %}
                 </div>
              
                 <div class="row">
                     <div class="col-12">
-                        {% if request.user.is_superuser %}
-                            <div class="d-flex justify-content-center mt-1">
-                                <a href="{% url 'add_result' competition.id %}" class="btn btn-success">
-                                    <i class="fas fa-plus"></i> Thêm kết quả
-                                </a>
-                            </div>
-                        {% endif %}
-
                         {% for group_name, rounds_info in results.items %}
-                            <div class="group-section mt-5">
-                                <h2>{{ group_name }}</h2>
+                            <div class="group-section mt-1">
+                                <h2 style="text-align: center;">{{ group_name }}</h2>
 
                                 {% for round_name, round_data in rounds_info.items %}
-                                    <div class="round-section mt-3">
+                                    <div class="round-section mt-1">
                                         <h3>{{ round_name }}</h3>
 
                                         <div class="row">
@@ -266,15 +262,22 @@
                                                 <table class="table table-bordered">
                                                     <thead>
                                                         <tr>
-                                                            <th>Thứ hạng</th>
-                                                            <th>Số báo danh</th>
-                                                            <th>Tên đội thi</th>
-                                                            <th>Huấn luyện viên</th>
-                                                            <th>Thành viên</th>
-                                                            <th>Điểm xếp hạng</th>
-                                                            <th>Trạng thái</th>
                                                             {% if request.user.is_superuser %}
-                                                                <th>Hành động</th>
+                                                                <th style="width: 6%;">Thứ hạng</th>
+                                                                <th style="width: 8%;">Số báo danh</th>
+                                                                <th style="width: 20%;">Tên đội thi</th>
+                                                                <th style="width: 15%;">Huấn luyện viên</th>
+                                                                <th style="width: 15%;">Thành viên</th>
+                                                                <th style="width: 10%;">Điểm xếp hạng</th>
+                                                                <th style="width: 8%;">Trạng thái</th>
+                                                                <th style="width: 10%;">Hành động</th>
+                                                            {% else %}
+                                                                <th style="width: 5%;">Thứ hạng</th>
+                                                                <th style="width: 8%;">Số báo danh</th>
+                                                                <th style="width: 20%;">Tên đội thi</th>
+                                                                <th style="width: 15%;">Huấn luyện viên</th>
+                                                                <th style="width: 15%;">Thành viên</th>
+                                                                <th style="width: 10%;">Điểm xếp hạng</th>
                                                             {% endif %}
                                                         </tr>
                                                     </thead>
@@ -291,8 +294,9 @@
                                                                     {% endfor %}
                                                                 </td>
                                                                 <td>{{ round_result.result.ranking_score|floatformat:0 }}</td>
-                                                                <td>
-                                                                    {% if request.user.is_superuser %}
+
+                                                                {% if request.user.is_superuser %}
+                                                                    <td>
                                                                         <button class="btn btn-sm toggle-result-status" data-id="{{ round_result.result.id }}">
                                                                             {% if round_result.result.is_active %}
                                                                                 <span class="badge badge-success">Thi đấu</span>
@@ -300,16 +304,9 @@
                                                                                 <span class="badge badge-danger">Bị loại</span>
                                                                             {% endif %}
                                                                         </button>
-                                                                    {% else %}
-                                                                        <button class="btn btn-sm toggle-result-status" data-id="{{ round_result.result.id }}">
-                                                                            {% if round_result.result.is_active %}
-                                                                                <strong class="text-success">Thi đấu</strong>
-                                                                            {% else %}
-                                                                                <strong class="text-danger">Bị loại</strong>
-                                                                            {% endif %}
-                                                                        </button>
-                                                                    {% endif %}
-                                                                </td>
+                                                                    </td>
+                                                                {% endif %}
+
                                                                 {% if request.user.is_superuser %}
                                                                     <td>
                                                                         <a href="{% url 'edit_result' competition.id round_result.result.id %}" class="btn btn-warning">

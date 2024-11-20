@@ -33,6 +33,7 @@ from django.utils import timezone
 from .models import UserProfile, Competition, Registration, Notification, CustomUser, CompetitionResult, Kit, Sponsor, \
     Feedback, GuideFile, Team
 from .utils import generate_random_code
+from unidecode import unidecode
 
 
 def register(request):
@@ -163,7 +164,6 @@ def change_password(request):
                 form.add_error('current_password', 'Mật khẩu cũ không đúng.')
         else:
             print(form.errors)
-            messages.error(request, 'Vui lòng kiểm tra các lỗi trong biểu mẫu.')
     else:
         form = ChangePasswordForm(user=request.user)
 
@@ -277,13 +277,11 @@ def register_competition(request, competition_id):
 
     # Kiểm tra khoảng thời gian đăng ký
     if not (competition.registration_start_date <= today <= competition.registration_end_date):
-        messages.error(request, 'Ngoài khoảng thời gian đăng ký.')  # Thông báo nếu không trong khoảng thời gian
         return redirect('competition_detail', competition_id=competition.id)  # Quay lại trang chi tiết cuộc thi
 
     # Kiểm tra số lượng đội đăng ký
     current_participants = competition.teams.count()  # Đếm số đội hiện tại đã đăng ký
     if competition.max_participants is not None and current_participants >= competition.max_participants:
-        messages.error(request, 'Số lượng đội đã đầy.')  # Thông báo nếu số lượng đội đã đầy
         return redirect('competition_detail', competition_id=competition.id)  # Quay lại trang chi tiết cuộc thi
 
     if request.method == 'POST':  # Kiểm tra xem có phải là request POST không
@@ -415,7 +413,6 @@ def register_competition(request, competition_id):
                     return redirect('competition_detail', competition_id=competition.id)
 
             except Exception as e:
-                messages.error(request, f"Có lỗi xảy ra: {str(e)}")  # Hiển thị lỗi nếu xảy ra ngoại lệ
                 return redirect('competition_detail', competition_id=competition.id)
         else:
             # In ra các lỗi trong form nếu form không hợp lệ
@@ -805,7 +802,6 @@ def add_result(request, competition_id):
     if request.method == 'POST':
         team_ids = request.POST.getlist('team_ids')
         if not team_ids:
-            messages.error(request, "Không có đội nào được gửi để lưu kết quả.")
             return redirect(request.path)
 
         for team_id in team_ids:
@@ -845,10 +841,8 @@ def add_result(request, competition_id):
                         ranking_score=ranking_score
                     )
             except Exception as e:
-                messages.error(request, f"Lỗi khi lưu kết quả cho đội {team_id}: {e}")
                 continue
 
-        messages.success(request, "Kết quả đã được lưu thành công.")
         return redirect('result_detail', competition_id=competition.id)
 
     return render(request, 'result/add_result.html', {
@@ -1191,7 +1185,6 @@ def submit_feedback(request):
                     feedback.image.save(f"{feedback.image.name}.jpg", ContentFile(img_byte_arr.read()), save=False)
                 except Exception as e:
                     form.add_error('image', 'Lỗi khi xử lý hình ảnh: ' + str(e))
-                    messages.error(request, "Có lỗi xảy ra khi xử lý hình ảnh.")
                     return render(request, 'feedback/submit_feedback.html', {'form': form})
 
             feedback.save()
@@ -1200,7 +1193,6 @@ def submit_feedback(request):
         else:
             # In ra lỗi để dễ debug
             print(form.errors)  # In ra các lỗi của form trong console
-            messages.error(request, "Có lỗi xảy ra khi gửi phản hồi. Vui lòng kiểm tra lại.")
     else:
         form = FeedbackForm()
 
@@ -1213,7 +1205,6 @@ def feedback_list(request):
         feedback_list = Feedback.objects.all().order_by('-created_at')
         return render(request, 'feedback/feedback_list.html', {'feedback_list': feedback_list})
     else:
-        messages.error(request, "Bạn không có quyền truy cập vào trang này.")
         return redirect('home')
 
 
@@ -1330,11 +1321,16 @@ def sanitize_filename(filename):
     # Bước 1: Loại bỏ các từ không cần thiết như "Cuộc thi"
     filename = filename.replace("Cuộc thi", "").strip()  # Loại bỏ "Cuộc thi" và trim khoảng trắng
 
-    # Bước 2: Thay thế các ký tự không hợp lệ trong tên file (chỉ giữ lại các ký tự an toàn)
+    # Bước 2: Chuyển đổi tiếng Việt có dấu sang không dấu
+    filename = unidecode(filename)
+
+    # Bước 3: Thay thế các ký tự không hợp lệ trong tên file (chỉ giữ lại các ký tự an toàn)
     filename = re.sub(r'[<>:"/\\|?*]', '_', filename)  # Thay thế các ký tự không hợp lệ bằng dấu gạch dưới
     filename = filename.replace(' ', '_')  # Thay thế dấu cách bằng dấu gạch dưới
 
-    # Bước 3: Trả về tên file đã xử lý
+    # Bước 4: Đảm bảo độ dài hợp lý của tên file (tùy chọn)
+    filename = filename[:100]  # Giới hạn tối đa 100 ký tự (nếu cần)
+
     return filename
 
 
@@ -1462,7 +1458,7 @@ def export_results_to_excel(request, competition_id):
                 competition=competition,
                 group_name=group_name,
                 round_name=round_name
-            ).order_by('-score')
+            ).order_by('-ranking_score')
 
             # Duyệt qua các kết quả để thêm vào sheet
             for rank, result in enumerate(round_results, start=1):
@@ -1500,6 +1496,7 @@ def export_results_to_excel(request, competition_id):
 
     # Thiết lập response để tải về file Excel
     safe_filename = sanitize_filename(competition.name)  # Bạn có thể viết hàm sanitize_filename nếu cần
+    print('safe_filename: ', safe_filename)
     response = HttpResponse(file_stream,
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename=Ket_qua_{safe_filename}.xlsx'
@@ -1663,7 +1660,6 @@ def edit_registration(request, registration_id):
 
     # Kiểm tra quyền truy cập
     if registration.user != request.user:
-        messages.error(request, 'Bạn không có quyền chỉnh sửa thông tin này.')
         return redirect('competition_detail')
 
     # Lấy tất cả các bản ghi của đội thi này theo `team_id`
@@ -1800,7 +1796,6 @@ def password_reset_request(request):
 #                 messages.success(request, "Mật khẩu đã được đặt lại thành công!")
 #                 return redirect("password_reset_complete")
 #             else:
-#                 messages.error(request, "Mật khẩu không khớp. Vui lòng thử lại.")
 #         except CustomUser.DoesNotExist:
 #             messages.error(request, "Mã reset mật khẩu không hợp lệ.")
 #
